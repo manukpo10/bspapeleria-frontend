@@ -34,8 +34,8 @@ export default function Login() {
   return (
     <div className="min-h-screen grid lg:grid-cols-2">
       {/* Panel izquierdo - Formulario */}
-      <div className="flex items-center justify-center bg-cream px-6 py-12">
-        <div className="w-full max-w-md">
+      <div className="bg-cream px-6 py-32 lg:py-40">
+        <div className="w-full max-w-md mx-auto">
           {/* Logo mobile */}
           <Link to="/" className="flex items-center gap-2 mb-10 lg:hidden">
             <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
@@ -147,33 +147,31 @@ export default function Login() {
       </div>
 
       {/* Panel derecho - Imagen y branding */}
-      <div className="hidden lg:flex relative overflow-hidden bg-gradient-to-br from-primary via-primary/90 to-secondary items-center">
+      <div className="hidden lg:block relative overflow-hidden bg-gradient-to-br from-primary via-primary/90 to-secondary px-8 py-32 lg:py-40">
         {/* Elementos decorativos */}
         <div className="absolute top-20 -left-20 w-64 h-64 bg-white/10 rounded-full blur-3xl" />
         <div className="absolute bottom-40 -right-10 w-48 h-48 bg-accent/30 rounded-full blur-2xl" />
-        <div className="absolute top-1/2 left-1/3 w-32 h-32 bg-white/5 rounded-full" />
         
         {/* Patrón de fondo */}
         <div className="absolute inset-0 opacity-10" 
           style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '32px 32px' }} 
         />
         
-        <div className="relative z-10 flex flex-col items-center justify-center text-center text-white p-8 w-full">
-          {/* Logo centrado */}
-          <Link to="/" className="group mb-6">
+        {/* Contenido alineado con el panel izquierdo */}
+        <div className="max-w-md mx-auto">
+          <Link to="/" className="group mb-8 block">
             <img 
               src="/LOGO.png" 
               alt="BS Papelería" 
-              className="w-48 h-48 object-contain drop-shadow-2xl group-hover:scale-105 transition-transform duration-300"
+              className="w-40 h-40 object-contain mx-auto drop-shadow-2xl group-hover:scale-105 transition-transform duration-300"
             />
           </Link>
 
-          {/* Contenido */}
-          <div className="flex flex-col items-center space-y-4 max-w-sm">
-            <div className="w-16 h-16 bg-white/10 rounded-2xl flex items-center justify-center backdrop-blur-sm border border-white/20">
+          <div className="text-center">
+            <div className="w-16 h-16 bg-white/10 rounded-2xl flex items-center justify-center backdrop-blur-sm border border-white/20 mx-auto mb-4">
               <span className="text-3xl">✨</span>
             </div>
-            <blockquote className="text-xl font-heading font-medium leading-relaxed">
+            <blockquote className="text-xl font-heading font-medium leading-relaxed text-white mb-4">
               "Creá, organizá y personalizá tu mundo"
             </blockquote>
             <p className="text-white/70 text-sm">

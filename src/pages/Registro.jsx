@@ -81,8 +81,8 @@ export default function Registro() {
   return (
     <div className="min-h-screen grid lg:grid-cols-2">
       {/* Panel izquierdo - Formulario */}
-      <div className="flex items-center justify-center bg-cream px-6 py-12 order-2 lg:order-1">
-        <div className="w-full max-w-md">
+      <div className="bg-cream px-6 py-32 lg:py-40 order-2 lg:order-1">
+        <div className="w-full max-w-md mx-auto">
           {/* Logo mobile */}
           <Link to="/" className="flex items-center gap-2 mb-10 lg:hidden">
             <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
@@ -241,39 +241,37 @@ export default function Registro() {
       </div>
 
       {/* Panel derecho - Imagen y beneficios */}
-      <div className="hidden lg:flex relative overflow-hidden bg-gradient-to-br from-secondary via-secondary/90 to-primary order-1 lg:order-2 items-center">
+      <div className="hidden lg:block relative overflow-hidden bg-gradient-to-br from-secondary via-secondary/90 to-primary px-8 py-32 lg:py-40 order-1 lg:order-2">
         {/* Elementos decorativos */}
         <div className="absolute top-10 -right-10 w-56 h-56 bg-white/10 rounded-full blur-3xl" />
         <div className="absolute bottom-20 -left-16 w-64 h-64 bg-accent/20 rounded-full blur-3xl" />
-        <div className="absolute top-1/3 right-20 w-24 h-24 bg-white/5 rounded-full" />
         
         {/* Patrón de fondo */}
         <div className="absolute inset-0 opacity-10" 
           style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '32px 32px' }} 
         />
         
-        <div className="relative z-10 flex flex-col items-center justify-center text-center text-white p-8 w-full">
-          {/* Logo centrado */}
-          <Link to="/" className="group mb-6">
+        {/* Contenido alineado con el panel izquierdo */}
+        <div className="max-w-md mx-auto">
+          <Link to="/" className="group mb-8 block">
             <img 
               src="/LOGO.png" 
               alt="BS Papelería" 
-              className="w-48 h-48 object-contain drop-shadow-2xl group-hover:scale-105 transition-transform duration-300"
+              className="w-40 h-40 object-contain mx-auto drop-shadow-2xl group-hover:scale-105 transition-transform duration-300"
             />
           </Link>
 
-          {/* Contenido - Igual que Login */}
-          <div className="flex flex-col items-center space-y-4 max-w-sm">
-            <div className="flex items-center gap-3">
+          <div className="text-center">
+            <div className="flex items-center justify-center gap-3 mb-4">
               <Sparkles className="text-accent" size={28} />
-              <h2 className="font-heading text-xl font-bold">¡Únete a la comunidad!</h2>
+              <h2 className="font-heading text-xl font-bold text-white">¡Únete a la comunidad!</h2>
             </div>
             
-            <p className="text-white/70 text-sm">
+            <p className="text-white/70 text-sm mb-6">
               Obtené beneficios exclusivos al registrarte
             </p>
 
-            <div className="grid grid-cols-1 gap-3">
+            <div className="space-y-3">
               {beneficios.map((b) => (
                 <div key={b.title} className="flex items-center gap-3 p-3 bg-white/10 backdrop-blur-sm rounded-xl border border-white/20">
                   <span className="text-xl">{b.icon}</span>
