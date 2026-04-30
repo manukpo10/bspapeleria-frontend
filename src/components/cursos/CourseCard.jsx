@@ -132,9 +132,9 @@ export default function CourseCard({ curso, variant = 'default' }) {
         {/* Instructor */}
         <div className="flex items-center gap-2 mb-3">
           <div className="w-6 h-6 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
-            <span className="text-[10px] font-bold text-white">{curso.instructor.charAt(0)}</span>
+            <span className="text-[10px] font-bold text-white">{(curso.instructor || 'B').charAt(0)}</span>
           </div>
-          <span className="text-sm text-dark/60">{curso.instructor}</span>
+          <span className="text-sm text-dark/60">{curso.instructor || 'BS Papelería'}</span>
         </div>
         
         {/* Nivel y Modalidad */}

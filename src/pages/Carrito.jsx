@@ -278,7 +278,7 @@ export default function Carrito() {
             Descubrí nuestros productos y cursos para darle un toque especial a tus proyectos
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <Link to="/tienda">
+            <Link to="/productos">
               <Button size="lg">Ver productos</Button>
             </Link>
             <Link to="/cursos">
@@ -339,7 +339,7 @@ export default function Carrito() {
               items={items}
               total={total}
               onCheckout={handleCheckout}
-              onContinue={() => navigate('/tienda')}
+              onContinue={() => navigate('/productos')}
               onWhatsApp={() => window.open('https://wa.me/5492215703036', '_blank')}
               loading={loading}
             />

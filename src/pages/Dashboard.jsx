@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { Package, BookOpen, Clock, CheckCircle, XCircle, Truck, ShoppingBag, ArrowRight } from 'lucide-react'
+import { Package, BookOpen, Clock, CheckCircle, XCircle, Truck, ShoppingBag, ArrowRight, Play } from 'lucide-react'
 import useAuthStore from '../store/useAuthStore'
 import { getMisOrdenes } from '../api/ordenes'
+import { cursos } from '../data/cursosData'
 import Spinner from '../components/ui/Spinner'
 import ErrorMessage from '../components/ui/ErrorMessage'
 import Button from '../components/ui/Button'
@@ -23,6 +24,7 @@ export default function Dashboard() {
 
   useEffect(() => {
     if (!user) { navigate('/login'); return }
+    if (user.rol === 'ADMIN') { navigate('/admin'); return }
     getMisOrdenes()
       .then((res) => setOrdenes(res.data))
       .catch((err) => setError(err.response?.data?.error || 'Error al cargar ordenes'))
@@ -89,7 +91,7 @@ export default function Dashboard() {
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-10">
           {[
-            { to: '/tienda', icon: ShoppingBag, label: 'Ir a la tienda', color: 'bg-primary/10 text-primary' },
+            { to: '/productos', icon: ShoppingBag, label: 'Ir a la tienda', color: 'bg-primary/10 text-primary' },
             { to: '/cursos',  icon: BookOpen,   label: 'Ver cursos',     color: 'bg-accent/10 text-accent'   },
             { to: '/carrito', icon: Package,    label: 'Mi carrito',     color: 'bg-sand/50 text-dark'       },
           ].map((a) => (
@@ -123,7 +125,7 @@ export default function Dashboard() {
               Todavia no realizaste compras
             </h3>
             <p className="text-dark/40 mb-6">Explora nuestra tienda y encontra tus productos favoritos</p>
-            <Button onClick={() => navigate('/tienda')}>Ir a la tienda</Button>
+            <Button onClick={() => navigate('/productos')}>Ir a la tienda</Button>
           </div>
         ) : (
           <div className="space-y-4">
@@ -175,6 +177,30 @@ export default function Dashboard() {
                         <div className="flex-1 min-w-0">
                           <p className="text-dark/70 text-sm font-medium truncate">{item.nombreSnapshot}</p>
                           <p className="text-dark/30 text-xs">{item.tipoItem} · x{item.cantidad}</p>
+                          {item.tipoItem === 'CURSO' && orden.estado === 'PAGADA' && (
+                            (() => {
+                              const refId = item.referenciaId
+                              const curso = cursos.find(c => 
+                                c.id === refId || 
+                                c.id === Number(refId) || 
+                                c.id.toString() === String(refId) ||
+                                c.slug === refId
+                              )
+                              return curso ? (
+                                <Link 
+                                  to={`/cursos/${curso.slug}/aula`}
+                                  className="inline-flex items-center gap-1 mt-1 text-xs text-primary hover:underline"
+                                >
+                                  <Play size={12} />
+                                  Ir al aula
+                                </Link>
+                              ) : (
+                                <span className="inline-flex items-center gap-1 mt-1 text-xs text-dark/30">
+                                  (curso no encontrado)
+                                </span>
+                              )
+                            })()
+                          )}
                         </div>
                         <p className="text-dark/60 text-sm font-medium flex-shrink-0">
                           ${(Number(item.precioUnitario) * item.cantidad).toLocaleString('es-AR')}

@@ -1,11 +1,52 @@
-import { useState, useMemo } from 'react'
-import { SlidersHorizontal, Grid, List, X, GraduationCap } from 'lucide-react'
+import { useState, useMemo, useEffect } from 'react'
+import { SlidersHorizontal, Grid, List, X, GraduationCap, Loader2 } from 'lucide-react'
 import CourseCard from '../components/cursos/CourseCard'
 import CoursesFilters from '../components/cursos/CoursesFilters'
 import SearchBar from '../components/productos/SearchBar'
-import { cursos, categorias, niveles } from '../data/cursosData'
+import { getCursos } from '../api/cursos'
 
 export default function Cursos() {
+  const [cursos, setCursos] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+
+  useEffect(() => {
+    getCursos()
+      .then(res => {
+        const data = (res.data || []).map(c => ({
+          ...c,
+          imagen: c.imagen || c.imagenUrl || 'https://images.unsplash.com/photo-1517842645767-c639042777db?w=800&h=500&fit=crop',
+          slug: c.slug || c.titulo?.toLowerCase().replace(/\s+/g, '-'),
+          disponible: c.disponible !== false,
+          badge: c.badge || null,
+          duracion: c.duracion || '0 horas',
+          clases: c.clases || 0,
+          instructor: c.instructor || 'BS Papelería',
+          nivel: c.nivel || 'intermedio',
+        }))
+        console.log('Cursos transformados:', data)
+        setCursos(data)
+      })
+      .catch(err => {
+        console.error('Error cursos:', err)
+        setError('Error al cargar cursos')
+      })
+      .finally(() => setLoading(false))
+  }, [])
+
+  // Categorías y niveles para filtros
+  const categorias = [
+    { id: 'agendas', nombre: 'Agendas' },
+    { id: 'fiestas', nombre: 'Fiestas' },
+    { id: 'escolar', nombre: 'Escolar' },
+    { id: 'digital', nombre: 'Digital' },
+    { id: 'arte', nombre: 'Arte' },
+  ]
+  const niveles = [
+    { id: 'basico', nombre: 'Básico' },
+    { id: 'intermedio', nombre: 'Intermedio' },
+    { id: 'avanzado', nombre: 'Avanzado' },
+  ]
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [vistaGrid, setVistaGrid] = useState(true)
   
@@ -14,52 +55,55 @@ export default function Cursos() {
     categorias: [],
     niveles: [],
     precioMin: 0,
-    precioMax: 50000,
+    precioMax: 1000000,
     estado: null,
   })
 
   const cursosFiltrados = useMemo(() => {
+    if (!cursos || cursos.length === 0) return []
+    
     return cursos.filter(curso => {
       if (filtros.busqueda) {
         const search = filtros.busqueda.toLowerCase()
-        if (!curso.titulo.toLowerCase().includes(search) && 
-            !curso.descripcionCorta.toLowerCase().includes(search)) {
+        if (!curso.titulo?.toLowerCase().includes(search) && 
+            !curso.descripcion?.toLowerCase().includes(search)) {
           return false
         }
       }
 
-      if (filtros.categorias.length > 0) {
-        if (!filtros.categorias.includes(curso.categoria)) return false
-      }
-
+      // Modalidad filter (backend returns ONLINE/PRESENCIAL)
       if (filtros.niveles.length > 0) {
-        if (!filtros.niveles.includes(curso.nivel)) return false
+        // Backend doesn't have nivel, skip for now
       }
 
-      if (curso.precio !== null && (curso.precio < filtros.precioMin || curso.precio > filtros.precioMax)) {
-        return false
-      }
-
-      if (filtros.estado) {
-        if (filtros.estado === 'disponible' && !curso.disponible) return false
-        if (filtros.estado === 'proximamente' && curso.disponible) return false
+      // Precio
+      if (curso.precio !== null) {
+        if (Number(curso.precio) < filtros.precioMin || Number(curso.precio) > filtros.precioMax) return false
       }
 
       return true
     })
-  }, [filtros])
+  }, [cursos, filtros])
 
   const filtrosActivos = useMemo(() => {
     let count = 0
     if (filtros.categorias.length > 0) count++
     if (filtros.niveles.length > 0) count++
-    if (filtros.precioMin > 0 || filtros.precioMax < 50000) count++
+    if (filtros.precioMin > 0 || filtros.precioMax < 1000000) count++
     if (filtros.estado) count++
     return count
   }, [filtros])
 
   // Featured course (el primero disponible)
-  const featuredCourse = cursos.find(c => c.disponible)
+  const featuredCourse = cursosFiltrados?.[0]
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-cream flex items-center justify-center">
+        <Loader2 className="animate-spin text-primary" size={40} />
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-cream">

@@ -3,7 +3,7 @@ import { Instagram, Mail, MapPin, Phone, Heart, ArrowRight, Send } from 'lucide-
 
 const navLinks = [
   { to: '/',         label: 'Inicio'   },
-  { to: '/tienda',   label: 'Tienda'   },
+  { to: '/productos',   label: 'Tienda'   },
   { to: '/cursos',   label: 'Cursos'   },
   { to: '/contacto', label: 'Contacto' },
 ]

@@ -1,40 +1,41 @@
-import { useState } from 'react'
-import { useParams, Link } from 'react-router-dom'
-import { ArrowLeft, Clock, BookOpen, Users, Award, CheckCircle, Play, Calendar, MessageCircle, Lock, ShoppingCart } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { useParams, Link, useNavigate } from 'react-router-dom'
+import { ArrowLeft, Clock, BookOpen, Users, Award, CheckCircle, Play, Calendar, MessageCircle, Lock, ShoppingCart, ChevronDown, ChevronRight, Loader2 } from 'lucide-react'
 import Button from '../components/ui/Button'
 import useAuthStore from '../store/useAuthStore'
 import useCartStore from '../store/useCartStore'
-import { getCursoBySlug } from '../data/cursosData'
+import { getCursos, getCursoById } from '../api/cursos'
 
 function AccordionModule({ modulo, index }) {
-  const [open, setOpen] = useState(false)
+  const [isOpen, setIsOpen] = useState(false)
   
   return (
     <div className="border border-sand/30 rounded-xl overflow-hidden">
       <button
-        onClick={() => setOpen(!open)}
-        className="w-full flex items-center justify-between p-4 bg-white hover:bg-sand/20 transition"
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full flex items-center justify-between p-4 bg-cream/50 hover:bg-cream transition"
       >
         <div className="flex items-center gap-3">
-          <span className="w-8 h-8 rounded-full bg-primary/10 text-primary font-bold flex items-center justify-center">
+          <span className="w-8 h-8 rounded-full bg-primary/10 text-primary font-bold text-sm flex items-center justify-center">
             {index + 1}
           </span>
-          <span className="font-semibold text-dark text-left">{modulo.titulo}</span>
+          <span className="font-medium text-dark">{modulo.titulo}</span>
         </div>
-        <span className="text-sm text-dark/50">{modulo.duracion}</span>
+        <div className="flex items-center gap-3">
+          <span className="text-sm text-dark/40">{modulo.duracion}</span>
+          {isOpen ? <ChevronDown size={18} /> : <ChevronRight size={18} />}
+        </div>
       </button>
-      
-      {open && modulo.lecciones && (
-        <div className="bg-cream/50 border-t border-sand/30">
-          {modulo.lecciones.map((leccion, i) => (
-            <div 
-              key={i} 
-              className="flex items-center gap-3 px-4 py-3 hover:bg-white transition"
-            >
-              <Play size={14} className="text-primary flex-shrink-0" />
-              <span className="text-sm text-dark/70">{leccion}</span>
-            </div>
-          ))}
+      {isOpen && (
+        <div className="p-4 bg-white border-t border-sand/30">
+          <ul className="space-y-2">
+            {(modulo.lecciones || []).map((leccion, i) => (
+              <li key={i} className="flex items-center gap-2 text-sm text-dark/60">
+                <Play size={14} className="text-primary" />
+                {leccion}
+              </li>
+            ))}
+          </ul>
         </div>
       )}
     </div>
@@ -43,12 +44,64 @@ function AccordionModule({ modulo, index }) {
 
 export default function CursoDetalle() {
   const { slug } = useParams()
+  const navigate = useNavigate()
   const { user, isAuthenticated } = useAuthStore()
   const { addItem, items } = useCartStore()
-  const curso = getCursoBySlug(slug)
+  const [loading, setLoading] = useState(true)
+  const [curso, setCurso] = useState(null)
+  const [cursosTodos, setCursosTodos] = useState([])
   
-  const [comprado, setComprado] = useState(false) // Esto vendría del backend
+  useEffect(() => {
+    Promise.all([getCursos(), slug && !isNaN(slug) ? getCursoById(slug).catch(() => null) : null])
+      .then(([res, cursoData]) => {
+        const todos = (res.data || []).map(c => ({
+          ...c,
+          imagen: c.imagen || c.imagenUrl,
+          slug: c.slug || c.titulo?.toLowerCase().replace(/\s+/g, '-'),
+        }))
+        setCursosTodos(todos)
+        
+        // Buscar por slug o ID
+        console.log('Buscando curso:', slug, 'en', todos.map(c => c.slug || c.id))
+        const slugLower = slug?.toLowerCase()
+        const encontrado = todos.find(c => 
+          c.slug === slug || 
+          c.slug?.toLowerCase() === slugLower ||
+          c.id === Number(slug) || 
+          c.id?.toString() === slug ||
+          (slug?.includes('-') && c.slug?.includes(slug.split('-')[0]))
+        )
+        
+        // Agregar campos por defecto si no existen
+        const cursoCompleto = encontrado ? {
+          ...encontrado,
+          descripcionCompleta: encontrado.descripcionCompleta || encontrado.descripcion || 'Descripción del curso',
+          incluye: encontrado.incluye || ['Videos clases', 'Material descargable', 'Certificado'],
+          modulos: encontrado.modulos || [{ titulo: 'Contenido del curso', duracion: 'A definir', lecciones: ['Clase 1'] }],
+          duracion: encontrado.duracion || '0 horas',
+          clases: encontrado.clases || 1,
+          instructor: encontrado.instructor || 'BS Papelería',
+          nivel: encontrado.nivel || 'intermedio',
+          modalidad: encontrado.modalidad || 'online',
+        } : null
+        
+        console.log('Encontrado:', cursoCompleto)
+        setCurso(cursoCompleto)
+      })
+      .catch(() => setCurso(null))
+      .finally(() => setLoading(false))
+  }, [slug])
   
+// El curso ya se cargó en el useEffect
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-cream flex items-center justify-center">
+        <Loader2 className="animate-spin text-primary" size={40} />
+      </div>
+    )
+  }
+
   const enCarrito = items.some(i => i.referenciaId === curso?.id && i.tipoItem === 'CURSO')
   
   const handleAddToCart = () => {
@@ -57,8 +110,9 @@ export default function CursoDetalle() {
       tipoItem: 'CURSO',
       nombre: curso.titulo,
       precio: curso.precio,
-      imagenUrl: curso.imagen,
+      imagenUrl: curso.imagenUrl,
     })
+    navigate('/carrito')
   }
   
   if (!curso) {
@@ -91,7 +145,7 @@ export default function CursoDetalle() {
     if (!isLoggedIn) {
       return { text: 'Iniciá sesión para comprar este curso', type: 'login' }
     }
-    if (!comprado) {
+    if (!hasPurchased) {
       return { text: 'Inscribite para acceder al contenido completo', type: 'purchase' }
     }
     return null
@@ -187,11 +241,11 @@ export default function CursoDetalle() {
               <div className="flex items-center gap-4">
                 <div className="w-16 h-16 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
                   <span className="text-2xl font-bold text-white">
-                    {curso.instructor.charAt(0)}
+                    {(curso.instructor || 'B').charAt(0)}
                   </span>
                 </div>
                 <div>
-                  <p className="font-bold text-dark">{curso.instructor}</p>
+                  <p className="font-bold text-dark">{curso.instructor || 'BS Papelería'}</p>
                   <p className="text-sm text-dark/50">Instructor certificado</p>
                 </div>
               </div>

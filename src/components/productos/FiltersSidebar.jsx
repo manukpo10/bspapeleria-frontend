@@ -19,22 +19,27 @@ export default function FiltersSidebar({
     setOpenSections(prev => ({ ...prev, [section]: !prev[section] }))
   }
 
+  const cats = filtros.categorias || []
+  const subs = filtros.subcategorias || []
+
   const getSubcategorias = (categoriaId) => {
     const cat = categorias.find(c => c.id === categoriaId)
-    return cat ? cat.subcategorias : []
+    return cat?.subcategorias || []
   }
 
   const handleCategoriaChange = (categoriaId) => {
-    const nuevas = filtros.categorias.includes(categoriaId)
-      ? filtros.categorias.filter(c => c !== categoriaId)
-      : [...filtros.categorias, categoriaId]
+    const cats = filtros.categorias || []
+    const nuevas = cats.includes(categoriaId)
+      ? cats.filter(c => c !== categoriaId)
+      : [...cats, categoriaId]
     setFiltros({ ...filtros, categorias: nuevas, subcategorias: [] })
   }
 
   const handleSubcategoriaChange = (subcategoria) => {
-    const nuevas = filtros.subcategorias.includes(subcategoria)
-      ? filtros.subcategorias.filter(s => s !== subcategoria)
-      : [...filtros.subcategorias, subcategoria]
+    const subs = filtros.subcategorias || []
+    const nuevas = subs.includes(subcategoria)
+      ? subs.filter(s => s !== subcategoria)
+      : [...subs, subcategoria]
     setFiltros({ ...filtros, subcategorias: nuevas })
   }
 
@@ -58,8 +63,9 @@ export default function FiltersSidebar({
     })
   }
 
-  const minPrice = productos.filter(p => p.precio).reduce((min, p) => p.precio < min ? p.precio : min, 0)
-  const maxPrice = productos.reduce((max, p) => p.precio > max ? p.precio : max, 0)
+  const productosList = productos || []
+  const minPrice = productosList.filter(p => p.precio).reduce((min, p) => p.precio < min ? p.precio : min, 0)
+  const maxPrice = productosList.reduce((max, p) => p.precio > max ? p.precio : max, 0)
 
   return (
     <div className="bg-white rounded-2xl border border-sand/30 p-6 sticky top-24">
@@ -101,7 +107,7 @@ export default function FiltersSidebar({
                 <label className="flex items-center gap-2 cursor-pointer group">
                   <input
                     type="checkbox"
-                    checked={filtros.categorias.includes(cat.id)}
+                    checked={cats.includes(cat.id)}
                     onChange={() => handleCategoriaChange(cat.id)}
                     className="w-4 h-4 rounded border-sand text-primary focus:ring-primary/20"
                   />
@@ -111,13 +117,13 @@ export default function FiltersSidebar({
                 </label>
                 
                 {/* Subcategorías */}
-                {filtros.categorias.includes(cat.id) && getSubcategorias(cat.id).length > 0 && (
+                {cats.includes(cat.id) && getSubcategorias(cat.id).length > 0 && (
                   <div className="ml-6 mt-2 space-y-1">
                     {getSubcategorias(cat.id).map((sub) => (
                       <label key={sub} className="flex items-center gap-2 cursor-pointer">
                         <input
                           type="checkbox"
-                          checked={filtros.subcategorias.includes(sub)}
+                          checked={subs.includes(sub)}
                           onChange={() => handleSubcategoriaChange(sub)}
                           className="w-3.5 h-3.5 rounded border-sand text-primary focus:ring-primary/20"
                         />

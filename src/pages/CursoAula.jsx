@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { ArrowLeft, Play, CheckCircle, Clock, BookOpen, Users, Download, Award, Lock, Menu, X } from 'lucide-react'
 import Button from '../components/ui/Button'
-import { getCursoBySlug } from '../data/cursosData'
+import { cursos } from '../data/cursosData'
 
 function VideoPlayer({ titulo, url, completado }) {
   const [playing, setPlaying] = useState(false)
@@ -83,10 +83,30 @@ function SidebarLeccion({ leccion, index, activa, completada, onClick }) {
 
 export default function CursoAula() {
   const { slug } = useParams()
-  const curso = getCursoBySlug(slug)
+  const curso = cursos.find(c => c.slug === slug || c.id.toString() === slug)
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [leccionActiva, setLeccionActiva] = useState(0)
   const [moduloExpandido, setModuloExpandido] = useState(0)
+  
+  // Total de lecciones
+  const totalLecciones = curso?.modulos?.reduce((acc, m) => acc + (m.lecciones?.length || 0), 0) || 0
+  
+  // Lecciones completadas (simulado, en memoria)
+  const [completadas, setCompletadas] = useState(() => {
+    const saved = localStorage.getItem(`curso-${slug}-completadas`)
+    return saved ? JSON.parse(saved) : []
+  })
+  
+  const marcarCompletada = () => {
+    const key = `${moduloExpandido}-${leccionActiva}`
+    if (!completadas.includes(key)) {
+      const nuevas = [...completadas, key]
+      setCompletadas(nuevas)
+      localStorage.setItem(`curso-${slug}-completadas`, JSON.stringify(nuevas))
+    }
+  }
+  
+  const progreso = totalLecciones > 0 ? Math.round((completadas.length / totalLecciones) * 100) : 0
   
   if (!curso) {
     return (
@@ -102,7 +122,7 @@ export default function CursoAula() {
   }
   
   // Simular progreso
-  const [progreso, setProgreso] = useState(25) // 25% completado
+  
   
   const currentModulo = curso.modulos[moduloExpandido]
   const leccion = currentModulo?.lecciones[leccionActiva]
@@ -135,7 +155,7 @@ export default function CursoAula() {
                   style={{ width: `${progreso}%` }}
                 />
               </div>
-              <span className="text-sm text-dark/50">{progreso}%</span>
+              <span className="text-sm text-dark/50">{progreso || 0}%</span>
             </div>
             
             {/* Menú mobile */}
@@ -185,19 +205,23 @@ export default function CursoAula() {
                   {/* Lecciones del módulo */}
                   {moduloExpandido === idx && (
                     <div className="ml-2 mt-2 space-y-1">
-                      {modulo.lecciones.map((leccion, lecIdx) => (
-                        <SidebarLeccion
-                          key={lecIdx}
-                          leccion={leccion}
-                          index={lecIdx}
-                          activa={idx === moduloExpandido && leccionActiva === lecIdx}
-                          completada={idx < moduloExpandido}
-                          onClick={() => {
-                            setLeccionActiva(lecIdx)
-                            setSidebarOpen(false)
-                          }}
-                        />
-                      ))}
+                      {modulo.lecciones.map((leccion, lecIdx) => {
+                          const key = `${idx}-${lecIdx}`
+                          const isCompleted = completadas.includes(key)
+                          return (
+                            <SidebarLeccion
+                              key={lecIdx}
+                              leccion={leccion}
+                              index={lecIdx}
+                              activa={idx === moduloExpandido && leccionActiva === lecIdx}
+                              completada={isCompleted}
+                              onClick={() => {
+                                setLeccionActiva(lecIdx)
+                                setSidebarOpen(false)
+                              }}
+                            />
+                          )
+                        })}
                     </div>
                   )}
                 </div>
@@ -249,9 +273,23 @@ export default function CursoAula() {
                     Módulo {moduloExpandido + 1}
                   </span>
                 </div>
-                <button className="text-sm text-primary font-medium hover:underline">
-                  Marcar como completada
-                </button>
+                {(() => {
+                    const key = `${moduloExpandido}-${leccionActiva}`
+                    const estaCompletada = completadas.includes(key)
+                    return estaCompletada ? (
+                      <span className="text-sm text-green-600 font-medium flex items-center gap-1">
+                        <CheckCircle size={14} />
+                        Completada
+                      </span>
+                    ) : (
+                      <button 
+                        onClick={marcarCompletada}
+                        className="text-sm text-primary font-medium hover:underline"
+                      >
+                        Marcar como completada
+                      </button>
+                    )
+                  })()}
               </div>
               
               <h1 className="font-heading text-2xl font-bold text-dark mb-4">
@@ -273,7 +311,21 @@ export default function CursoAula() {
                     <p className="font-medium text-dark">Material de apoyo</p>
                     <p className="text-xs text-dark/40">PDF descargable · 2.5 MB</p>
                   </div>
-                  <Button variant="outline" size="sm">
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => {
+                      // Crear un PDF simple de ejemplo
+                      const contenido = `Material de apoyo - ${leccion}\n\nEste es un recurso descargable para la lección "${leccion}" del curso "${curso.titulo}".\n\n¡Gracias por estudiar con BS Papelería!`
+                      const blob = new Blob([contenido], { type: 'text/plain' })
+                      const url = URL.createObjectURL(blob)
+                      const a = document.createElement('a')
+                      a.href = url
+                      a.download = `material-${leccion.toLowerCase().replace(/\s+/g, '-')}.txt`
+                      a.click()
+                      URL.revokeObjectURL(url)
+                    }}
+                  >
                     Descargar
                   </Button>
                 </div>

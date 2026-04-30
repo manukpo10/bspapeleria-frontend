@@ -1,5 +1,6 @@
-import { Clock, Calendar, Monitor, MapPin, Users, ShoppingCart } from 'lucide-react'
+import { Clock, Calendar, Monitor, MapPin, Users, ShoppingCart, ArrowRight } from 'lucide-react'
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import useCartStore from '../../store/useCartStore'
 import Badge from '../ui/Badge'
 
@@ -121,19 +122,27 @@ export default function CursoCard({ curso }) {
               ${Number(curso.precio).toLocaleString('es-AR')}
             </span>
           </div>
-          <button
-            onClick={handleAdd}
-            disabled={sinCupos}
-            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 ${
-              added
-                ? 'bg-success-bg text-success'
-                : sinCupos
-                ? 'bg-dark/10 text-dark/40 cursor-not-allowed'
-                : 'bg-accent/10 hover:bg-accent text-accent hover:text-white'
-            }`}
-          >
-            {added ? '✓ Agregado' : sinCupos ? 'Sin cupos' : 'Inscribirme'}
-          </button>
+          <div className="flex items-center gap-2">
+            <Link
+              to={`/cursos/${curso.id}`}
+              className="flex items-center gap-1 px-4 py-2.5 rounded-xl text-sm font-semibold border border-sand/30 text-dark hover:bg-sand/20 transition"
+            >
+              Ver <ArrowRight size={14} />
+            </Link>
+            <button
+              onClick={handleAdd}
+              disabled={sinCupos}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 ${
+                added
+                  ? 'bg-success-bg text-success'
+                  : sinCupos
+                  ? 'bg-dark/10 text-dark/40 cursor-not-allowed'
+                  : 'bg-accent/10 hover:bg-accent text-accent hover:text-white'
+              }`}
+            >
+              {added ? '✓' : sinCupos ? '' : '+'}
+            </button>
+          </div>
         </div>
       </div>
     </div>

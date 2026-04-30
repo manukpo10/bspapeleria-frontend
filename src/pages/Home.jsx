@@ -239,7 +239,7 @@ export default function Home() {
               ].map((item) => (
                 <Link
                   key={item.nombre}
-                  to={item.link || '/tienda'}
+                  to={item.link || '/productos'}
                   className={`group relative overflow-hidden rounded-2xl p-3 bg-gradient-to-br from-white to-sand/30 border border-sand/30 hover:shadow-xl hover:shadow-accent/20 hover:-translate-y-1 transition-all duration-300 min-w-[160px] md:min-w-0`}
                 >
                   <div className="relative aspect-square rounded-xl overflow-hidden mb-2">
@@ -259,7 +259,7 @@ export default function Home() {
           </div>
 
           <div className="mt-8 flex flex-wrap justify-center gap-4 animate-fade-in" style={{animationDelay: '0.5s'}}>
-            <Link to="/tienda">
+            <Link to="/productos">
               <Button size="lg" variant="secondary" className="shadow-xl shadow-accent/30 hover:scale-105 transition-all duration-300">
                 Ver archivos <ArrowRight size={18} />
               </Button>
@@ -335,7 +335,7 @@ export default function Home() {
               ].map((item) => (
                 <Link
                   key={item.nombre}
-                  to="/tienda"
+                  to="/productos"
                   className={`group relative overflow-hidden rounded-2xl p-3 bg-gradient-to-br ${item.color} border border-sand/30 hover:shadow-xl hover:shadow-primary/20 hover:-translate-y-1 transition-all duration-300 min-w-[160px] md:min-w-0`}
                 >
                   <div className="relative aspect-square rounded-xl overflow-hidden mb-3">
@@ -350,7 +350,7 @@ export default function Home() {
           </div>
 
           <div className="mt-8 flex flex-wrap justify-center gap-4 animate-fade-in" style={{animationDelay: '0.5s'}}>
-            <Link to="/tienda">
+            <Link to="/productos">
               <Button size="lg" className="shadow-xl shadow-primary/30 hover:scale-105 transition-all duration-300">
                 Ver todos <ArrowRight size={18} />
               </Button>
@@ -410,7 +410,7 @@ export default function Home() {
               ].map((item) => (
                 <Link
                   key={item.nombre}
-                  to="/tienda"
+                  to="/productos"
                   className={`group relative overflow-hidden rounded-2xl p-3 bg-gradient-to-br from-white to-sand/30 border border-sand/30 hover:shadow-xl hover:shadow-secondary/20 hover:-translate-y-1 transition-all duration-300 min-w-[160px] md:min-w-0`}
                 >
                   <div className="relative aspect-square rounded-xl overflow-hidden mb-3">
@@ -425,7 +425,7 @@ export default function Home() {
           </div>
 
           <div className="mt-8 flex flex-wrap justify-center gap-4 animate-fade-in" style={{animationDelay: '0.5s'}}>
-            <Link to="/tienda">
+            <Link to="/productos">
               <Button size="lg" variant="secondary" className="shadow-xl shadow-secondary/30 hover:scale-105 transition-all duration-300">
                 Ver todos <ArrowRight size={18} />
               </Button>
@@ -491,7 +491,7 @@ export default function Home() {
               ].map((item) => (
                 <Link
                   key={item.nombre}
-                  to="/tienda"
+                  to="/productos"
                   className={`group relative overflow-hidden rounded-2xl p-2 bg-gradient-to-br from-white to-sand/30 border border-sand/30 hover:shadow-xl hover:shadow-accent/20 hover:-translate-y-1 transition-all duration-300 min-w-[160px] md:min-w-0`}
                 >
                   <div className="relative aspect-square rounded-xl overflow-hidden mb-2">
@@ -506,7 +506,7 @@ export default function Home() {
           </div>
 
           <div className="mt-8 flex flex-wrap justify-center gap-4 animate-fade-in" style={{animationDelay: '0.5s'}}>
-            <Link to="/tienda">
+            <Link to="/productos">
               <Button size="lg" variant="secondary" className="shadow-xl shadow-accent/30 hover:scale-105 transition-all duration-300">
                 Ver todos <ArrowRight size={18} />
               </Button>
@@ -567,7 +567,7 @@ export default function Home() {
               ].map((item) => (
                 <Link
                   key={item.nombre}
-                  to="/tienda"
+                  to="/productos"
                   className={`group relative overflow-hidden rounded-2xl p-3 bg-gradient-to-br from-white to-sand/30 border border-sand/30 hover:shadow-xl hover:shadow-primary/20 hover:-translate-y-1 transition-all duration-300 min-w-[160px] md:min-w-0`}
                 >
                   <div className="relative aspect-square rounded-xl overflow-hidden mb-2">
@@ -582,7 +582,7 @@ export default function Home() {
           </div>
 
           <div className="mt-8 flex flex-wrap justify-center gap-4 animate-fade-in" style={{animationDelay: '0.5s'}}>
-            <Link to="/tienda">
+            <Link to="/productos">
               <Button size="lg" className="shadow-xl shadow-primary/30 hover:scale-105 transition-all duration-300">
                 Ver todos <ArrowRight size={18} />
               </Button>
