@@ -1,12 +1,14 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { Mail, Lock, Eye, EyeOff } from 'lucide-react'
 import { login as loginApi } from '../api/auth'
 import useAuthStore from '../store/useAuthStore'
 import Button from '../components/ui/Button'
-import ErrorMessage from '../components/ui/ErrorMessage'
 
 export default function Login() {
   const [form, setForm] = useState({ email: '', password: '' })
+  const [showPassword, setShowPassword] = useState(false)
+  const [rememberMe, setRememberMe] = useState(false)
   const [error, setError] = useState(null)
   const [loading, setLoading] = useState(false)
   const { login } = useAuthStore()
@@ -23,7 +25,7 @@ export default function Login() {
       login(data)
       navigate('/dashboard')
     } catch (err) {
-      setError(err.response?.data?.error || 'Email o contrasena incorrectos')
+      setError(err.response?.data?.error || 'Email o contraseña incorrectos')
     } finally {
       setLoading(false)
     }
@@ -31,37 +33,7 @@ export default function Login() {
 
   return (
     <div className="min-h-screen grid lg:grid-cols-2">
-      {/* Panel izquierdo con imagen */}
-      <div className="hidden lg:block relative overflow-hidden">
-        <img
-          src="https://picsum.photos/seed/login-bg/800/1000"
-          alt="Papeleria"
-          className="w-full h-full object-cover"
-        />
-        <div className="absolute inset-0 bg-gradient-to-br from-dark/80 via-dark/60 to-primary/40" />
-        <div className="absolute inset-0 flex flex-col justify-between p-12">
-          <Link to="/" className="flex items-center gap-2">
-            <div className="w-9 h-9 bg-primary rounded-lg flex items-center justify-center">
-              <span className="text-white font-heading font-bold text-sm">BS</span>
-            </div>
-            <span className="font-heading text-xl font-bold text-white">BSPapeleria</span>
-          </Link>
-          <div>
-            <blockquote className="text-white/90 text-xl font-heading italic mb-4 leading-relaxed">
-              "La creatividad no espera. Tus materiales, tampoco."
-            </blockquote>
-            <div className="flex items-center gap-3">
-              <img src="https://picsum.photos/seed/testimonial-login/48/48" alt="Cliente" className="w-10 h-10 rounded-full border-2 border-white/30" />
-              <div>
-                <p className="text-white font-medium text-sm">Ana Garcia</p>
-                <p className="text-white/50 text-xs">Alumna del taller de lettering</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Panel derecho con formulario */}
+      {/* Panel izquierdo - Formulario */}
       <div className="flex items-center justify-center bg-cream px-6 py-12">
         <div className="w-full max-w-md">
           {/* Logo mobile */}
@@ -69,51 +41,145 @@ export default function Login() {
             <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
               <span className="text-white font-heading font-bold text-sm">BS</span>
             </div>
-            <span className="font-heading text-xl font-bold text-dark">BSPapeleria</span>
+            <span className="font-heading text-xl font-bold text-dark">BS Papelería</span>
           </Link>
 
-          <h1 className="font-heading text-3xl font-bold text-dark mb-2">Bienvenida/o</h1>
-          <p className="text-dark/50 mb-8">Ingresa a tu cuenta para continuar</p>
+          {/* Header */}
+          <div className="mb-8">
+            <h1 className="font-heading text-3xl font-bold text-dark mb-2">¡Bienvenido/a!</h1>
+            <p className="text-dark/50">Ingresá a tu cuenta para continuar</p>
+          </div>
 
-          {error && <div className="mb-5"><ErrorMessage message={error} /></div>}
-
-          <form onSubmit={handleSubmit} className="space-y-5">
-            <div>
-              <label className="block text-sm font-medium text-dark mb-2">Email</label>
-              <input
-                type="email" name="email" required
-                value={form.email} onChange={handleChange}
-                className="input-base"
-                placeholder="hola@email.com"
-              />
+          {/* Error */}
+          {error && (
+            <div className="mb-6 p-4 bg-error/10 border border-error/30 rounded-xl flex items-center gap-3">
+              <span className="text-error">⚠️</span>
+              <p className="text-error text-sm">{error}</p>
             </div>
+          )}
+
+          {/* Formulario */}
+          <form onSubmit={handleSubmit} className="space-y-5">
+            {/* Email */}
+            <div>
+              <label className="block text-sm font-semibold text-dark mb-2">Email</label>
+              <div className="relative">
+                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-dark/30" size={18} />
+                <input
+                  type="email"
+                  name="email"
+                  required
+                  value={form.email}
+                  onChange={handleChange}
+                  className="w-full pl-12 pr-4 py-3.5 rounded-xl border border-sand/50 bg-white focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 transition text-dark placeholder:text-dark/30"
+                  placeholder="tu@email.com"
+                />
+              </div>
+            </div>
+
+            {/* Contraseña */}
             <div>
               <div className="flex items-center justify-between mb-2">
-                <label className="text-sm font-medium text-dark">Contrasena</label>
+                <label className="text-sm font-semibold text-dark">Contraseña</label>
+                <Link to="/recuperar" className="text-sm text-primary hover:text-secondary transition-colors">
+                  ¿Olvidaste tu contraseña?
+                </Link>
               </div>
-              <input
-                type="password" name="password" required
-                value={form.password} onChange={handleChange}
-                className="input-base"
-                placeholder="••••••••"
-              />
+              <div className="relative">
+                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-dark/30" size={18} />
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  name="password"
+                  required
+                  value={form.password}
+                  onChange={handleChange}
+                  className="w-full pl-12 pr-14 py-3.5 rounded-xl border border-sand/50 bg-white focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 transition text-dark placeholder:text-dark/30"
+                  placeholder="••••••••"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-dark/30 hover:text-dark transition-colors"
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
             </div>
-            <Button type="submit" className="w-full" size="lg" loading={loading}>
-              Iniciar sesion
+
+            {/* Recordarme */}
+            <div className="flex items-center gap-3">
+              <input
+                type="checkbox"
+                id="remember"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
+                className="w-5 h-5 rounded border-sand/50 text-primary focus:ring-primary/20"
+              />
+              <label htmlFor="remember" className="text-sm text-dark/60 cursor-pointer">
+                Recordarme
+              </label>
+            </div>
+
+            {/* Botón */}
+            <Button type="submit" className="w-full py-3.5 text-base font-semibold" size="lg" loading={loading}>
+              Iniciar sesión
             </Button>
           </form>
 
-          <div className="relative my-7">
-            <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-sand/50" /></div>
-            <div className="relative flex justify-center"><span className="bg-cream px-3 text-dark/30 text-xs">o</span></div>
+          {/* Divisor */}
+          <div className="relative my-8">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-sand" />
+            </div>
+            <div className="relative flex justify-center">
+              <span className="bg-cream px-4 text-dark/30 text-sm">o</span>
+            </div>
           </div>
 
-          <p className="text-center text-dark/50 text-sm">
-            No tenes cuenta?{' '}
-            <Link to="/registro" className="text-primary font-semibold hover:text-secondary">
-              Registrate gratis
+          {/* Link a registro */}
+          <p className="text-center text-dark/50">
+            ¿No tenés cuenta?{' '}
+            <Link to="/registro" className="text-primary font-semibold hover:text-secondary transition-colors">
+              Crear cuenta gratis
             </Link>
           </p>
+        </div>
+      </div>
+
+      {/* Panel derecho - Imagen y branding */}
+      <div className="hidden lg:flex relative overflow-hidden bg-gradient-to-br from-primary via-primary/90 to-secondary items-center">
+        {/* Elementos decorativos */}
+        <div className="absolute top-20 -left-20 w-64 h-64 bg-white/10 rounded-full blur-3xl" />
+        <div className="absolute bottom-40 -right-10 w-48 h-48 bg-accent/30 rounded-full blur-2xl" />
+        <div className="absolute top-1/2 left-1/3 w-32 h-32 bg-white/5 rounded-full" />
+        
+        {/* Patrón de fondo */}
+        <div className="absolute inset-0 opacity-10" 
+          style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '32px 32px' }} 
+        />
+        
+        <div className="relative z-10 flex flex-col items-center justify-center text-center text-white p-8 w-full">
+          {/* Logo centrado */}
+          <Link to="/" className="group mb-6">
+            <img 
+              src="/LOGO.png" 
+              alt="BS Papelería" 
+              className="w-48 h-48 object-contain drop-shadow-2xl group-hover:scale-105 transition-transform duration-300"
+            />
+          </Link>
+
+          {/* Contenido */}
+          <div className="flex flex-col items-center space-y-4 max-w-sm">
+            <div className="w-16 h-16 bg-white/10 rounded-2xl flex items-center justify-center backdrop-blur-sm border border-white/20">
+              <span className="text-3xl">✨</span>
+            </div>
+            <blockquote className="text-xl font-heading font-medium leading-relaxed">
+              "Creá, organizá y personalizá tu mundo"
+            </blockquote>
+            <p className="text-white/70 text-sm">
+              Encontrá todo lo que necesitás para dar vida a tus ideas creativas.
+            </p>
+          </div>
         </div>
       </div>
     </div>

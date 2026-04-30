@@ -1,33 +1,69 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { CheckCircle } from 'lucide-react'
+import { User, Mail, Lock, Eye, EyeOff, Sparkles } from 'lucide-react'
 import { register as registerApi } from '../api/auth'
 import useAuthStore from '../store/useAuthStore'
 import Button from '../components/ui/Button'
-import ErrorMessage from '../components/ui/ErrorMessage'
 
-const perks = [
-  'Acceso a ofertas exclusivas para miembros',
-  'Historial de compras y reordenes faciles',
-  'Inscripcion prioritaria a cursos nuevos',
-  'Descuento del 10% en tu primera compra',
+const beneficios = [
+  { icon: '🎁', title: 'Descuento del 10%', desc: 'En tu primera compra' },
+  { icon: '📚', title: 'Cursos exclusivos', desc: 'Acceso prioritario a nuevos talleres' },
+  { icon: '📦', title: 'Historial de compras', desc: 'Reordenar es más fácil' },
+  { icon: '⭐', title: 'Ofertas members', desc: 'Solo para usuarios registrados' },
 ]
 
 export default function Registro() {
-  const [form, setForm] = useState({ nombre: '', email: '', password: '' })
+  const [form, setForm] = useState({ nombre: '', email: '', password: '', confirmarPassword: '' })
+  const [showPassword, setShowPassword] = useState(false)
+  const [errores, setErrores] = useState({})
   const [error, setError] = useState(null)
   const [loading, setLoading] = useState(false)
   const { login } = useAuthStore()
   const navigate = useNavigate()
 
-  const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value })
+  const handleChange = (e) => {
+    const { name, value } = e.target
+    setForm({ ...form, [name]: value })
+    if (errores[name]) {
+      setErrores({ ...errores, [name]: null })
+    }
+  }
+
+  const validar = () => {
+    const newErrores = {}
+    
+    if (!form.nombre.trim()) {
+      newErrores.nombre = 'El nombre es obligatorio'
+    }
+    
+    if (!form.email.trim()) {
+      newErrores.email = 'El email es obligatorio'
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
+      newErrores.email = 'Ingresa un email válido'
+    }
+    
+    if (!form.password) {
+      newErrores.password = 'La contraseña es obligatoria'
+    } else if (form.password.length < 8) {
+      newErrores.password = 'Mínimo 8 caracteres'
+    }
+    
+    if (form.password !== form.confirmarPassword) {
+      newErrores.confirmarPassword = 'Las contraseñas no coinciden'
+    }
+    
+    setErrores(newErrores)
+    return Object.keys(newErrores).length === 0
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+    if (!validar()) return
+    
     setError(null)
     setLoading(true)
     try {
-      const { data } = await registerApi(form)
+      const { data } = await registerApi({ nombre: form.nombre, email: form.email, password: form.password })
       login(data)
       navigate('/dashboard')
     } catch (err) {
@@ -44,93 +80,210 @@ export default function Registro() {
 
   return (
     <div className="min-h-screen grid lg:grid-cols-2">
-      {/* Panel izquierdo formulario */}
+      {/* Panel izquierdo - Formulario */}
       <div className="flex items-center justify-center bg-cream px-6 py-12 order-2 lg:order-1">
         <div className="w-full max-w-md">
+          {/* Logo mobile */}
           <Link to="/" className="flex items-center gap-2 mb-10 lg:hidden">
             <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
               <span className="text-white font-heading font-bold text-sm">BS</span>
             </div>
-            <span className="font-heading text-xl font-bold text-dark">BSPapeleria</span>
+            <span className="font-heading text-xl font-bold text-dark">BS Papelería</span>
           </Link>
 
-          <h1 className="font-heading text-3xl font-bold text-dark mb-2">Crear cuenta</h1>
-          <p className="text-dark/50 mb-8">Unite a la comunidad BSPapeleria</p>
+          {/* Header */}
+          <div className="mb-8">
+            <h1 className="font-heading text-3xl font-bold text-dark mb-2">Crear cuenta</h1>
+            <p className="text-dark/50">Completá tus datos para unirte a BS Papelería</p>
+          </div>
 
-          {error && <div className="mb-5"><ErrorMessage message={error} /></div>}
+          {/* Error general */}
+          {error && (
+            <div className="mb-6 p-4 bg-error/10 border border-error/30 rounded-xl flex items-center gap-3">
+              <span className="text-error">⚠️</span>
+              <p className="text-error text-sm">{error}</p>
+            </div>
+          )}
 
+          {/* Formulario */}
           <form onSubmit={handleSubmit} className="space-y-5">
+            {/* Nombre */}
             <div>
-              <label className="block text-sm font-medium text-dark mb-2">Nombre completo</label>
-              <input
-                type="text" name="nombre" required
-                value={form.nombre} onChange={handleChange}
-                className="input-base" placeholder="Ana Garcia"
-              />
+              <label className="block text-sm font-semibold text-dark mb-2">Nombre completo</label>
+              <div className="relative">
+                <User className="absolute left-4 top-1/2 -translate-y-1/2 text-dark/30" size={18} />
+                <input
+                  type="text"
+                  name="nombre"
+                  value={form.nombre}
+                  onChange={handleChange}
+                  className={`w-full pl-12 pr-4 py-3.5 rounded-xl border bg-white focus:outline-none focus:ring-4 transition text-dark placeholder:text-dark/30 ${
+                    errores.nombre 
+                      ? 'border-error focus:border-error focus:ring-error/10' 
+                      : 'border-sand/50 focus:border-primary focus:ring-primary/10'
+                  }`}
+                  placeholder="Ana García"
+                />
+              </div>
+              {errores.nombre && (
+                <p className="mt-1.5 text-sm text-error flex items-center gap-1">
+                  <span>⚠️</span> {errores.nombre}
+                </p>
+              )}
             </div>
+
+            {/* Email */}
             <div>
-              <label className="block text-sm font-medium text-dark mb-2">Email</label>
-              <input
-                type="email" name="email" required
-                value={form.email} onChange={handleChange}
-                className="input-base" placeholder="hola@email.com"
-              />
+              <label className="block text-sm font-semibold text-dark mb-2">Email</label>
+              <div className="relative">
+                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-dark/30" size={18} />
+                <input
+                  type="email"
+                  name="email"
+                  value={form.email}
+                  onChange={handleChange}
+                  className={`w-full pl-12 pr-4 py-3.5 rounded-xl border bg-white focus:outline-none focus:ring-4 transition text-dark placeholder:text-dark/30 ${
+                    errores.email 
+                      ? 'border-error focus:border-error focus:ring-error/10' 
+                      : 'border-sand/50 focus:border-primary focus:ring-primary/10'
+                  }`}
+                  placeholder="tu@email.com"
+                />
+              </div>
+              {errores.email && (
+                <p className="mt-1.5 text-sm text-error flex items-center gap-1">
+                  <span>⚠️</span> {errores.email}
+                </p>
+              )}
             </div>
+
+            {/* Contraseña */}
             <div>
-              <label className="block text-sm font-medium text-dark mb-2">
-                Contrasena <span className="text-dark/30 font-normal">(min. 8 caracteres)</span>
+              <label className="block text-sm font-semibold text-dark mb-2">
+                Contraseña <span className="text-dark/40 font-normal">(mínimo 8 caracteres)</span>
               </label>
-              <input
-                type="password" name="password" required minLength={8}
-                value={form.password} onChange={handleChange}
-                className="input-base" placeholder="••••••••"
-              />
+              <div className="relative">
+                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-dark/30" size={18} />
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  name="password"
+                  value={form.password}
+                  onChange={handleChange}
+                  className={`w-full pl-12 pr-14 py-3.5 rounded-xl border bg-white focus:outline-none focus:ring-4 transition text-dark placeholder:text-dark/30 ${
+                    errores.password 
+                      ? 'border-error focus:border-error focus:ring-error/10' 
+                      : 'border-sand/50 focus:border-primary focus:ring-primary/10'
+                  }`}
+                  placeholder="••••••••"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-dark/30 hover:text-dark transition-colors"
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
+              {errores.password && (
+                <p className="mt-1.5 text-sm text-error flex items-center gap-1">
+                  <span>⚠️</span> {errores.password}
+                </p>
+              )}
             </div>
-            <Button type="submit" className="w-full" size="lg" loading={loading}>
-              Crear mi cuenta gratis
+
+            {/* Confirmar contraseña */}
+            <div>
+              <label className="block text-sm font-semibold text-dark mb-2">Confirmar contraseña</label>
+              <div className="relative">
+                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-dark/30" size={18} />
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  name="confirmarPassword"
+                  value={form.confirmarPassword}
+                  onChange={handleChange}
+                  className={`w-full pl-12 pr-4 py-3.5 rounded-xl border bg-white focus:outline-none focus:ring-4 transition text-dark placeholder:text-dark/30 ${
+                    errores.confirmarPassword 
+                      ? 'border-error focus:border-error focus:ring-error/10' 
+                      : 'border-sand/50 focus:border-primary focus:ring-primary/10'
+                  }`}
+                  placeholder="••••••••"
+                />
+              </div>
+              {errores.confirmarPassword && (
+                <p className="mt-1.5 text-sm text-error flex items-center gap-1">
+                  <span>⚠️</span> {errores.confirmarPassword}
+                </p>
+              )}
+            </div>
+
+            {/* Botón */}
+            <Button type="submit" className="w-full py-3.5 text-base font-semibold" size="lg" loading={loading}>
+              Crear mi cuenta
             </Button>
           </form>
 
-          <p className="text-center text-dark/40 text-xs mt-5 leading-relaxed">
-            Al registrarte aceptas nuestros terminos y condiciones y politica de privacidad.
+          {/* Términos */}
+          <p className="text-center text-dark/40 text-xs mt-6 leading-relaxed">
+            Al registrarte aceptas nuestros{' '}
+            <a href="/terminos" className="underline hover:text-dark/60">Términos y Condiciones</a>
+            {' '}y{' '}
+            <a href="/privacidad" className="underline hover:text-dark/60">Política de Privacidad</a>
           </p>
 
-          <p className="text-center text-dark/50 text-sm mt-6">
-            Ya tenes cuenta?{' '}
-            <Link to="/login" className="text-primary font-semibold hover:text-secondary">
-              Iniciar sesion
+          {/* Link a login */}
+          <p className="text-center text-dark/50 mt-6">
+            ¿Ya tenés cuenta?{' '}
+            <Link to="/login" className="text-primary font-semibold hover:text-secondary transition-colors">
+              Iniciá sesión
             </Link>
           </p>
         </div>
       </div>
 
-      {/* Panel derecho con imagen y beneficios */}
-      <div className="hidden lg:block relative overflow-hidden order-1 lg:order-2">
-        <img
-          src="https://picsum.photos/seed/registro-bg/800/1000"
-          alt="Papeleria"
-          className="w-full h-full object-cover"
+      {/* Panel derecho - Imagen y beneficios */}
+      <div className="hidden lg:flex relative overflow-hidden bg-gradient-to-br from-secondary via-secondary/90 to-primary order-1 lg:order-2 items-center">
+        {/* Elementos decorativos */}
+        <div className="absolute top-10 -right-10 w-56 h-56 bg-white/10 rounded-full blur-3xl" />
+        <div className="absolute bottom-20 -left-16 w-64 h-64 bg-accent/20 rounded-full blur-3xl" />
+        <div className="absolute top-1/3 right-20 w-24 h-24 bg-white/5 rounded-full" />
+        
+        {/* Patrón de fondo */}
+        <div className="absolute inset-0 opacity-10" 
+          style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '32px 32px' }} 
         />
-        <div className="absolute inset-0 bg-gradient-to-bl from-accent/80 via-dark/70 to-dark/90" />
-        <div className="absolute inset-0 flex flex-col justify-between p-12">
-          <Link to="/" className="flex items-center gap-2">
-            <div className="w-9 h-9 bg-primary rounded-lg flex items-center justify-center">
-              <span className="text-white font-heading font-bold text-sm">BS</span>
-            </div>
-            <span className="font-heading text-xl font-bold text-white">BSPapeleria</span>
+        
+        <div className="relative z-10 flex flex-col items-center justify-center text-center text-white p-8 w-full">
+          {/* Logo centrado */}
+          <Link to="/" className="group mb-6">
+            <img 
+              src="/LOGO.png" 
+              alt="BS Papelería" 
+              className="w-48 h-48 object-contain drop-shadow-2xl group-hover:scale-105 transition-transform duration-300"
+            />
           </Link>
-          <div>
-            <h2 className="font-heading text-2xl font-bold text-white mb-6">
-              Beneficios de ser miembro
-            </h2>
-            <ul className="space-y-4">
-              {perks.map((p) => (
-                <li key={p} className="flex items-start gap-3">
-                  <CheckCircle size={18} className="text-primary flex-shrink-0 mt-0.5" />
-                  <span className="text-white/80 text-sm leading-relaxed">{p}</span>
-                </li>
+
+          {/* Contenido - Igual que Login */}
+          <div className="flex flex-col items-center space-y-4 max-w-sm">
+            <div className="flex items-center gap-3">
+              <Sparkles className="text-accent" size={28} />
+              <h2 className="font-heading text-xl font-bold">¡Únete a la comunidad!</h2>
+            </div>
+            
+            <p className="text-white/70 text-sm">
+              Obtené beneficios exclusivos al registrarte
+            </p>
+
+            <div className="grid grid-cols-1 gap-3">
+              {beneficios.map((b) => (
+                <div key={b.title} className="flex items-center gap-3 p-3 bg-white/10 backdrop-blur-sm rounded-xl border border-white/20">
+                  <span className="text-xl">{b.icon}</span>
+                  <div className="text-left">
+                    <h3 className="font-semibold text-white text-sm">{b.title}</h3>
+                    <p className="text-white/60 text-xs">{b.desc}</p>
+                  </div>
+                </div>
               ))}
-            </ul>
+            </div>
           </div>
         </div>
       </div>
