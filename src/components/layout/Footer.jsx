@@ -28,18 +28,18 @@ export default function Footer() {
       {/* Newsletter strip */}
       <div className="border-b border-white/10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-          <div className="flex flex-col md:flex-row items-center gap-6 justify-between">
-            <div>
+          <div className="flex flex-col md:flex-row items-center md:items-start gap-6 justify-between text-center md:text-left">
+            <div className="max-w-md">
               <h3 className="font-heading text-xl font-bold text-white mb-1">
                 Suscribite a nuestras novedades
               </h3>
               <p className="text-white/40 text-sm">Ofertas, nuevos productos y tips creativos en tu inbox.</p>
             </div>
-            <form className="flex gap-2 w-full md:w-auto" onSubmit={(e) => e.preventDefault()}>
+            <form className="flex gap-2 w-full md:w-auto flex-col sm:flex-row" onSubmit={(e) => e.preventDefault()}>
               <input
                 type="email"
                 placeholder="tu@email.com"
-                className="flex-1 md:w-64 px-4 py-2.5 rounded-xl bg-white/10 border border-white/20 text-white placeholder:text-white/30 focus:outline-none focus:border-accent focus:bg-white/15 transition text-sm"
+                className="flex-1 md:w-64 px-4 py-2.5 rounded-xl bg-white/10 border border-white/20 text-white placeholder:text-white/30 focus:outline-none focus:border-accent focus:bg-white/15 transition text-sm text-center sm:text-left"
               />
               <button
                 type="submit"
@@ -55,22 +55,22 @@ export default function Footer() {
 
       {/* Cuerpo principal */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-10">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-10 md:gap-8">
 
           {/* Logo + descripcion */}
-          <div className="md:col-span-1">
+          <div className="md:col-span-1 text-center md:text-left">
             {/* Logo real en el footer */}
             <Link to="/" className="inline-block mb-4 group">
               <img
                 src="/LOGO.png"
                 alt="BS Papelería"
-                className="h-20 w-auto object-contain brightness-0 invert opacity-90 group-hover:opacity-100 transition"
+                className="h-20 w-auto object-contain brightness-0 invert opacity-90 group-hover:opacity-100 transition mx-auto md:mx-0"
               />
             </Link>
             <p className="text-white/40 text-sm leading-relaxed mb-6">
               Tu espacio creativo favorito. Materiales de calidad y cursos para potenciar tu arte. Creatividad que vuela.
             </p>
-            <div className="flex gap-3">
+            <div className="flex gap-3 justify-center md:justify-start">
               <a
                 href="https://instagram.com"
                 target="_blank"
@@ -91,7 +91,7 @@ export default function Footer() {
           </div>
 
           {/* Navegacion */}
-          <div>
+          <div className="text-center md:text-left">
             <h3 className="text-white font-semibold text-sm uppercase tracking-widest mb-5">Navegacion</h3>
             <ul className="space-y-3">
               {navLinks.map((l) => (
@@ -109,7 +109,7 @@ export default function Footer() {
           </div>
 
           {/* Mi cuenta */}
-          <div>
+          <div className="text-center md:text-left">
             <h3 className="text-white font-semibold text-sm uppercase tracking-widest mb-5">Mi cuenta</h3>
             <ul className="space-y-3">
               {accountLinks.map((l) => (
@@ -127,18 +127,18 @@ export default function Footer() {
           </div>
 
           {/* Contacto */}
-          <div>
+          <div className="text-center md:text-left">
             <h3 className="text-white font-semibold text-sm uppercase tracking-widest mb-5">Contacto</h3>
             <ul className="space-y-4">
               {contactInfo.map((c) => (
-                <li key={c.text} className="flex items-start gap-3">
+                <li key={c.text} className="flex items-start gap-3 md:justify-start justify-center">
                   <c.icon size={15} className="text-primary mt-0.5 flex-shrink-0" />
                   <span className="text-sm">{c.text}</span>
                 </li>
               ))}
             </ul>
             <div className="mt-6 bg-white/5 rounded-2xl p-4 border border-white/10">
-              <p className="text-white/50 text-xs leading-relaxed">
+              <p className="text-white/50 text-xs leading-relaxed text-center md:text-left">
                 <span className="text-accent font-medium block mb-1">Horario de atencion</span>
                 Lun–Vie 9:00–18:00<br />Sab 10:00–14:00
               </p>

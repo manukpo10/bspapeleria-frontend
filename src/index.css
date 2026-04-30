@@ -52,6 +52,7 @@ html {
   /* Scrollbar personalizado */
   ::-webkit-scrollbar {
     width: 6px;
+    height: 6px;
   }
   ::-webkit-scrollbar-track {
     background: #FEFAE0;
@@ -62,5 +63,14 @@ html {
   }
   ::-webkit-scrollbar-thumb:hover {
     background: #F4A261;
+  }
+
+  /* Horizontal scroll para mobile */
+  .scroll-hide::-webkit-scrollbar {
+    display: none;
+  }
+  .scroll-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
   }
 }

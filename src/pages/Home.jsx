@@ -145,7 +145,7 @@ export default function Home() {
           </div>
 
           <div className="mt-8 animate-fade-in" style={{animationDelay: '0.4s'}}>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="flex overflow-x-auto scroll-hide gap-4 pb-4 md:grid md:grid-cols-4 md:pb-0">
               {[
                 { nombre: 'El Mundo de las Agendas', img: 'https://images.unsplash.com/photo-1517842645767-c639042777db?w=300&h=300&fit=crop', precio: '$15.000', likes: 245, link: '/cursos?categoria=agendas' },
                 { nombre: 'La Magia del Candybar', img: 'https://images.unsplash.com/photo-1527529482837-4698179dc6ce?w=300&h=300&fit=crop', precio: '$12.000', likes: 532, link: '/cursos?categoria=candybar' },
@@ -155,7 +155,7 @@ export default function Home() {
                 <Link
                   key={item.nombre}
                   to={item.link || '/cursos'}
-                  className={`group relative overflow-hidden rounded-2xl p-3 bg-gradient-to-br from-white to-sand/30 border border-sand/30 hover:shadow-xl hover:shadow-primary/20 hover:-translate-y-1 transition-all duration-300`}
+                  className={`group relative overflow-hidden rounded-2xl p-3 bg-gradient-to-br from-white to-sand/30 border border-sand/30 hover:shadow-xl hover:shadow-primary/20 hover:-translate-y-1 transition-all duration-300 min-w-[160px] md:min-w-0`}
                 >
                   <div className="relative aspect-[4/3] rounded-xl overflow-hidden mb-2">
                     <img src={item.img} alt={item.nombre} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
@@ -230,7 +230,7 @@ export default function Home() {
           </div>
 
           <div className="mt-8 animate-fade-in" style={{animationDelay: '0.3s'}}>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="flex overflow-x-auto scroll-hide gap-4 pb-4 md:grid md:grid-cols-4 md:pb-0">
               {[
                 { nombre: 'Kit de Agendas', img: 'https://images.unsplash.com/photo-1517842645767-c639042777db?w=300&h=300&fit=crop' },
                 { nombre: 'San Valentin', img: 'https://images.unsplash.com/photo-1506784983877-45594efa4cbe?w=300&h=300&fit=crop' },
@@ -240,7 +240,7 @@ export default function Home() {
                 <Link
                   key={item.nombre}
                   to={item.link || '/tienda'}
-                  className={`group relative overflow-hidden rounded-2xl p-3 bg-gradient-to-br from-white to-sand/30 border border-sand/30 hover:shadow-xl hover:shadow-accent/20 hover:-translate-y-1 transition-all duration-300`}
+                  className={`group relative overflow-hidden rounded-2xl p-3 bg-gradient-to-br from-white to-sand/30 border border-sand/30 hover:shadow-xl hover:shadow-accent/20 hover:-translate-y-1 transition-all duration-300 min-w-[160px] md:min-w-0`}
                 >
                   <div className="relative aspect-square rounded-xl overflow-hidden mb-2">
                     <img src={item.img} alt={item.nombre} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
@@ -322,7 +322,7 @@ export default function Home() {
           </div>
 
           <div className="mt-8 animate-fade-in" style={{animationDelay: '0.3s'}}>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="flex overflow-x-auto scroll-hide gap-4 pb-4 md:grid md:grid-cols-4 md:pb-0">
               {[
                 { nombre: 'Agendas', img: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=400&h=400&fit=crop', color: 'from-pink-400/20 to-pink-400/5' },
                 { nombre: 'Cuadernos', img: 'https://images.unsplash.com/photo-1531346878377-a5be20888e57?w=400&h=400&fit=crop', color: 'from-purple-400/20 to-purple-400/5' },
@@ -336,7 +336,7 @@ export default function Home() {
                 <Link
                   key={item.nombre}
                   to="/tienda"
-                  className={`group relative overflow-hidden rounded-2xl p-3 bg-gradient-to-br ${item.color} border border-sand/30 hover:shadow-xl hover:shadow-primary/20 hover:-translate-y-1 transition-all duration-300`}
+                  className={`group relative overflow-hidden rounded-2xl p-3 bg-gradient-to-br ${item.color} border border-sand/30 hover:shadow-xl hover:shadow-primary/20 hover:-translate-y-1 transition-all duration-300 min-w-[160px] md:min-w-0`}
                 >
                   <div className="relative aspect-square rounded-xl overflow-hidden mb-3">
                     <img src={item.img} alt={item.nombre} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
@@ -411,7 +411,7 @@ export default function Home() {
                 <Link
                   key={item.nombre}
                   to="/tienda"
-                  className={`group relative overflow-hidden rounded-2xl p-3 bg-gradient-to-br from-white to-sand/30 border border-sand/30 hover:shadow-xl hover:shadow-secondary/20 hover:-translate-y-1 transition-all duration-300`}
+                  className={`group relative overflow-hidden rounded-2xl p-3 bg-gradient-to-br from-white to-sand/30 border border-sand/30 hover:shadow-xl hover:shadow-secondary/20 hover:-translate-y-1 transition-all duration-300 min-w-[160px] md:min-w-0`}
                 >
                   <div className="relative aspect-square rounded-xl overflow-hidden mb-3">
                     <img src={item.img} alt={item.nombre} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
@@ -492,7 +492,7 @@ export default function Home() {
                 <Link
                   key={item.nombre}
                   to="/tienda"
-                  className={`group relative overflow-hidden rounded-2xl p-2 bg-gradient-to-br from-white to-sand/30 border border-sand/30 hover:shadow-xl hover:shadow-accent/20 hover:-translate-y-1 transition-all duration-300`}
+                  className={`group relative overflow-hidden rounded-2xl p-2 bg-gradient-to-br from-white to-sand/30 border border-sand/30 hover:shadow-xl hover:shadow-accent/20 hover:-translate-y-1 transition-all duration-300 min-w-[160px] md:min-w-0`}
                 >
                   <div className="relative aspect-square rounded-xl overflow-hidden mb-2">
                     <img src={item.img} alt={item.nombre} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
@@ -568,7 +568,7 @@ export default function Home() {
                 <Link
                   key={item.nombre}
                   to="/tienda"
-                  className={`group relative overflow-hidden rounded-2xl p-3 bg-gradient-to-br from-white to-sand/30 border border-sand/30 hover:shadow-xl hover:shadow-primary/20 hover:-translate-y-1 transition-all duration-300`}
+                  className={`group relative overflow-hidden rounded-2xl p-3 bg-gradient-to-br from-white to-sand/30 border border-sand/30 hover:shadow-xl hover:shadow-primary/20 hover:-translate-y-1 transition-all duration-300 min-w-[160px] md:min-w-0`}
                 >
                   <div className="relative aspect-square rounded-xl overflow-hidden mb-2">
                     <img src={item.img} alt={item.nombre} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />

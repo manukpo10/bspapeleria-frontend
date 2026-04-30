@@ -33,7 +33,7 @@ export default function Nosotros() {
     <div className="overflow-x-hidden">
 
       {/* Hero */}
-      <section className="relative min-h-[70vh] flex items-center overflow-hidden bg-gradient-to-br from-primary/20 via-cream to-accent/10">
+      <section className="relative min-h-screen flex items-center overflow-hidden bg-gradient-to-br from-primary/20 via-cream to-accent/10">
 
         <svg className="absolute inset-0 w-full h-full pointer-events-none" preserveAspectRatio="none">
           <defs>
