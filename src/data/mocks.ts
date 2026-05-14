@@ -2,10 +2,28 @@ import type {
   Product, Course, Instructor, User, FAQItem, Review, Coupon, Notification, QAItem, Order, LessonType
 } from '../types';
 
-const imgUrl = (text: string, w = 800, h = 600, _colorKey = 'default') => {
-  // Picsum returns a consistent, real photo for each unique seed
-  const seed = text.replace(/\s+/g, '-').toLowerCase();
-  return `https://picsum.photos/seed/${seed}/${w}/${h}`;
+const LOCAL_IMAGES: Record<string, string[]> = {
+  personalizados: ['/images/notebook1.jpg', '/images/planner1.jpg', '/images/pen1.jpg'],
+  sublimables: ['/images/mug1.jpg', '/images/ceramic1.jpg', '/images/fabric1.jpg'],
+  fiestas: ['/images/party1.jpg', '/images/balloon2.jpg', '/images/celebration1.jpg'],
+  carteleria: ['/images/wedding1.jpg', '/images/invitation1.jpg', '/images/card1.jpg'],
+  'archivos-digitales': ['/images/laptop1.jpg', '/images/design1.jpg', '/images/notebook1.jpg'],
+  sublimacion: ['/images/mug1.jpg', '/images/ceramic1.jpg', '/images/fabric1.jpg'],
+  lettering: ['/images/lettering1.jpg', '/images/calligraphy1.jpg', '/images/pen1.jpg'],
+  impresion3d: ['/images/workshop1.jpg', '/images/craft1.jpg', '/images/ceramic1.jpg'],
+  decoracion: ['/images/party1.jpg', '/images/celebration1.jpg', '/images/balloon2.jpg'],
+  canva: ['/images/laptop1.jpg', '/images/design1.jpg', '/images/notebook1.jpg'],
+  negocio: ['/images/workshop1.jpg', '/images/craft1.jpg', '/images/laptop1.jpg'],
+  bodadiy: ['/images/wedding1.jpg', '/images/invitation1.jpg', '/images/card1.jpg'],
+  ilustracion: ['/images/watercolor1.jpg', '/images/calligraphy1.jpg', '/images/lettering1.jpg'],
+  default: ['/images/notebook1.jpg', '/images/planner1.jpg', '/images/design1.jpg'],
+};
+
+const imgUrl = (text: string, _w = 800, _h = 600, colorKey = 'default') => {
+  const images = LOCAL_IMAGES[colorKey] ?? LOCAL_IMAGES.default;
+  // Use a deterministic hash based on text to pick a consistent image
+  const hash = text.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  return images[hash % images.length];
 };
 
 export const instructors: Instructor[] = [
