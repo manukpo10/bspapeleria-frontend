@@ -2,26 +2,10 @@ import type {
   Product, Course, Instructor, User, FAQItem, Review, Coupon, Notification, QAItem, Order, LessonType
 } from '../types';
 
-const COLORS: Record<string, string> = {
-  personalizados: 'e0d4fc',
-  sublimables: 'bedcfa',
-  fiestas: 'da9ff9',
-  carteleria: '98acf8',
-  'archivos-digitales': 'b088f9',
-  sublimacion: 'f0d4a8',
-  lettering: '8ed4a8',
-  impresion3d: 'e8a8b8',
-  decoracion: 'd4a8e8',
-  canva: 'a8d4e8',
-  negocio: 'e8d4a8',
-  bodadiy: 'd4e8a8',
-  ilustracion: 'a8e8d4',
-  default: 'e0d4fc',
-};
-
-const imgUrl = (text: string, w = 800, h = 600, colorKey = 'default') => {
-  const bg = COLORS[colorKey] ?? COLORS.default;
-  return `https://placehold.co/${w}x${h}/${bg}/1a1a2e?text=${encodeURIComponent(text)}`;
+const imgUrl = (text: string, w = 800, h = 600, _colorKey = 'default') => {
+  // Picsum returns a consistent, real photo for each unique seed
+  const seed = text.replace(/\s+/g, '-').toLowerCase();
+  return `https://picsum.photos/seed/${seed}/${w}/${h}`;
 };
 
 export const instructors: Instructor[] = [
