@@ -107,13 +107,15 @@ export const products: Product[] = [
   { id: 'p40', slug: 'mockups-cuadernos-set', name: 'Set Mockups Cuadernos y Agendas', description: 'Pack de 20 mockups profesionales de cuadernos y agendas. Smart objects en Photoshop.', shortDescription: 'Presentá tus diseños como un profesional.', price: 3200, comparePrice: 4500, images: [imgUrl('Mockups Cuadernos', 800, 600, 'archivos-digitales'), imgUrl('Set', 800, 600, 'archivos-digitales')], category: 'archivos-digitales', tags: ['mockups', 'cuadernos', 'photoshop'], stock: 999, isDigital: true, downloadUrl: '#', featured: true, rating: 4.6, reviewsCount: 12, createdAt: '2025-11-26T00:00:00Z' },
 ];
 
+const BIG_BUCK_BUNNY = 'https://www.youtube.com/embed/aqz-KE-bpKQ';
+
 const makeLessons = (prefix: string, types: LessonType[]): import('../types').Lesson[] =>
   types.map((type, i) => ({
     id: `${prefix}-l${i + 1}`,
     title: type === 'video' ? `Lección ${i + 1}: Introducción práctica` : type === 'text' ? `Lección ${i + 1}: Conceptos teóricos` : type === 'quiz' ? `Lección ${i + 1}: Evaluación de conocimientos` : type === 'assignment' ? `Lección ${i + 1}: Proyecto práctico` : `Lección ${i + 1}: Material descargable`,
     type,
     duration: type === 'video' ? '12:30' : type === 'text' ? '8 min lectura' : type === 'quiz' ? '10 min' : type === 'assignment' ? '2 hs' : '5 min',
-    videoUrl: type === 'video' ? 'https://www.youtube.com/watch?v=dQw4w9WgXcQ' : undefined,
+    videoUrl: type === 'video' ? BIG_BUCK_BUNNY : undefined,
     content: type === 'text' ? '<p>En esta lección vamos a profundizar en los conceptos fundamentales del tema. Asegurate de tomar notas y consultar los recursos adjuntos.</p>' : undefined,
     quiz: type === 'quiz' ? {
       id: `${prefix}-q${i + 1}`,
@@ -133,6 +135,60 @@ const makeLessons = (prefix: string, types: LessonType[]): import('../types').Le
     isPreview: i === 0,
     order: i + 1,
   }));
+
+/* ─── Curso Sublimación desde Cero — lecciones realistas ─── */
+const sublimationLessons = {
+  t1: [
+    { id: 'c1-t1-l1', title: '¿Qué es la sublimación y cómo funciona?', type: 'video' as LessonType, duration: '14:32', videoUrl: BIG_BUCK_BUNNY, isPreview: true, order: 1 },
+    { id: 'c1-t1-l2', title: 'Equipamiento básico que vas a necesitar', type: 'video' as LessonType, duration: '11:48', videoUrl: BIG_BUCK_BUNNY, isPreview: false, order: 2 },
+    { id: 'c1-t1-l3', title: 'Materiales que se pueden sublimar', type: 'text' as LessonType, duration: '6 min lectura', content: '<p>La sublimación es un proceso químico en el que la tinta pasa directamente de estado sólido a gaseoso sin pasar por líquido. Esto permite que el color penetre en la fibra del material en lugar de quedar sobre la superficie.</p><p>Los materiales más comunes aptos para sublimación son: poliéster, cerámica recubierta, aluminio, fibra de vidrio y ciertos plásticos tratados.</p>', isPreview: false, order: 3 },
+    { id: 'c1-t1-l4', title: 'Quiz inicial - Conceptos básicos', type: 'quiz' as LessonType, duration: '8 min', isPreview: false, order: 4, quiz: {
+      id: 'c1-t1-q1', passingScore: 25, timeLimit: 10, maxAttempts: 3,
+      questions: [
+        { id: 'c1-t1-q1-1', type: 'multiple-choice', question: '¿Qué proceso químico ocurre en la sublimación?', options: ['Sólido → Líquido → Gas', 'Sólido → Gas directamente', 'Líquido → Gas', 'Gas → Sólido'], correctAnswer: 'Sólido → Gas directamente', points: 10 },
+        { id: 'c1-t1-q1-2', type: 'true-false', question: 'La sublimación funciona sobre algodón natural.', correctAnswer: 'false', points: 5 },
+        { id: 'c1-t1-q1-3', type: 'multiple-choice', question: '¿Qué material NO es apto para sublimación?', options: ['Poliéster', 'Cerámica recubierta', 'Algodón 100%', 'Aluminio'], correctAnswer: 'Algodón 100%', points: 10 },
+        { id: 'c1-t1-q1-4', type: 'multiple-choice', question: '¿Qué tipo de impresora se usa para sublimación?', options: ['Impresora láser', 'Impresora de inyección con tinta de sublimación', 'Impresora 3D', 'Impresora offset'], correctAnswer: 'Impresora de inyección con tinta de sublimación', points: 5 },
+      ]
+    }},
+  ],
+  t2: [
+    { id: 'c1-t2-l1', title: 'Configurando tu espacio de trabajo en Photoshop', type: 'video' as LessonType, duration: '22:15', videoUrl: BIG_BUCK_BUNNY, isPreview: false, order: 1 },
+    { id: 'c1-t2-l2', title: 'Calibración de color para sublimación', type: 'video' as LessonType, duration: '18:30', videoUrl: BIG_BUCK_BUNNY, isPreview: false, order: 2 },
+    { id: 'c1-t2-l3', title: 'Espejo, dimensiones y resolución correcta', type: 'text' as LessonType, duration: '8 min lectura', content: '<p>Antes de imprimir para sublimación, es fundamental invertir la imagen (efecto espejo) para que al prensar quede en el sentido correcto. La resolución ideal es 300 DPI y el modo de color debe ser RGB.</p><p>Además, es importante dejar un margen de sangría de 3-5mm para evitar bordes blancos no deseados.</p>', isPreview: false, order: 3 },
+    { id: 'c1-t2-l4', title: 'Plantillas descargables para mate, taza y remera', type: 'file' as LessonType, duration: '2 min', isPreview: false, order: 4, files: [
+      { name: 'Plantilla-Mate-Estándar.psd', url: '#' },
+      { name: 'Plantilla-Taza-11oz.psd', url: '#' },
+      { name: 'Plantilla-Remera-A4.psd', url: '#' },
+    ]},
+    { id: 'c1-t2-l5', title: 'Proyecto: Diseñá tu primera plantilla', type: 'assignment' as LessonType, duration: 'Sin límite', isPreview: false, order: 5, assignment: { id: 'c1-t2-a1', title: 'Diseño de plantilla personalizada', description: 'Creá una plantilla para sublimar una taza de 11oz. Debe incluir: un diseño original, aplicación del espejo, y guías de corte. Subí el archivo .psd o .ai.', totalPoints: 100, passingPoints: 70, maxFileSize: 15, allowedFileTypes: ['psd', 'ai', 'pdf'] }},
+  ],
+  t3: [
+    { id: 'c1-t3-l1', title: 'Configurando tu plancha de sublimación', type: 'video' as LessonType, duration: '16:42', videoUrl: BIG_BUCK_BUNNY, isPreview: false, order: 1 },
+    { id: 'c1-t3-l2', title: 'Tiempos y temperaturas por material', type: 'video' as LessonType, duration: '24:18', videoUrl: BIG_BUCK_BUNNY, isPreview: false, order: 2 },
+    { id: 'c1-t3-l3', title: 'Tabla de referencia descargable', type: 'file' as LessonType, duration: '2 min', isPreview: false, order: 3, files: [
+      { name: 'Tabla-Temperaturas-Materiales.pdf', url: '#' },
+      { name: 'Guía-Tiempos-Prensado.pdf', url: '#' },
+    ]},
+    { id: 'c1-t3-l4', title: 'Quiz de técnicas', type: 'quiz' as LessonType, duration: '10 min', isPreview: false, order: 4, quiz: {
+      id: 'c1-t3-q1', passingScore: 30, timeLimit: 15, maxAttempts: 3,
+      questions: [
+        { id: 'c1-t3-q1-1', type: 'multiple-choice', question: '¿Qué temperatura se recomienda para sublimar una remera de poliéster?', options: ['150°C', '180°C', '200°C', '230°C'], correctAnswer: '200°C', points: 10 },
+        { id: 'c1-t3-q1-2', type: 'multiple-choice', question: '¿Cuánto tiempo se prensa una taza de cerámica?', options: ['60 segundos', '120 segundos', '180 segundos', '240 segundos'], correctAnswer: '180 segundos', points: 10 },
+        { id: 'c1-t3-q1-3', type: 'true-false', question: 'Es recomendable usar papel protector en cada prensado.', correctAnswer: 'true', points: 5 },
+        { id: 'c1-t3-q1-4', type: 'multiple-choice', question: '¿Qué hacer si el color sale apagado?', options: ['Aumentar la temperatura', 'Aumentar el tiempo', 'Revisar el perfil de color de la impresora', 'Todas las anteriores'], correctAnswer: 'Todas las anteriores', points: 10 },
+        { id: 'c1-t3-q1-5', type: 'short-answer', question: 'Menciona un error común al prensar por primera vez.', correctAnswer: 'movimiento', points: 5 },
+      ]
+    }},
+  ],
+  t4: [
+    { id: 'c1-t4-l1', title: 'Sublimando tu primera taza paso a paso', type: 'video' as LessonType, duration: '28:50', videoUrl: BIG_BUCK_BUNNY, isPreview: false, order: 1 },
+    { id: 'c1-t4-l2', title: 'Sublimando una remera', type: 'video' as LessonType, duration: '25:14', videoUrl: BIG_BUCK_BUNNY, isPreview: false, order: 2 },
+    { id: 'c1-t4-l3', title: 'Sublimando un mate', type: 'video' as LessonType, duration: '19:32', videoUrl: BIG_BUCK_BUNNY, isPreview: false, order: 3 },
+    { id: 'c1-t4-l4', title: 'Errores comunes y cómo solucionarlos', type: 'video' as LessonType, duration: '17:08', videoUrl: BIG_BUCK_BUNNY, isPreview: false, order: 4 },
+    { id: 'c1-t4-l5', title: 'Proyecto final del curso', type: 'assignment' as LessonType, duration: 'Sin límite', isPreview: false, order: 5, assignment: { id: 'c1-t4-a1', title: 'Proyecto Final - Sublimación Completa', description: 'Realizá 3 productos sublimados diferentes (taza, remera y mate). Documentá el proceso con fotos de cada etapa: diseño, impresión, prensado y resultado final. Incluí una reflexión sobre qué aprendiste.', totalPoints: 100, passingPoints: 75, maxFileSize: 20, allowedFileTypes: ['jpg', 'png', 'pdf', 'zip'] }},
+  ],
+};
 
 export const courses: Course[] = [
   {
@@ -154,10 +210,10 @@ export const courses: Course[] = [
     language: 'Español',
     certificate: true,
     topics: [
-      { id: 'c1-t1', title: 'Introducción a la Sublimación', summary: 'Conceptos básicos y materiales necesarios', lessons: makeLessons('c1-t1', ['video', 'text', 'quiz']), order: 1 },
-      { id: 'c1-t2', title: 'Preparación de Archivos', summary: 'Diseño y configuración de impresión', lessons: makeLessons('c1-t2', ['video', 'text', 'assignment', 'file']), order: 2 },
-      { id: 'c1-t3', title: 'Técnicas de Prensado', summary: 'Temperaturas, tiempos y tipos de prensa', lessons: makeLessons('c1-t3', ['video', 'video', 'quiz']), order: 3 },
-      { id: 'c1-t4', title: 'Proyectos Prácticos', summary: 'Aplicación en productos reales', lessons: makeLessons('c1-t4', ['video', 'assignment', 'text', 'file']), order: 4 },
+      { id: 'c1-t1', title: 'Introducción a la Sublimación', summary: 'Conceptos básicos y materiales necesarios', lessons: sublimationLessons.t1 as any, order: 1 },
+      { id: 'c1-t2', title: 'Preparación de Archivos', summary: 'Diseño y configuración de impresión', lessons: sublimationLessons.t2 as any, order: 2 },
+      { id: 'c1-t3', title: 'Técnicas de Prensado', summary: 'Temperaturas, tiempos y tipos de prensa', lessons: sublimationLessons.t3 as any, order: 3 },
+      { id: 'c1-t4', title: 'Proyectos Prácticos', summary: 'Aplicación en productos reales', lessons: sublimationLessons.t4 as any, order: 4 },
     ],
     includes: ['12 horas de video', '15 recursos descargables', 'Acceso de por vida', 'Certificado de finalización', 'Soporte en grupo privado'],
     tags: ['sublimación', 'diseño', 'textil'],
