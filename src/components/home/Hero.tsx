@@ -27,10 +27,11 @@ export function Hero() {
             animate={loaded ? { opacity: 1, y: 0 } : {}}
             transition={{ duration: 0.6 }}
           >
-            <span className="inline-flex items-center gap-2 rounded-full bg-primary/20 px-4 py-1.5 text-sm font-medium text-primary backdrop-blur-sm mb-6">
+            <span className="inline-flex items-center gap-2 rounded-full bg-primary/20 px-4 py-1.5 text-sm font-medium text-primary backdrop-blur-sm mb-2">
               <Sparkles className="w-4 h-4" />
-              Papelería boutique moderna
+              BS Papelería
             </span>
+            <p className="text-sm text-white/60 mb-6 tracking-wide uppercase">Papelería boutique moderna</p>
           </motion.div>
 
           <motion.h1
