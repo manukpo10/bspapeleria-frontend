@@ -1,0 +1,16 @@
+{
+  "name": "BS Papelería",
+  "short_name": "BS Papelería",
+  "description": "Papelería boutique moderna con productos personalizados, sublimables, archivos digitales y cursos creativos.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#98acf8",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}
