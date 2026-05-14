@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation, Pagination, Autoplay } from 'swiper/modules';
-import { ChevronLeft, ChevronRight, Clock, Users, Star, BookOpen } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Clock, Users, Star, ArrowRight } from 'lucide-react';
 import type { Course } from '../../types';
 import { formatPrice } from '../../lib/utils';
 
@@ -83,21 +83,50 @@ export function CourseSlider({ title, subtitle, script, courses }: CourseSliderP
                   </Link>
 
                   <div className="p-5">
+                    <div className="flex items-center gap-2 mb-3">
+                      <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${
+                        course.level === 'principiante' ? 'bg-emerald-100 text-emerald-700' :
+                        course.level === 'intermedio' ? 'bg-amber-100 text-amber-700' :
+                        'bg-rose-100 text-rose-700'
+                      }`}>
+                        {course.level === 'principiante' ? 'Principiante' : course.level === 'intermedio' ? 'Intermedio' : 'Avanzado'}
+                      </span>
+                    </div>
+                    
                     <Link to={`/cursos/${course.slug}`}>
-                      <h3 className="font-display font-medium text-dark group-hover:text-primary transition-colors line-clamp-2">
+                      <h3 className="font-display font-medium text-dark group-hover:text-primary transition-colors line-clamp-2 text-lg leading-snug">
                         {course.title}
                       </h3>
                     </Link>
+                    
+                    <div className="flex items-center gap-2 mt-3">
+                      <img 
+                        src={course.instructor.avatar} 
+                        alt={course.instructor.name}
+                        className="w-6 h-6 rounded-full object-cover"
+                      />
+                      <span className="text-sm text-dark/70">{course.instructor.name}</span>
+                    </div>
+                    
                     <div className="flex items-center gap-3 mt-3 text-xs text-dark/60">
+                      <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> {course.duration}</span>
                       <span className="flex items-center gap-1"><Users className="w-3 h-3" /> {course.enrolledCount}</span>
                       <span className="flex items-center gap-1"><Star className="w-3 h-3 text-warning fill-warning" /> {course.rating}</span>
-                      <span className="flex items-center gap-1"><BookOpen className="w-3 h-3" /> {course.topics.length} módulos</span>
                     </div>
-                    <div className="flex items-center gap-2 mt-4">
-                      <span className="text-primary font-semibold text-lg">{formatPrice(course.price)}</span>
-                      {course.comparePrice && (
-                        <span className="text-dark/40 text-sm line-through">{formatPrice(course.comparePrice)}</span>
-                      )}
+                    
+                    <div className="flex items-center justify-between mt-4 pt-4 border-t border-sand/50">
+                      <div className="flex items-center gap-2">
+                        <span className="text-primary font-semibold text-lg">{formatPrice(course.price)}</span>
+                        {course.comparePrice && (
+                          <span className="text-dark/40 text-sm line-through">{formatPrice(course.comparePrice)}</span>
+                        )}
+                      </div>
+                      <Link 
+                        to={`/cursos/${course.slug}`}
+                        className="flex items-center gap-1 text-sm font-medium text-primary hover:text-secondary transition-colors"
+                      >
+                        Ver curso <ArrowRight className="w-4 h-4" />
+                      </Link>
                     </div>
                   </div>
                 </div>
