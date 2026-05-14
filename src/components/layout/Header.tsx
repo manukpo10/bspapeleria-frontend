@@ -51,9 +51,8 @@ export function Header() {
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex h-16 items-center justify-between">
             {/* Logo */}
-            <Link to="/" className="flex items-center gap-2">
-              <span className="font-display text-2xl font-semibold text-dark">BS</span>
-              <span className="hidden sm:inline font-script text-xl text-secondary">Papelería</span>
+            <Link to="/" className="flex items-center">
+              <img src="/logo.png" alt="BS Papelería" className="h-10 w-auto" />
             </Link>
 
             {/* Desktop Nav */}

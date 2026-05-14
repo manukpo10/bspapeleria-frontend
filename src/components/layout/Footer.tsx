@@ -9,8 +9,7 @@ export function Footer() {
           {/* Brand */}
           <div className="space-y-4">
             <Link to="/" className="inline-block">
-              <span className="font-display text-2xl font-semibold text-white">BS</span>
-              <span className="font-script text-xl text-accent ml-2">Papelería</span>
+              <img src="/logo.png" alt="BS Papelería" className="h-10 w-auto" />
             </Link>
             <p className="text-sm text-white/60 leading-relaxed">
               Papelería boutique moderna con productos personalizados, sublimables, archivos digitales y cursos creativos.
