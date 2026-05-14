@@ -26,18 +26,25 @@ const features = [
 
 export function Features() {
   return (
-    <section className="py-20">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+    <section className="py-24 relative overflow-hidden">
+      {/* Decorative blobs */}
+      <div className="absolute top-[10%] right-[-5%] w-[300px] h-[300px] rounded-full bg-primary/10 blur-[100px] pointer-events-none" />
+      <div className="absolute bottom-[10%] left-[-5%] w-[250px] h-[250px] rounded-full bg-accent/10 blur-[80px] pointer-events-none" />
+
+      <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="text-center mb-12"
+          className="text-center mb-16"
         >
           <span className="block font-script text-2xl text-secondary mb-2">¿Por qué elegirnos?</span>
-          <h2 className="font-display text-3xl sm:text-4xl font-semibold text-dark">
+          <h2 className="font-display text-3xl sm:text-4xl lg:text-5xl font-semibold text-dark mb-4">
             Hecho a mano, pensado para vos
           </h2>
+          <p className="text-dark/60 max-w-xl mx-auto">
+            Cada detalle cuenta. Por eso nos enfocamos en ofrecerte la mejor experiencia de compra y aprendizaje.
+          </p>
         </motion.div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
@@ -48,13 +55,13 @@ export function Features() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.4, delay: i * 0.1 }}
-              className="text-center"
+              className="group text-center"
             >
-              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-                <feature.icon className="w-8 h-8" />
+              <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-3xl bg-gradient-to-br from-primary/20 to-secondary/20 text-primary shadow-soft group-hover:shadow-glow group-hover:scale-110 transition-all duration-300">
+                <feature.icon className="w-10 h-10" />
               </div>
-              <h3 className="font-display font-medium text-dark text-lg mb-2">{feature.title}</h3>
-              <p className="text-sm text-dark/60 leading-relaxed">{feature.description}</p>
+              <h3 className="font-display font-medium text-dark text-xl mb-3">{feature.title}</h3>
+              <p className="text-sm text-dark/60 leading-relaxed max-w-[260px] mx-auto">{feature.description}</p>
             </motion.div>
           ))}
         </div>

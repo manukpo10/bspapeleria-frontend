@@ -5,6 +5,8 @@ import { ProductSlider } from '../components/home/ProductSlider';
 import { Features } from '../components/home/Features';
 import { Testimonials } from '../components/home/Testimonials';
 import { Newsletter } from '../components/home/Newsletter';
+import { TrustStrip } from '../components/home/TrustStrip';
+import { SectionDivider } from '../components/home/SectionDivider';
 import { products, courses } from '../data/mocks';
 
 export default function HomePage() {
@@ -19,42 +21,70 @@ export default function HomePage() {
     <>
       <SEO title="Inicio" description="BS Papelería - Papelería boutique moderna con productos personalizados, sublimables, archivos digitales y cursos creativos." />
       <Hero />
-      <CourseSlider
-        title="Talleres y Cursos"
-        subtitle="Aprendé de la mano de profesionales y transformá tu creatividad en habilidades."
-        script="Aprendé con nosotros"
-        courses={featuredCourses}
-      />
-      <ProductSlider
-        title="Archivos Digitales"
-        subtitle="Plantillas, planners y recursos descargables para tu creatividad."
-        script="Descargá y creá"
-        products={digitalProducts}
-      />
+      <TrustStrip />
+
+      <div id="cursos">
+        <CourseSlider
+          title="Talleres y Cursos"
+          subtitle="Aprendé de la mano de profesionales y transformá tu creatividad en habilidades."
+          script="Aprendé con nosotros"
+          courses={featuredCourses}
+        />
+      </div>
+
+      <SectionDivider variant="wave" />
+
+      <div className="bg-sand/10">
+        <ProductSlider
+          title="Archivos Digitales"
+          subtitle="Plantillas, planners y recursos descargables para tu creatividad."
+          script="Descargá y creá"
+          products={digitalProducts}
+        />
+      </div>
+
+      <SectionDivider variant="wave" flip />
+
       <ProductSlider
         title="Productos Personalizados"
         subtitle="Agendas, tazas, llaveros y más con tu toque único."
         script="Hecho para vos"
         products={personalizedProducts}
       />
-      <ProductSlider
-        title="Productos Sublimables"
-        subtitle="Remeras, mates y accesorios con sublimación de calidad."
-        script="Colores vibrantes"
-        products={sublimationProducts}
-      />
+
+      <SectionDivider variant="curve" />
+
+      <div className="bg-gradient-to-b from-sand/10 to-transparent">
+        <ProductSlider
+          title="Productos Sublimables"
+          subtitle="Remeras, mates y accesorios con sublimación de calidad."
+          script="Colores vibrantes"
+          products={sublimationProducts}
+        />
+      </div>
+
+      <SectionDivider variant="curve" flip />
+
       <ProductSlider
         title="Detalles para Fiestas"
         subtitle="Cotillón, decoración y todo lo que necesitás para tu evento."
         script="Celebrá con estilo"
         products={partyProducts}
       />
-      <ProductSlider
-        title="Cartelería"
-        subtitle="Carteles, invitaciones y papelería para eventos especiales."
-        script="Comunicá con elegancia"
-        products={signageProducts}
-      />
+
+      <SectionDivider variant="wave" />
+
+      <div className="bg-sand/10">
+        <ProductSlider
+          title="Cartelería"
+          subtitle="Carteles, invitaciones y papelería para eventos especiales."
+          script="Comunicá con elegancia"
+          products={signageProducts}
+        />
+      </div>
+
+      <SectionDivider variant="wave" flip />
+
       <Features />
       <Testimonials />
       <Newsletter />

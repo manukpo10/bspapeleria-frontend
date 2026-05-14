@@ -19,7 +19,7 @@ interface CourseSliderProps {
 
 export function CourseSlider({ title, subtitle, script, courses }: CourseSliderProps) {
   return (
-    <section className="py-20 bg-sand/20">
+    <section className="py-20">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -61,28 +61,28 @@ export function CourseSlider({ title, subtitle, script, courses }: CourseSliderP
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.4, delay: i * 0.1 }}
-                className="group"
+                className="group h-full"
               >
-                <div className="relative rounded-2xl overflow-hidden bg-white border border-sand/50 shadow-soft hover:shadow-lg transition-all hover:-translate-y-1">
+                <div className="relative rounded-2xl overflow-hidden bg-white border border-sand/50 shadow-soft hover:shadow-xl transition-all duration-300 hover:-translate-y-2 h-full flex flex-col">
                   <Link to={`/cursos/${course.slug}`} className="block relative aspect-video overflow-hidden">
                     <img
                       src={course.coverImage}
                       alt={course.title}
-                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                       loading="lazy"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-dark/60 to-transparent" />
                     <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between">
-                      <span className="rounded-full bg-white/90 text-dark text-xs font-bold px-3 py-1">
+                      <span className="rounded-full bg-white/90 text-dark text-xs font-bold px-3 py-1 shadow-sm">
                         {course.level === 'principiante' ? 'Principiante' : course.level === 'intermedio' ? 'Intermedio' : 'Avanzado'}
                       </span>
-                      <span className="flex items-center gap-1 text-white text-xs">
+                      <span className="flex items-center gap-1 text-white text-xs drop-shadow-md">
                         <Clock className="w-3 h-3" /> {course.duration}
                       </span>
                     </div>
                   </Link>
 
-                  <div className="p-5">
+                  <div className="p-5 flex-1 flex flex-col">
                     <div className="flex items-center gap-2 mb-3">
                       <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${
                         course.level === 'principiante' ? 'bg-emerald-100 text-emerald-700' :
@@ -103,7 +103,7 @@ export function CourseSlider({ title, subtitle, script, courses }: CourseSliderP
                       <img 
                         src={course.instructor.avatar} 
                         alt={course.instructor.name}
-                        className="w-6 h-6 rounded-full object-cover"
+                        className="w-6 h-6 rounded-full object-cover ring-2 ring-sand/50"
                       />
                       <span className="text-sm text-dark/70">{course.instructor.name}</span>
                     </div>
@@ -114,7 +114,7 @@ export function CourseSlider({ title, subtitle, script, courses }: CourseSliderP
                       <span className="flex items-center gap-1"><Star className="w-3 h-3 text-warning fill-warning" /> {course.rating}</span>
                     </div>
                     
-                    <div className="flex items-center justify-between mt-4 pt-4 border-t border-sand/50">
+                    <div className="flex items-center justify-between mt-auto pt-4 border-t border-sand/50">
                       <div className="flex items-center gap-2">
                         <span className="text-primary font-semibold text-lg">{formatPrice(course.price)}</span>
                         {course.comparePrice && (
@@ -123,9 +123,9 @@ export function CourseSlider({ title, subtitle, script, courses }: CourseSliderP
                       </div>
                       <Link 
                         to={`/cursos/${course.slug}`}
-                        className="flex items-center gap-1 text-sm font-medium text-primary hover:text-secondary transition-colors"
+                        className="flex items-center gap-1 text-sm font-medium text-primary hover:text-secondary transition-colors group/link"
                       >
-                        Ver curso <ArrowRight className="w-4 h-4" />
+                        Ver curso <ArrowRight className="w-4 h-4 group-hover/link:translate-x-1 transition-transform" />
                       </Link>
                     </div>
                   </div>
