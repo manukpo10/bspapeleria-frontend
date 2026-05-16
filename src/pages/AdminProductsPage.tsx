@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Plus, Search, Pencil, Trash2, Image } from 'lucide-react';
 import { api } from '../services/api';
@@ -28,12 +29,12 @@ export default function AdminProductsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="font-display text-2xl font-semibold text-white">Productos</h1>
-        <button
-          onClick={() => toast.info('Creación de producto próximamente')}
+        <Link
+          to="/admin/productos/nuevo"
           className="flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-secondary transition-colors"
         >
           <Plus className="w-4 h-4" /> Nuevo producto
-        </button>
+        </Link>
       </div>
 
       <div className="relative">
@@ -90,9 +91,12 @@ export default function AdminProductsPage() {
                   <td className="p-4 text-white/60">{p.stock}</td>
                   <td className="p-4 text-right">
                     <div className="flex items-center justify-end gap-2">
-                      <button onClick={() => toast.info('Edición próximamente')} className="p-2 rounded-full hover:bg-white/10 text-white/40 hover:text-white transition-colors">
+                      <Link
+                        to={`/admin/productos/${p.id}/builder`}
+                        className="p-2 rounded-full hover:bg-white/10 text-white/40 hover:text-white transition-colors"
+                      >
                         <Pencil className="w-4 h-4" />
-                      </button>
+                      </Link>
                       <button onClick={() => handleDelete(p.id)} className="p-2 rounded-full hover:bg-error/10 text-white/40 hover:text-error transition-colors">
                         <Trash2 className="w-4 h-4" />
                       </button>

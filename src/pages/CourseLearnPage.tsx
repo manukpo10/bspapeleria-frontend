@@ -277,7 +277,7 @@ function SidebarContent({
 export default function CourseLearnPage() {
   const { slug } = useParams<{ slug: string }>();
   const { user } = useAuthStore();
-  const { enrollments, updateEnrollment } = useEnrollmentStore();
+  const { enrollments, updateEnrollment, syncWithBackend } = useEnrollmentStore();
 
   const [course, setCourse] = useState<Course | null>(null);
   const [currentLesson, setCurrentLesson] = useState<Lesson | null>(null);
@@ -312,21 +312,22 @@ export default function CourseLearnPage() {
 
   useEffect(() => {
     if (!slug) return;
-    const c = courses.find((co) => co.slug === slug);
-    if (c) {
-      setCourse(c);
-      const existing = enrollments.find((e) => e.courseId === c.id);
-      if (existing?.currentLessonId) {
-        const lesson = c.topics
-          .flatMap((t) => t.lessons)
-          .find((l) => l.id === existing.currentLessonId);
-        if (lesson) setCurrentLesson(lesson);
-      } else {
-        setCurrentLesson(c.topics[0]?.lessons[0] ?? null);
+    api.getCourseBySlug(slug).then((c) => {
+      if (c) {
+        setCourse(c);
+        const existing = enrollments.find((e) => e.courseId === c.id);
+        if (existing?.currentLessonId) {
+          const lesson = c.topics
+            .flatMap((t) => t.lessons)
+            .find((l) => l.id === existing.currentLessonId);
+          if (lesson) setCurrentLesson(lesson);
+        } else {
+          setCurrentLesson(c.topics[0]?.lessons[0] ?? null);
+        }
       }
-      api.getQAs(c.id).then((data) => setQaList(data)).catch(() => setQaList([]));
-    }
-  }, [slug, enrollments]);
+    });
+    if (user) syncWithBackend();
+  }, [slug, user]);
 
   const handleCompleteLesson = async () => {
     if (!course || !currentLesson || !user) return;

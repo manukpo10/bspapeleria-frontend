@@ -1,22 +1,39 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Search, Shield } from 'lucide-react';
-import { users } from '../data/mocks';
+import { api } from '../services/api';
+import { toast } from 'sonner';
 
 export default function AdminUsersPage() {
   const [search, setSearch] = useState('');
-  const [userList, setUserList] = useState(users);
+  const [userList, setUserList] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    api.getAllUsers().then((users) => { setUserList(users); setLoading(false); });
+  }, []);
 
   const filtered = userList.filter((u) =>
-    u.name.toLowerCase().includes(search.toLowerCase()) ||
-    u.email.toLowerCase().includes(search.toLowerCase())
+    u.name?.toLowerCase().includes(search.toLowerCase()) ||
+    u.email?.toLowerCase().includes(search.toLowerCase())
   );
 
-  const toggleRole = (id: string) => {
-    setUserList((prev) =>
-      prev.map((u) => (u.id === id ? { ...u, role: u.role === 'admin' ? 'user' : 'admin' } : u))
-    );
+  const toggleRole = async (id: string, currentRole: string) => {
+    const newRole = currentRole === 'admin' ? 'user' : 'admin';
+    try {
+      await api.updateUserRole(id, newRole);
+      setUserList((prev) =>
+        prev.map((u) => (u.id === id ? { ...u, role: newRole } : u))
+      );
+      toast.success(`Rol actualizado a ${newRole}`);
+    } catch (e: any) {
+      toast.error(e.message);
+    }
   };
+
+  if (loading) {
+    return <div className="space-y-3">{Array.from({ length: 5 }).map((_, i) => (<div key={i} className="h-16 rounded-xl bg-white/5 animate-pulse" />))}</div>;
+  }
 
   return (
     <div className="space-y-6">

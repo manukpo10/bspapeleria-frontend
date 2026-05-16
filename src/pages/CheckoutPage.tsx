@@ -62,12 +62,8 @@ export default function CheckoutPage() {
 
   const handlePayment = async () => {
     setLoading(true);
-    // Simulate Mercado Pago integration
-    setTimeout(() => {
-      setLoading(false);
-      // Create order
-      api.createOrder(
-        user?.id ?? 'guest',
+    try {
+      await api.createOrder(
         items,
         hasPhysical ? {
           id: 'temp',
@@ -80,17 +76,15 @@ export default function CheckoutPage() {
           isDefault: true,
         } : undefined,
         appliedCoupon ?? undefined
-      ).then(async () => {
-        // Refrescar usuario para que los nuevos enrollments aparezcan en el store
-        if (user) {
-          const updated = await api.getCurrentUser(user.id);
-          if (updated) login(updated);
-        }
-        clearCart();
-        toast.success('¡Compra exitosa!');
-        navigate('/checkout/exito');
-      });
-    }, 2000);
+      );
+      clearCart();
+      toast.success('¡Compra exitosa!');
+      navigate('/checkout/exito');
+    } catch (e: any) {
+      toast.error(e.message || 'Error al procesar la compra');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const steps = [

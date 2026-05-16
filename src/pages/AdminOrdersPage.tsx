@@ -7,14 +7,24 @@ import type { Order } from '../types';
 export default function AdminOrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+  const [pendingChange, setPendingChange] = useState<{ orderId: string; newStatus: Order['status'] } | null>(null);
 
   useEffect(() => {
     api.getAllOrders().then((data) => { setOrders(data); setLoading(false); });
   }, []);
 
-  const handleStatusChange = async (orderId: string, status: Order['status']) => {
-    await api.updateOrderStatus(orderId, status);
-    setOrders((prev) => prev.map((o) => (o.id === orderId ? { ...o, status } : o)));
+  const confirmStatusChange = async () => {
+    if (!pendingChange) return;
+    const { orderId, newStatus } = pendingChange;
+    const backendStatus = newStatus === 'pending' ? 'PENDIENTE'
+      : newStatus === 'paid' ? 'CONFIRMADA'
+      : newStatus === 'shipped' ? 'ENVIADA'
+      : newStatus === 'delivered' ? 'ENTREGADA'
+      : newStatus === 'cancelled' ? 'CANCELADA'
+      : newStatus;
+    await api.updateOrderStatus(orderId, backendStatus);
+    setOrders((prev) => prev.map((o) => (o.id === orderId ? { ...o, status: newStatus } : o)));
+    setPendingChange(null);
   };
 
   return (
@@ -54,7 +64,7 @@ export default function AdminOrdersPage() {
                   <td className="p-4">
                     <select
                       value={order.status}
-                      onChange={(e) => handleStatusChange(order.id, e.target.value as Order['status'])}
+                      onChange={(e) => setPendingChange({ orderId: order.id, newStatus: e.target.value as Order['status'] })}
                       className="bg-transparent text-white/80 text-xs border border-white/10 rounded-lg px-2 py-1 focus:outline-none"
                     >
                       <option value="pending" className="bg-dark">Pendiente</option>
@@ -69,6 +79,35 @@ export default function AdminOrdersPage() {
               ))}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {pendingChange && (
+        <div className="fixed inset-0 bg-dark/50 flex items-center justify-center z-50">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-white rounded-2xl p-6 max-w-sm w-full mx-4 shadow-xl"
+          >
+            <h3 className="font-display text-lg font-semibold text-dark mb-2">Confirmar cambio de estado</h3>
+            <p className="text-sm text-dark/60 mb-6">
+              ¿Cambiar el estado de la orden a <strong>{pendingChange.newStatus}</strong>?
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setPendingChange(null)}
+                className="flex-1 rounded-xl border border-sand py-2.5 text-sm font-medium text-dark hover:bg-sand/30 transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={confirmStatusChange}
+                className="flex-1 rounded-xl bg-primary py-2.5 text-sm font-semibold text-white hover:bg-secondary transition-colors"
+              >
+                Confirmar
+              </button>
+            </div>
+          </motion.div>
         </div>
       )}
     </div>

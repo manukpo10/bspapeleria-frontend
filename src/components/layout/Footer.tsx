@@ -29,9 +29,9 @@ export function Footer() {
             <h4 className="font-display text-white font-semibold mb-4">Tienda</h4>
             <ul className="space-y-2 text-sm">
               <li><Link to="/productos" className="hover:text-primary transition-colors">Productos</Link></li>
-              <li><Link to="/productos?category=personalizados" className="hover:text-primary transition-colors">Personalizados</Link></li>
-              <li><Link to="/productos?category=sublimables" className="hover:text-primary transition-colors">Sublimables</Link></li>
-              <li><Link to="/productos?category=archivos-digitales" className="hover:text-primary transition-colors">Archivos Digitales</Link></li>
+              <li><Link to="/productos?categoria=personalizados" className="hover:text-primary transition-colors">Personalizados</Link></li>
+              <li><Link to="/productos?categoria=sublimables" className="hover:text-primary transition-colors">Sublimables</Link></li>
+              <li><Link to="/productos?categoria=archivos-digitales" className="hover:text-primary transition-colors">Archivos Digitales</Link></li>
             </ul>
           </div>
 

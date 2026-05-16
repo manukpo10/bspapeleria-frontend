@@ -29,12 +29,12 @@ export default function AdminCoursesPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="font-display text-2xl font-semibold text-white">Cursos</h1>
-        <button
-          onClick={() => toast.info('Creación de curso próximamente')}
+        <Link
+          to="/admin/cursos/nuevo"
           className="flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-secondary transition-colors"
         >
           <Plus className="w-4 h-4" /> Crear curso
-        </button>
+        </Link>
       </div>
 
       <div className="relative">
@@ -94,7 +94,10 @@ export default function AdminCoursesPage() {
                   </td>
                   <td className="p-4 text-right">
                     <div className="flex items-center justify-end gap-2">
-                      <Link to={`/admin/cursos/${c.id}/builder`} className="p-2 rounded-full hover:bg-white/10 text-white/40 hover:text-white transition-colors">
+                      <Link
+                        to={`/admin/cursos/${c.id}/builder`}
+                        className="p-2 rounded-full hover:bg-white/10 text-white/40 hover:text-white transition-colors"
+                      >
                         <Pencil className="w-4 h-4" />
                       </Link>
                       <button onClick={() => handleDelete(c.id)} className="p-2 rounded-full hover:bg-error/10 text-white/40 hover:text-error transition-colors">

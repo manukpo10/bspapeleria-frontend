@@ -33,6 +33,7 @@ const DashboardNotificationsPage = lazy(() => import('./pages/DashboardNotificat
 const AdminLayoutPage = lazy(() => import('./pages/AdminLayoutPage'));
 const AdminOverviewPage = lazy(() => import('./pages/AdminOverviewPage'));
 const AdminProductsPage = lazy(() => import('./pages/AdminProductsPage'));
+const AdminProductBuilderPage = lazy(() => import('./pages/AdminProductBuilderPage'));
 const AdminCoursesPage = lazy(() => import('./pages/AdminCoursesPage'));
 const AdminCourseBuilderPage = lazy(() => import('./pages/AdminCourseBuilderPage'));
 const AdminOrdersPage = lazy(() => import('./pages/AdminOrdersPage'));
@@ -89,7 +90,10 @@ export default function App() {
           <Route path="/admin" element={<RoleRoute role="admin"><AdminLayoutPage /></RoleRoute>}>
             <Route path="overview" element={<AdminOverviewPage />} />
             <Route path="productos" element={<AdminProductsPage />} />
+            <Route path="productos/nuevo" element={<AdminProductBuilderPage />} />
+            <Route path="productos/:id/builder" element={<AdminProductBuilderPage />} />
             <Route path="cursos" element={<AdminCoursesPage />} />
+            <Route path="cursos/nuevo" element={<AdminCourseBuilderPage />} />
             <Route path="cursos/:id/builder" element={<AdminCourseBuilderPage />} />
             <Route path="pedidos" element={<AdminOrdersPage />} />
             <Route path="usuarios" element={<AdminUsersPage />} />

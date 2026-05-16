@@ -6,7 +6,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { SEO } from '../components/shared/SEO';
-import { api } from '../services/api';
+import { authApi } from '../services/authApi';
 import { useAuthStore } from '../store/authStore';
 import { toast } from 'sonner';
 
@@ -35,7 +35,7 @@ export default function RegisterPage() {
   const onSubmit = async (data: FormData) => {
     setLoading(true);
     try {
-      const user = await api.register({ name: data.name, email: data.email, password: data.password });
+      const user = await authApi.register({ name: data.name, email: data.email, password: data.password });
       login(user);
       toast.success('¡Registro exitoso! Bienvenida a BS Papelería');
       navigate('/');

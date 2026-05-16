@@ -29,12 +29,16 @@ function LessonIcon({ type }: { type: Lesson['type'] }) {
 export default function CourseDetailPage() {
   const { slug } = useParams<{ slug: string }>();
   const { addItem } = useCartStore();
-  const { isAuthenticated, user } = useAuthStore();
+  const { isAuthenticated, user, fetchUser } = useAuthStore();
   const [course, setCourse] = useState<Course | null>(null);
   const [loading, setLoading] = useState(true);
   const [expandedTopic, setExpandedTopic] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'reviews' | 'qa'>('reviews');
   const [playingPreview, setPlayingPreview] = useState(false);
+
+  useEffect(() => {
+    if (isAuthenticated) fetchUser();
+  }, [isAuthenticated]);
 
   useEffect(() => {
     if (!slug) return;

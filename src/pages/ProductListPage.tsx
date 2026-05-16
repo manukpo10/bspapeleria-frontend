@@ -30,59 +30,80 @@ function DualRangeSlider({
 }) {
   const trackRef = useRef<HTMLDivElement>(null);
   const [dragging, setDragging] = useState<'min' | 'max' | null>(null);
+  const valueRef = useRef(value);
 
   const minPercent = ((value[0] - min) / (max - min)) * 100;
   const maxPercent = ((value[1] - min) / (max - min)) * 100;
 
-  const getValueFromClientX = useCallback((clientX: number) => {
-    if (!trackRef.current) return min;
-    const rect = trackRef.current.getBoundingClientRect();
-    const pct = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
-    return Math.round(min + pct * (max - min));
-  }, [min, max]);
+  useEffect(() => {
+    valueRef.current = value;
+  }, [value]);
 
   useEffect(() => {
     if (!dragging) return;
     const handleMove = (e: MouseEvent | TouchEvent) => {
       const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
-      const newVal = getValueFromClientX(clientX);
+      if (!trackRef.current) return;
+      const rect = trackRef.current.getBoundingClientRect();
+      const pct = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+      const rawVal = Math.round(min + pct * (max - min));
+      const current = valueRef.current;
       if (dragging === 'min') {
-        onChange([Math.min(newVal, value[1] - 100), value[1]]);
+        onChange([Math.min(rawVal, current[1] - 1), current[1]]);
       } else {
-        onChange([value[0], Math.max(newVal, value[0] + 100)]);
+        onChange([current[0], Math.max(rawVal, current[0] + 1)]);
       }
     };
     const handleUp = () => setDragging(null);
-    window.addEventListener('mousemove', handleMove);
-    window.addEventListener('mouseup', handleUp);
-    window.addEventListener('touchmove', handleMove);
-    window.addEventListener('touchend', handleUp);
+    document.addEventListener('mousemove', handleMove);
+    document.addEventListener('mouseup', handleUp);
+    document.addEventListener('touchmove', handleMove);
+    document.addEventListener('touchend', handleUp);
     return () => {
-      window.removeEventListener('mousemove', handleMove);
-      window.removeEventListener('mouseup', handleUp);
-      window.removeEventListener('touchmove', handleMove);
-      window.removeEventListener('touchend', handleUp);
+      document.removeEventListener('mousemove', handleMove);
+      document.removeEventListener('mouseup', handleUp);
+      document.removeEventListener('touchmove', handleMove);
+      document.removeEventListener('touchend', handleUp);
     };
-  }, [dragging, min, max, value, onChange, getValueFromClientX]);
+  }, [dragging, min, max, onChange]);
 
   return (
     <div className="pt-2 pb-1">
-      <div ref={trackRef} className="relative h-2 bg-sand rounded-full select-none">
+      <div
+        ref={trackRef}
+        className="relative h-2 bg-sand rounded-full select-none"
+        onMouseDown={(e) => {
+          const target = e.target as HTMLElement;
+          if (target.closest('.thumb')) return;
+          const rect = trackRef.current!.getBoundingClientRect();
+          const pct = (e.clientX - rect.left) / rect.width;
+          const mid = ((value[0] - min) / (max - min) + (value[1] - min) / (max - min)) / 2;
+          setDragging(pct < mid ? 'min' : 'max');
+        }}
+        onTouchStart={(e) => {
+          const target = e.target as HTMLElement;
+          if (target.closest('.thumb')) return;
+          const rect = trackRef.current!.getBoundingClientRect();
+          const pct = (e.touches[0].clientX - rect.left) / rect.width;
+          const mid = ((value[0] - min) / (max - min) + (value[1] - min) / (max - min)) / 2;
+          setDragging(pct < mid ? 'min' : 'max');
+        }}
+      >
         <div
           className="absolute h-2 bg-primary rounded-full"
           style={{ left: `${minPercent}%`, width: `${maxPercent - minPercent}%` }}
         />
         <div
-          className="absolute top-1/2 -translate-y-1/2 w-5 h-5 bg-white border-2 border-primary rounded-full cursor-grab active:cursor-grabbing shadow-md z-10"
+          className="thumb absolute top-1/2 -translate-y-1/2 w-5 h-5 bg-white border-2 border-primary rounded-full cursor-grab active:cursor-grabbing shadow-md z-10"
           style={{ left: `calc(${minPercent}% - 10px)` }}
-          onMouseDown={() => setDragging('min')}
-          onTouchStart={() => setDragging('min')}
+          onMouseDown={(e) => { e.stopPropagation(); setDragging('min'); }}
+          onTouchStart={(e) => { e.stopPropagation(); setDragging('min'); }}
         />
         <div
-          className="absolute top-1/2 -translate-y-1/2 w-5 h-5 bg-white border-2 border-primary rounded-full cursor-grab active:cursor-grabbing shadow-md z-10"
+          className="thumb absolute top-1/2 -translate-y-1/2 w-5 h-5 bg-white border-2 border-primary rounded-full cursor-grab active:cursor-grabbing shadow-md z-10"
           style={{ left: `calc(${maxPercent}% - 10px)` }}
-          onMouseDown={() => setDragging('max')}
-          onTouchStart={() => setDragging('max')}
+          onMouseDown={(e) => { e.stopPropagation(); setDragging('max'); }}
+          onTouchStart={(e) => { e.stopPropagation(); setDragging('max'); }}
         />
       </div>
     </div>
@@ -422,12 +443,13 @@ export default function ProductListPage() {
 
   /* ── State from URL ── */
   const [search, setSearch] = useState(searchParams.get('search') ?? '');
+  const [urlSearch, setUrlSearch] = useState(searchParams.get('search') ?? '');
   const [selectedCategories, setSelectedCategories] = useState<ProductCategory[]>(
     searchParams.get('categoria')?.split(',').filter(Boolean) as ProductCategory[] ?? []
   );
   const [priceRange, setPriceRange] = useState<[number, number]>([
     Number(searchParams.get('precio_min') ?? 0),
-    Number(searchParams.get('precio_max') ?? 50000),
+    Number(searchParams.get('precio_max') ?? 999999),
   ]);
   const [productType, setProductType] = useState<'all' | 'physical' | 'digital'>(
     (searchParams.get('tipo') as any) ?? 'all'
@@ -459,11 +481,11 @@ export default function ProductListPage() {
 
   /* ── Computed catalog price bounds ── */
   const catalogMinPrice = useMemo(() => allProducts.length ? Math.min(...allProducts.map(p => p.price)) : 0, [allProducts]);
-  const catalogMaxPrice = useMemo(() => allProducts.length ? Math.max(...allProducts.map(p => p.price)) : 50000, [allProducts]);
+  const catalogMaxPrice = useMemo(() => allProducts.length ? Math.max(...allProducts.map(p => p.price)) : 999999, [allProducts]);
 
   /* ── Sync price range when catalog loads ── */
   useEffect(() => {
-    if (allProducts.length && priceRange[1] === 50000) {
+    if (allProducts.length && priceRange[1] === 999999) {
       setPriceRange([catalogMinPrice, catalogMaxPrice]);
     }
   }, [allProducts, catalogMinPrice, catalogMaxPrice]);
@@ -471,8 +493,8 @@ export default function ProductListPage() {
   /* ── Filtering ── */
   const filteredProducts = useMemo(() => {
     let result = [...allProducts];
-    if (search) {
-      const q = search.toLowerCase();
+    if (urlSearch) {
+      const q = urlSearch.toLowerCase();
       result = result.filter(p => p.name.toLowerCase().includes(q) || p.tags.some(t => t.toLowerCase().includes(q)));
     }
     if (selectedCategories.length) {
@@ -491,7 +513,7 @@ export default function ProductListPage() {
       default: break;
     }
     return result;
-  }, [allProducts, search, selectedCategories, priceRange, productType, onSale, inStock, sortBy]);
+  }, [allProducts, urlSearch, selectedCategories, priceRange, productType, onSale, inStock, sortBy]);
 
   /* ── Pagination ── */
   const totalPages = Math.max(1, Math.ceil(filteredProducts.length / perPage));
@@ -507,7 +529,7 @@ export default function ProductListPage() {
   /* ── Active filter chips ── */
   const activeChips = useMemo(() => {
     const chips: { key: string; label: string; onRemove: () => void }[] = [];
-    if (search) chips.push({ key: 'search', label: `Búsqueda: "${search}"`, onRemove: () => updateSearch('') });
+    if (urlSearch) chips.push({ key: 'search', label: `Búsqueda: "${urlSearch}"`, onRemove: () => updateSearch('') });
     selectedCategories.forEach(cat => {
       const name = PRODUCT_CATEGORIES.find(c => c.id === cat)?.name ?? cat;
       chips.push({ key: `cat-${cat}`, label: name, onRemove: () => toggleCategory(cat) });
@@ -521,7 +543,7 @@ export default function ProductListPage() {
     if (onSale) chips.push({ key: 'sale', label: 'Solo ofertas 🔥', onRemove: () => setOnSale(false) });
     if (inStock) chips.push({ key: 'stock', label: 'En stock', onRemove: () => setInStock(false) });
     return chips;
-  }, [search, selectedCategories, priceRange, productType, onSale, inStock, catalogMinPrice, catalogMaxPrice]);
+  }, [urlSearch, selectedCategories, priceRange, productType, onSale, inStock, catalogMinPrice, catalogMaxPrice]);
 
   const filterCount = activeChips.length + (sortBy !== 'relevance' ? 1 : 0);
   const hasFilters = filterCount > 0;
@@ -529,7 +551,7 @@ export default function ProductListPage() {
   /* ── URL sync ── */
   const buildParams = useCallback(() => {
     const params = new URLSearchParams();
-    if (search) params.set('search', search);
+    if (urlSearch) params.set('search', urlSearch);
     if (selectedCategories.length) params.set('categoria', selectedCategories.join(','));
     if (priceRange[0] > catalogMinPrice) params.set('precio_min', String(priceRange[0]));
     if (priceRange[1] < catalogMaxPrice) params.set('precio_max', String(priceRange[1]));
@@ -539,22 +561,24 @@ export default function ProductListPage() {
     if (sortBy !== 'relevance') params.set('orden', sortBy);
     if (page > 1) params.set('pagina', String(page));
     return params;
-  }, [search, selectedCategories, priceRange, productType, onSale, inStock, sortBy, page, catalogMinPrice, catalogMaxPrice]);
+  }, [urlSearch, selectedCategories, priceRange, productType, onSale, inStock, sortBy, page, catalogMinPrice, catalogMaxPrice]);
 
   useEffect(() => {
     setSearchParams(buildParams());
   }, [buildParams, setSearchParams]);
 
   /* ── Debounced search ── */
-  const debouncedSearch = useCallback(debounce((val: string) => {
+  const updateSearch = useCallback((val: string) => {
     setSearch(val);
-    setPage(1);
-  }, 300), []);
+  }, []);
 
-  const updateSearch = (val: string) => {
-    setSearch(val);
-    debouncedSearch(val);
-  };
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setUrlSearch(search);
+      setPage(1);
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [search]);
 
   const toggleCategory = (cat: ProductCategory) => {
     setSelectedCategories(prev => prev.includes(cat) ? prev.filter(c => c !== cat) : [...prev, cat]);
@@ -573,7 +597,7 @@ export default function ProductListPage() {
   };
 
   /* ── Sidebar content ── */
-  const FiltersContent = ({ onClose }: { onClose?: () => void }) => (
+  const renderFilters = (onClose?: () => void) => (
     <div className="space-y-0">
       {/* Search */}
       <div className="pb-5">
@@ -770,7 +794,7 @@ export default function ProductListPage() {
                   </button>
                 )}
               </div>
-              <FiltersContent />
+              {renderFilters()}
             </div>
           </aside>
 
@@ -795,7 +819,7 @@ export default function ProductListPage() {
                     </button>
                   </div>
                   <div className="overflow-y-auto p-5">
-                    <FiltersContent onClose={() => setMobileFiltersOpen(false)} />
+                    {renderFilters(() => setMobileFiltersOpen(false))}
                   </div>
                   <div className="p-5 border-t border-sand shrink-0">
                     <button

@@ -1,19 +1,62 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Play, Award, BookOpen } from 'lucide-react';
-import { useEnrollmentStore } from '../store/enrollmentStore';
-import { courses } from '../data/mocks';
+import { api } from '../services/api';
+import { toast } from 'sonner';
+import type { Course, Enrollment } from '../types';
 
 export default function DashboardCoursesPage() {
-  const { enrollments } = useEnrollmentStore();
+  const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
+  const [courses, setCourses] = useState<Map<string, Course>>(new Map());
+  const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<'in-progress' | 'completed' | 'all'>('all');
+
+  useEffect(() => {
+    api.getMyProgresos().then((data) => {
+      setEnrollments(data.map((p: any) => ({
+        id: String(p.id),
+        courseId: String(p.cursoId),
+        enrolledAt: p.fechaInscripcion,
+        lastAccessedAt: p.ultimaActividad,
+        completedLessons: p.leccionesCompletadas || [],
+        currentLessonId: p.leccionActualId ? String(p.leccionActualId) : undefined,
+        progress: p.porcentajeProgreso || 0,
+        completedAt: p.fechaCompletado,
+        certificateUnlocked: p.certificadoDesbloqueado || false,
+      })));
+      setLoading(false);
+    }).catch(() => setLoading(false));
+  }, []);
+
+  useEffect(() => {
+    enrollments.forEach((e) => {
+      api.getCourseById(e.courseId).then((course) => {
+        if (course) {
+          setCourses((prev) => new Map(prev).set(e.courseId, course));
+        }
+      }).catch(() => {});
+    });
+  }, [enrollments.length > 0]);
 
   const filtered = enrollments.filter((e) => {
     if (tab === 'in-progress') return e.progress > 0 && e.progress < 100;
     if (tab === 'completed') return e.progress >= 100;
     return true;
   });
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <h1 className="font-display text-2xl font-semibold text-dark">Mis Cursos</h1>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {[1, 2].map((i) => (
+            <div key={i} className="h-48 rounded-2xl bg-sand/20 animate-pulse" />
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -46,7 +89,7 @@ export default function DashboardCoursesPage() {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {filtered.map((e, i) => {
-            const c = courses.find((c) => c.id === e.courseId);
+            const c = courses.get(e.courseId);
             if (!c) return null;
             return (
               <motion.div
@@ -57,7 +100,7 @@ export default function DashboardCoursesPage() {
                 className="rounded-2xl bg-white border border-sand/50 overflow-hidden"
               >
                 <div className="aspect-video relative">
-                  <img src={c.coverImage} alt={c.title} className="w-full h-full object-cover" />
+                  <img src={c.coverImage || 'https://picsum.photos/seed/course/600/400'} alt={c.title} className="w-full h-full object-cover" />
                   <div className="absolute inset-0 bg-gradient-to-t from-dark/60 to-transparent" />
                   <div className="absolute bottom-3 left-3 right-3">
                     <div className="h-1.5 rounded-full bg-white/30 overflow-hidden">

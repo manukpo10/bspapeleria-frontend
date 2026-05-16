@@ -7,6 +7,7 @@ interface EnrollmentState {
   setEnrollments: (enrollments: Enrollment[]) => void;
   updateEnrollment: (courseId: string, data: Partial<Enrollment>) => void;
   addEnrollment: (enrollment: Enrollment) => void;
+  syncWithBackend: () => Promise<void>;
 }
 
 export const useEnrollmentStore = create<EnrollmentState>()(
@@ -26,6 +27,14 @@ export const useEnrollmentStore = create<EnrollmentState>()(
         const { enrollments } = get();
         if (!enrollments.find((e) => e.courseId === enrollment.courseId)) {
           set({ enrollments: [...enrollments, enrollment] });
+        }
+      },
+      syncWithBackend: async () => {
+        try {
+          const { api } = await import('../services/api');
+          const backendEnrollments = await api.getMyEnrollments();
+          set({ enrollments: backendEnrollments as any });
+        } catch {
         }
       },
     }),

@@ -6,7 +6,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { SEO } from '../components/shared/SEO';
-import { api } from '../services/api';
+import { authApi } from '../services/authApi';
 import { useAuthStore } from '../store/authStore';
 import { toast } from 'sonner';
 
@@ -30,10 +30,10 @@ export default function LoginPage() {
   const onSubmit = async (data: FormData) => {
     setLoading(true);
     try {
-      const user = await api.login(data.email, data.password);
+      const user = await authApi.login(data.email, data.password);
       login(user);
       toast.success(`¡Bienvenida de vuelta, ${user.name}!`);
-      navigate('/');
+      navigate(user.role === 'admin' ? '/admin/overview' : '/');
     } catch (err: any) {
       toast.error(err.message || 'Credenciales incorrectas');
     } finally {

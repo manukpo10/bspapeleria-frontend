@@ -45,40 +45,51 @@ function DualRangeSlider({
   const minPercent = ((value[0] - min) / (max - min)) * 100;
   const maxPercent = ((value[1] - min) / (max - min)) * 100;
 
-  const getValueFromClientX = useCallback((clientX: number) => {
-    if (!trackRef.current) return min;
-    const rect = trackRef.current.getBoundingClientRect();
-    const pct = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
-    return Math.round(min + pct * (max - min));
-  }, [min, max]);
-
   useEffect(() => {
     if (!dragging) return;
     const handleMove = (e: MouseEvent | TouchEvent) => {
       const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
-      const newVal = getValueFromClientX(clientX);
+      if (!trackRef.current) return;
+      const rect = trackRef.current.getBoundingClientRect();
+      const pct = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+      const rawVal = Math.round(min + pct * (max - min));
       if (dragging === 'min') {
-        onChange([Math.min(newVal, value[1] - 100), value[1]]);
+        onChange([Math.min(rawVal, value[1] - 1), value[1]]);
       } else {
-        onChange([value[0], Math.max(newVal, value[0] + 100)]);
+        onChange([value[0], Math.max(rawVal, value[0] + 1)]);
       }
     };
     const handleUp = () => setDragging(null);
-    window.addEventListener('mousemove', handleMove);
-    window.addEventListener('mouseup', handleUp);
-    window.addEventListener('touchmove', handleMove);
-    window.addEventListener('touchend', handleUp);
+    document.addEventListener('mousemove', handleMove, { passive: false });
+    document.addEventListener('mouseup', handleUp);
+    document.addEventListener('touchmove', handleMove, { passive: false });
+    document.addEventListener('touchend', handleUp);
     return () => {
-      window.removeEventListener('mousemove', handleMove);
-      window.removeEventListener('mouseup', handleUp);
-      window.removeEventListener('touchmove', handleMove);
-      window.removeEventListener('touchend', handleUp);
+      document.removeEventListener('mousemove', handleMove);
+      document.removeEventListener('mouseup', handleUp);
+      document.removeEventListener('touchmove', handleMove);
+      document.removeEventListener('touchend', handleUp);
     };
-  }, [dragging, min, max, value, onChange, getValueFromClientX]);
+  }, [dragging, min, max, onChange]);
 
   return (
     <div className="pt-2 pb-1">
-      <div ref={trackRef} className="relative h-2 bg-sand rounded-full select-none">
+      <div
+        ref={trackRef}
+        className="relative h-2 bg-sand rounded-full select-none"
+        onMouseDown={(e) => {
+          const rect = trackRef.current!.getBoundingClientRect();
+          const pct = (e.clientX - rect.left) / rect.width;
+          const mid = ((value[0] - min) / (max - min) + (value[1] - min) / (max - min)) / 2;
+          setDragging(pct < mid ? 'min' : 'max');
+        }}
+        onTouchStart={(e) => {
+          const rect = trackRef.current!.getBoundingClientRect();
+          const pct = (e.touches[0].clientX - rect.left) / rect.width;
+          const mid = ((value[0] - min) / (max - min) + (value[1] - min) / (max - min)) / 2;
+          setDragging(pct < mid ? 'min' : 'max');
+        }}
+      >
         <div
           className="absolute h-2 bg-primary rounded-full"
           style={{ left: `${minPercent}%`, width: `${maxPercent - minPercent}%` }}
@@ -86,14 +97,14 @@ function DualRangeSlider({
         <div
           className="absolute top-1/2 -translate-y-1/2 w-5 h-5 bg-white border-2 border-primary rounded-full cursor-grab active:cursor-grabbing shadow-md z-10"
           style={{ left: `calc(${minPercent}% - 10px)` }}
-          onMouseDown={() => setDragging('min')}
-          onTouchStart={() => setDragging('min')}
+          onMouseDown={(e) => { e.stopPropagation(); setDragging('min'); }}
+          onTouchStart={(e) => { e.stopPropagation(); setDragging('min'); }}
         />
         <div
           className="absolute top-1/2 -translate-y-1/2 w-5 h-5 bg-white border-2 border-primary rounded-full cursor-grab active:cursor-grabbing shadow-md z-10"
           style={{ left: `calc(${maxPercent}% - 10px)` }}
-          onMouseDown={() => setDragging('max')}
-          onTouchStart={() => setDragging('max')}
+          onMouseDown={(e) => { e.stopPropagation(); setDragging('max'); }}
+          onTouchStart={(e) => { e.stopPropagation(); setDragging('max'); }}
         />
       </div>
     </div>
@@ -277,6 +288,7 @@ export default function CourseListPage() {
 
   /* ── State from URL ── */
   const [search, setSearch] = useState(searchParams.get('search') ?? '');
+  const [urlSearch, setUrlSearch] = useState(searchParams.get('search') ?? '');
   const [selectedLevels, setSelectedLevels] = useState<CourseLevel[]>(
     searchParams.get('nivel')?.split(',').filter(Boolean) as CourseLevel[] ?? []
   );
@@ -285,7 +297,7 @@ export default function CourseListPage() {
   );
   const [priceRange, setPriceRange] = useState<[number, number]>([
     Number(searchParams.get('precio_min') ?? 0),
-    Number(searchParams.get('precio_max') ?? 50000),
+    Number(searchParams.get('precio_max') ?? 999999),
   ]);
   const [sortBy, setSortBy] = useState(searchParams.get('orden') ?? 'relevance');
   const [page, setPage] = useState(Number(searchParams.get('pagina') ?? 1));
@@ -310,10 +322,10 @@ export default function CourseListPage() {
 
   /* ── Catalog price bounds ── */
   const catalogMinPrice = useMemo(() => allCourses.length ? Math.min(...allCourses.map(c => c.price)) : 0, [allCourses]);
-  const catalogMaxPrice = useMemo(() => allCourses.length ? Math.max(...allCourses.map(c => c.price)) : 50000, [allCourses]);
+  const catalogMaxPrice = useMemo(() => allCourses.length ? Math.max(...allCourses.map(c => c.price)) : 999999, [allCourses]);
 
   useEffect(() => {
-    if (allCourses.length && priceRange[1] === 50000) {
+    if (allCourses.length && priceRange[1] === 999999) {
       setPriceRange([catalogMinPrice, catalogMaxPrice]);
     }
   }, [allCourses, catalogMinPrice, catalogMaxPrice]);
@@ -321,8 +333,8 @@ export default function CourseListPage() {
   /* ── Filtering ── */
   const filteredCourses = useMemo(() => {
     let result = [...allCourses];
-    if (search) {
-      const q = search.toLowerCase();
+    if (urlSearch) {
+      const q = urlSearch.toLowerCase();
       result = result.filter(c => c.title.toLowerCase().includes(q) || c.tags.some(t => t.toLowerCase().includes(q)));
     }
     if (selectedLevels.length) result = result.filter(c => selectedLevels.includes(c.level));
@@ -337,7 +349,7 @@ export default function CourseListPage() {
       default: break;
     }
     return result;
-  }, [allCourses, search, selectedLevels, selectedModalities, priceRange, sortBy]);
+  }, [allCourses, urlSearch, selectedLevels, selectedModalities, priceRange, sortBy]);
 
   /* ── Pagination ── */
   const totalPages = Math.max(1, Math.ceil(filteredCourses.length / perPage));
@@ -359,7 +371,7 @@ export default function CourseListPage() {
   /* ── Active filter chips ── */
   const activeChips = useMemo(() => {
     const chips: { key: string; label: string; onRemove: () => void }[] = [];
-    if (search) chips.push({ key: 'search', label: `Búsqueda: "${search}"`, onRemove: () => updateSearch('') });
+    if (urlSearch) chips.push({ key: 'search', label: `Búsqueda: "${urlSearch}"`, onRemove: () => updateSearch('') });
     selectedLevels.forEach(l => {
       chips.push({ key: `level-${l}`, label: levelConfig[l].label, onRemove: () => toggleLevel(l) });
     });
@@ -378,7 +390,7 @@ export default function CourseListPage() {
   /* ── URL sync ── */
   const buildParams = useCallback(() => {
     const params = new URLSearchParams();
-    if (search) params.set('search', search);
+    if (urlSearch) params.set('search', urlSearch);
     if (selectedLevels.length) params.set('nivel', selectedLevels.join(','));
     if (selectedModalities.length) params.set('modalidad', selectedModalities.join(','));
     if (priceRange[0] > catalogMinPrice) params.set('precio_min', String(priceRange[0]));
@@ -386,22 +398,24 @@ export default function CourseListPage() {
     if (sortBy !== 'relevance') params.set('orden', sortBy);
     if (page > 1) params.set('pagina', String(page));
     return params;
-  }, [search, selectedLevels, selectedModalities, priceRange, sortBy, page, catalogMinPrice, catalogMaxPrice]);
+  }, [urlSearch, selectedLevels, selectedModalities, priceRange, sortBy, page, catalogMinPrice, catalogMaxPrice]);
 
   useEffect(() => {
     setSearchParams(buildParams());
   }, [buildParams, setSearchParams]);
 
   /* ── Debounced search ── */
-  const debouncedSearch = useCallback(debounce((val: string) => {
+  const updateSearch = useCallback((val: string) => {
     setSearch(val);
-    setPage(1);
-  }, 300), []);
+  }, []);
 
-  const updateSearch = (val: string) => {
-    setSearch(val);
-    debouncedSearch(val);
-  };
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setUrlSearch(search);
+      setPage(1);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [search]);
 
   const toggleLevel = (level: CourseLevel) => {
     setSelectedLevels(prev => prev.includes(level) ? prev.filter(l => l !== level) : [...prev, level]);
@@ -422,7 +436,7 @@ export default function CourseListPage() {
     setPage(1);
   };
 
-  const FiltersContent = ({ onClose }: { onClose?: () => void }) => (
+  const renderFilters = (onClose?: () => void) => (
     <div className="space-y-0">
       {/* Search */}
       <div className="pb-5">
@@ -580,7 +594,7 @@ export default function CourseListPage() {
                   </button>
                 )}
               </div>
-              <FiltersContent />
+              {renderFilters()}
             </div>
           </aside>
 
@@ -605,7 +619,7 @@ export default function CourseListPage() {
                     </button>
                   </div>
                   <div className="overflow-y-auto p-5">
-                    <FiltersContent onClose={() => setMobileFiltersOpen(false)} />
+                    {renderFilters(() => setMobileFiltersOpen(false))}
                   </div>
                   <div className="p-5 border-t border-sand shrink-0">
                     <button

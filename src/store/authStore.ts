@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { User, Address, NotificationPreferences } from '../types';
+import { authApi } from '../services/authApi';
 
 interface AuthState {
   user: User | null;
@@ -12,31 +13,31 @@ interface AuthState {
   updateAddresses: (addresses: Address[]) => void;
   updateNotificationPreferences: (prefs: NotificationPreferences) => void;
   toggleAdminView: () => void;
+  fetchUser: () => Promise<void>;
 }
 
 export const useAuthStore = create<AuthState>()(
   persist(
-    (set, get) => ({
+    (set) => ({
       user: null,
       isAuthenticated: false,
       isAdminView: false,
       login: (user) => set({ user, isAuthenticated: true }),
-      logout: () => set({ user: null, isAuthenticated: false, isAdminView: false }),
-      updateUser: (data) => {
-        const { user } = get();
-        if (!user) return;
-        set({ user: { ...user, ...data } });
+      logout: () => {
+        authApi.logout();
+        set({ user: null, isAuthenticated: false, isAdminView: false });
       },
-      updateAddresses: (addresses) => {
-        const { user } = get();
-        if (!user) return;
-        set({ user: { ...user, addresses } });
+      fetchUser: async () => {
+        try {
+          const user = await authApi.getMe();
+          set({ user, isAuthenticated: true });
+        } catch {
+          set({ user: null, isAuthenticated: false });
+        }
       },
-      updateNotificationPreferences: (prefs) => {
-        const { user } = get();
-        if (!user) return;
-        set({ user: { ...user, notificationPreferences: prefs } });
-      },
+      updateUser: (data) => set((state) => state.user ? { user: { ...state.user, ...data } } : {}),
+      updateAddresses: (addresses) => set((state) => state.user ? { user: { ...state.user, addresses } } : {}),
+      updateNotificationPreferences: (prefs) => set((state) => state.user ? { user: { ...state.user, notificationPreferences: prefs } } : {}),
       toggleAdminView: () => set((state) => ({ isAdminView: !state.isAdminView })),
     }),
     { name: 'bs-auth-storage' }
