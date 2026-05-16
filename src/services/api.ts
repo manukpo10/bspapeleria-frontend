@@ -3,7 +3,7 @@ import type {
   ProductFilters, CourseFilters
 } from '../types';
 
-const API_URL = 'http://localhost:8080';
+const API_URL = 'https://bspapeleria-backend.onrender.com';
 
 function getToken() {
   if (typeof window !== 'undefined') {
