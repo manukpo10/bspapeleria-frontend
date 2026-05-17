@@ -122,7 +122,7 @@ export default function LoginPage() {
 
             <div className="mt-6 pt-6 border-t border-sand/50 text-xs text-dark/40 text-center">
               <p>Admin: admin@bspapeleria.com / admin123</p>
-              <p>Usuario: usuario@test.com / user123</p>
+              <p>Cliente: alumno@bspapeleria.com / alumno123</p>
             </div>
           </div>
         </motion.div>
