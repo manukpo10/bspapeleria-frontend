@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ShoppingCart, Heart, Minus, Plus, Star, Check, Truck, Shield, RotateCcw } from 'lucide-react';
 import { SEO } from '../components/shared/SEO';
@@ -12,6 +12,7 @@ import { toast } from 'sonner';
 
 export default function ProductDetailPage() {
   const { slug } = useParams<{ slug: string }>();
+  const navigate = useNavigate();
   const { addItem } = useCartStore();
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
@@ -72,7 +73,7 @@ export default function ProductDetailPage() {
 
   const handleBuyNow = () => {
     handleAddToCart();
-    window.location.href = '/checkout';
+    navigate('/checkout');
   };
 
   return (

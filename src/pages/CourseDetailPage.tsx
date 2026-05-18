@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Play, Clock, Users, Star, BookOpen, Check, ChevronDown, ChevronUp,
@@ -28,6 +28,7 @@ function LessonIcon({ type }: { type: Lesson['type'] }) {
 
 export default function CourseDetailPage() {
   const { slug } = useParams<{ slug: string }>();
+  const navigate = useNavigate();
   const { addItem } = useCartStore();
   const { isAuthenticated, user, fetchUser } = useAuthStore();
   const [course, setCourse] = useState<Course | null>(null);
@@ -335,7 +336,7 @@ export default function CourseDetailPage() {
                     <ShoppingCart className="w-4 h-4" /> Agregar al carrito
                   </button>
                   <button
-                    onClick={() => { handleAddToCart(); window.location.href = '/checkout'; }}
+                    onClick={() => { handleAddToCart(); navigate('/checkout'); }}
                     className="w-full rounded-2xl bg-dark py-3.5 text-sm font-semibold text-white hover:bg-dark/90 transition-colors"
                   >
                     Inscribirme ahora
