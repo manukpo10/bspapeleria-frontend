@@ -98,11 +98,16 @@ function mapBackendCourse(data: any): Course {
         content: l.contenido,
         isPreview: l.esPreview || false,
         order: l.orden,
+        files: l.urlMaterial ? [{ name: 'Material del curso.pptx', url: l.urlMaterial }] : undefined,
       }],
       order: 0,
     })),
     includes: [],
     tags: data.tags || [],
+    courseMaterials: (data.materialUrls || []).map((url: string) => ({
+      name: url.split('/').pop()?.replace(/%20/g, ' ') || 'Material',
+      url,
+    })),
     rating: data.rating || 0,
     reviewsCount: 0,
     enrolledCount: data.estudiantesCount || 0,
@@ -281,6 +286,7 @@ export const api = {
       duracionHoras: course.duration ? parseInt(course.duration) : null,
       urlVideoIntro: course.videoPreviewUrl,
       tags: course.tags,
+      materialUrls: course.courseMaterials?.map((m) => m.url) || [],
     };
     return authRequest<any>('/api/cursos', {
       method: 'POST',
@@ -316,6 +322,7 @@ export const api = {
       duracionHoras: data.duration ? parseInt(data.duration) : null,
       urlVideoIntro: data.videoPreviewUrl,
       tags: data.tags,
+      materialUrls: data.courseMaterials?.map((m: { url: string }) => m.url) || [],
       lecciones: buildLecciones(),
     };
     return authRequest<any>(`/api/cursos/${id}`, {

@@ -867,12 +867,19 @@ export default function CourseLearnPage() {
 
                     {activeTab === 'resources' && (
                       <div className="space-y-3">
-                        {(currentLesson.files && currentLesson.files.length > 0
+                        {(course.courseMaterials && course.courseMaterials.length > 0
+                          ? course.courseMaterials.map((f) => ({
+                              name: f.name,
+                              size: 'Descargable',
+                              url: f.url,
+                            }))
+                          : currentLesson.files && currentLesson.files.length > 0
                           ? currentLesson.files.map((f) => ({
                               name: f.name,
                               size: 'Descargable',
+                              url: f.url,
                             }))
-                          : MOCK_RESOURCES
+                          : MOCK_RESOURCES.map((r) => ({ ...r, url: '#' }))
                         ).map((file, i) => (
                           <div
                             key={i}
@@ -889,14 +896,14 @@ export default function CourseLearnPage() {
                                 {file.size}
                               </p>
                             </div>
-                            <button
-                              onClick={() =>
-                                toast.info('Descarga próximamente')
-                              }
+                            <a
+                              href={file.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
                               className="flex items-center gap-1.5 rounded-xl bg-primary px-3 py-2 text-xs font-medium text-white hover:bg-secondary transition-colors shrink-0"
                             >
                               <Download className="w-3.5 h-3.5" /> Descargar
-                            </button>
+                            </a>
                           </div>
                         ))}
                       </div>

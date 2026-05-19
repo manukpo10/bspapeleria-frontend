@@ -342,6 +342,7 @@ export default function AdminCourseBuilderPage() {
     reviewsCount: 0,
     enrolledCount: 0,
     featured: false,
+    courseMaterials: [],
   });
 
   useEffect(() => {
@@ -637,7 +638,7 @@ export default function AdminCourseBuilderPage() {
             </section>
 
             {/* Tags */}
-            <section className="space-y-4 pb-8">
+            <section className="space-y-4">
               <h2 className="text-sm font-semibold text-white/40 uppercase tracking-wider">Tags</h2>
               <input
                 value={course.tags.join(', ')}
@@ -645,6 +646,40 @@ export default function AdminCourseBuilderPage() {
                 placeholder="sublimación, poliéster, técnica"
                 className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-primary/50"
               />
+            </section>
+
+            {/* Course Materials */}
+            <section className="space-y-4">
+              <h2 className="text-sm font-semibold text-white/40 uppercase tracking-wider">Materiales descargables</h2>
+              <p className="text-xs text-white/30">Agregá las URLs de los archivos en Supabase Storage. Aparecerán en la pestaña Recursos del aula.</p>
+              <div className="space-y-2">
+                {(course.courseMaterials || []).map((mat, i) => (
+                  <div key={i} className="flex gap-2 items-center">
+                    <input
+                      value={mat.url}
+                      onChange={(e) => {
+                        const updated = [...(course.courseMaterials || [])];
+                        updated[i] = { ...updated[i], url: e.target.value, name: e.target.value.split('/').pop()?.replace(/%20/g, ' ') || 'Material' };
+                        setCourse({ ...course, courseMaterials: updated });
+                      }}
+                      placeholder="https://kpnukedjelyfoewpqwpr.supabase.co/storage/v1/object/public/..."
+                      className="flex-1 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-primary/50"
+                    />
+                    <button
+                      onClick={() => setCourse({ ...course, courseMaterials: (course.courseMaterials || []).filter((_, mi) => mi !== i) })}
+                      className="p-2 text-error/50 hover:text-error transition-colors"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+              <button
+                onClick={() => setCourse({ ...course, courseMaterials: [...(course.courseMaterials || []), { name: 'Material', url: '' }] })}
+                className="flex items-center gap-1.5 text-xs text-primary hover:text-primary/80 transition-colors"
+              >
+                <Plus className="w-3.5 h-3.5" /> Agregar material
+              </button>
             </section>
           </div>
         </div>

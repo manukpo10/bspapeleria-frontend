@@ -114,6 +114,7 @@ export interface Course {
   certificate: boolean;
   topics: Topic[];
   includes: string[];
+  courseMaterials?: { name: string; url: string }[];
   tags: string[];
   rating: number;
   reviewsCount: number;
