@@ -85,11 +85,11 @@ function mapBackendCourse(data: any): Course {
     modality: data.modalidad === 'video' ? 'online' : data.modalidad === 'texto' ? 'presencial' : 'hibrido',
     language: 'es',
     certificate: true,
-    topics: (data.modulos || []).map((m: any) => ({
+    topics: (data.modulos || []).sort((a: any, b: any) => (a.orden || 0) - (b.orden || 0)).map((m: any) => ({
       id: String(m.id),
       title: m.titulo,
       summary: m.descripcion || '',
-      lessons: (m.lecciones || []).map((l: any) => ({
+      lessons: (m.lecciones || []).sort((a: any, b: any) => (a.orden || 0) - (b.orden || 0)).map((l: any) => ({
         id: String(l.id),
         title: l.titulo,
         type: l.urlVideo ? 'video' : 'text' as const,
