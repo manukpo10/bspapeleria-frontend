@@ -105,7 +105,7 @@ function mapBackendCourse(data: any): Course {
     includes: [],
     tags: data.tags || [],
     courseMaterials: (data.materialUrls || []).map((url: string) => ({
-      name: url.split('/').pop()?.replace(/%20/g, ' ') || 'Material',
+      name: decodeURIComponent(url.split('/').pop() || '') || 'Material',
       url,
     })),
     rating: data.rating || 0,
