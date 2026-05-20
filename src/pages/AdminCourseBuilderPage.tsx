@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Plus, Trash2, GripVertical, Save, ChevronDown, ChevronUp, Play, Eye, EyeOff, Image as ImageIcon, Upload, FileText, Loader2 } from 'lucide-react';
 import { api } from '../services/api';
-import { uploadCourseMaterial } from '../services/supabaseStorage';
+import { uploadCourseMaterial, uploadCourseCoverImage } from '../services/supabaseStorage';
 import type { Course, Topic, Lesson } from '../types';
 import { toast } from 'sonner';
 
@@ -307,6 +307,111 @@ function CoursePreview({ course }: { course: Course }) {
         )}
       </div>
     </div>
+  );
+}
+
+/* ─── Cover Image Uploader ─── */
+function CoverImageUploader({
+  value,
+  courseSlug,
+  onChange,
+}: {
+  value: string;
+  courseSlug: string;
+  onChange: (url: string) => void;
+}) {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const slug = courseSlug.trim() || 'sin-slug';
+    setUploading(true);
+    try {
+      const url = await uploadCourseCoverImage(file, slug);
+      onChange(url);
+      toast.success('Imagen subida');
+    } catch (err: any) {
+      toast.error(`Error subiendo imagen: ${err.message}`);
+    } finally {
+      setUploading(false);
+      e.target.value = '';
+    }
+  };
+
+  return (
+    <Field label="Imagen de portada">
+      <div className="space-y-3">
+        {/* Preview */}
+        {value ? (
+          <div className="relative group rounded-xl overflow-hidden">
+            <img src={value} alt="Portada" className="w-full h-44 object-cover" />
+            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+                className="flex items-center gap-1.5 rounded-lg bg-white/90 px-3 py-1.5 text-xs font-medium text-dark hover:bg-white transition-colors"
+              >
+                <Upload className="w-3.5 h-3.5" />
+                Cambiar
+              </button>
+              <button
+                type="button"
+                onClick={() => onChange('')}
+                className="flex items-center gap-1.5 rounded-lg bg-error/80 px-3 py-1.5 text-xs font-medium text-white hover:bg-error transition-colors"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                Quitar
+              </button>
+            </div>
+            {uploading && (
+              <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+                <Loader2 className="w-6 h-6 text-white animate-spin" />
+              </div>
+            )}
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={uploading}
+            className="w-full h-44 flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-white/20 hover:border-primary hover:text-primary text-white/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {uploading ? (
+              <>
+                <Loader2 className="w-6 h-6 animate-spin" />
+                <span className="text-xs">Subiendo...</span>
+              </>
+            ) : (
+              <>
+                <ImageIcon className="w-8 h-8" />
+                <span className="text-xs font-medium">Subir imagen de portada</span>
+                <span className="text-xs opacity-60">JPG, PNG — recomendado 1280×720</span>
+              </>
+            )}
+          </button>
+        )}
+
+        {/* Input URL manual como fallback */}
+        <input
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder="O pegá una URL de imagen..."
+          className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-primary/50"
+        />
+
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
+          className="hidden"
+          onChange={handleFileChange}
+        />
+      </div>
+    </Field>
   );
 }
 
@@ -668,18 +773,12 @@ export default function AdminCourseBuilderPage() {
             {/* Media */}
             <section className="space-y-4">
               <h2 className="text-sm font-semibold text-white/40 uppercase tracking-wider">Multimedia</h2>
-              
-              <Field label="URL de imagen de portada">
-                <input
-                  value={course.coverImage}
-                  onChange={(e) => setCourse({ ...course, coverImage: e.target.value })}
-                  placeholder="https://..."
-                  className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-primary/50"
-                />
-              </Field>
-              {course.coverImage && (
-                <img src={course.coverImage} alt="Preview" className="w-full h-40 object-cover rounded-xl" />
-              )}
+
+              <CoverImageUploader
+                value={course.coverImage}
+                courseSlug={course.slug}
+                onChange={(url) => setCourse({ ...course, coverImage: url })}
+              />
 
               <Field label="URL de video intro (opcional)">
                 <input
