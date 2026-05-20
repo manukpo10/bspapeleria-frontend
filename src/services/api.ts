@@ -85,11 +85,11 @@ function mapBackendCourse(data: any): Course {
     modality: data.modalidad === 'video' ? 'online' : data.modalidad === 'texto' ? 'presencial' : 'hibrido',
     language: 'es',
     certificate: true,
-    topics: (data.lecciones || []).map((l: any) => ({
-      id: String(l.id),
-      title: l.titulo,
-      summary: '',
-      lessons: [{
+    topics: (data.modulos || []).map((m: any) => ({
+      id: String(m.id),
+      title: m.titulo,
+      summary: m.descripcion || '',
+      lessons: (m.lecciones || []).map((l: any) => ({
         id: String(l.id),
         title: l.titulo,
         type: l.urlVideo ? 'video' : 'text' as const,
@@ -98,9 +98,9 @@ function mapBackendCourse(data: any): Course {
         content: l.contenido,
         isPreview: l.esPreview || false,
         order: l.orden,
-        files: l.urlMaterial ? [{ name: 'Material del curso.pptx', url: l.urlMaterial }] : undefined,
-      }],
-      order: 0,
+        files: l.urlMaterial ? [{ name: decodeURIComponent(l.urlMaterial.split('/').pop() || 'Material'), url: l.urlMaterial }] : undefined,
+      })),
+      order: m.orden || 0,
     })),
     includes: [],
     tags: data.tags || [],
@@ -287,6 +287,20 @@ export const api = {
       urlVideoIntro: course.videoPreviewUrl,
       tags: course.tags,
       materialUrls: course.courseMaterials?.map((m) => m.url) || [],
+      modulos: (course.topics || []).map((topic, ti) => ({
+        titulo: topic.title,
+        descripcion: topic.summary || '',
+        orden: ti,
+        lecciones: (topic.lessons || []).map((lesson, li) => ({
+          titulo: lesson.title,
+          contenido: lesson.content || '',
+          urlVideo: lesson.videoUrl || undefined,
+          urlMaterial: undefined,
+          orden: li,
+          duracionMinutos: lesson.duration ? parseInt(lesson.duration) : 0,
+          esPreview: lesson.isPreview || false,
+        })),
+      })),
     };
     return authRequest<any>('/api/cursos', {
       method: 'POST',
@@ -295,21 +309,6 @@ export const api = {
   },
 
   updateCourse: async (id: string, data: Partial<Course>): Promise<Course> => {
-    const buildLecciones = () => {
-      if (!data.topics || data.topics.length === 0) return undefined;
-      return data.topics.flatMap((topic) =>
-        topic.lessons.map((lesson) => ({
-          titulo: lesson.title,
-          contenido: lesson.content || '',
-          urlVideo: lesson.videoUrl || undefined,
-          urlMaterial: undefined,
-          orden: lesson.order ?? 0,
-          duracionMinutos: lesson.duration ? parseInt(lesson.duration) : undefined,
-          esPreview: lesson.isPreview || false,
-        }))
-      );
-    };
-
     const payload = {
       titulo: data.title,
       descripcion: data.description,
@@ -323,7 +322,20 @@ export const api = {
       urlVideoIntro: data.videoPreviewUrl,
       tags: data.tags,
       materialUrls: data.courseMaterials?.map((m: { url: string }) => m.url) || [],
-      lecciones: buildLecciones(),
+      modulos: (data.topics || []).map((topic, ti) => ({
+        titulo: topic.title,
+        descripcion: topic.summary || '',
+        orden: ti,
+        lecciones: (topic.lessons || []).map((lesson, li) => ({
+          titulo: lesson.title,
+          contenido: lesson.content || '',
+          urlVideo: lesson.videoUrl || undefined,
+          urlMaterial: undefined,
+          orden: li,
+          duracionMinutos: lesson.duration ? parseInt(lesson.duration) : 0,
+          esPreview: lesson.isPreview || false,
+        })),
+      })),
     };
     return authRequest<any>(`/api/cursos/${id}`, {
       method: 'PUT',
