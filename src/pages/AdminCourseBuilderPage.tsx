@@ -1,7 +1,8 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Plus, Trash2, GripVertical, Save, ChevronDown, ChevronUp, Play, Eye, EyeOff, Image as ImageIcon } from 'lucide-react';
+import { Plus, Trash2, GripVertical, Save, ChevronDown, ChevronUp, Play, Eye, EyeOff, Image as ImageIcon, Upload, FileText, Loader2 } from 'lucide-react';
 import { api } from '../services/api';
+import { uploadCourseMaterial } from '../services/supabaseStorage';
 import type { Course, Topic, Lesson } from '../types';
 import { toast } from 'sonner';
 
@@ -309,6 +310,116 @@ function CoursePreview({ course }: { course: Course }) {
   );
 }
 
+/* ─── Course Materials Section ─── */
+function CourseMaterialsSection({
+  materials,
+  courseSlug,
+  onChange,
+}: {
+  materials: { name: string; url: string }[];
+  courseSlug: string;
+  onChange: (updated: { name: string; url: string }[]) => void;
+}) {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
+
+    const slug = courseSlug.trim() || 'sin-slug';
+    setUploading(true);
+
+    const results: { name: string; url: string }[] = [];
+    for (const file of files) {
+      try {
+        const result = await uploadCourseMaterial(file, slug);
+        results.push(result);
+        toast.success(`"${file.name}" subido`);
+      } catch (err: any) {
+        toast.error(`Error subiendo "${file.name}": ${err.message}`);
+      }
+    }
+
+    onChange([...materials, ...results]);
+    setUploading(false);
+    // reset input so the same file puede subirse de nuevo si hace falta
+    e.target.value = '';
+  };
+
+  const handleRemove = (index: number) => {
+    onChange(materials.filter((_, i) => i !== index));
+  };
+
+  return (
+    <section className="space-y-4">
+      <h2 className="text-sm font-semibold text-white/40 uppercase tracking-wider">Materiales descargables</h2>
+      <p className="text-xs text-white/30">
+        Subí los archivos directamente desde acá. Se guardan en Supabase y aparecen en la pestaña Recursos del aula.
+      </p>
+
+      {/* Lista de materiales cargados */}
+      {materials.length > 0 && (
+        <div className="space-y-2">
+          {materials.map((mat, i) => (
+            <div key={i} className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 px-3 py-2.5">
+              <FileText className="w-4 h-4 text-primary/70 shrink-0" />
+              <span className="flex-1 text-sm text-white/80 truncate">{mat.name}</span>
+              <a
+                href={mat.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs text-white/40 hover:text-primary transition-colors shrink-0"
+              >
+                Ver
+              </a>
+              <button
+                onClick={() => handleRemove(i)}
+                className="p-1 text-error/40 hover:text-error transition-colors shrink-0"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Botón de upload */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        multiple
+        className="hidden"
+        onChange={handleFileChange}
+        accept=".pdf,.pptx,.ppt,.docx,.doc,.xlsx,.xls,.zip,.png,.jpg,.jpeg"
+      />
+      <button
+        type="button"
+        onClick={() => fileInputRef.current?.click()}
+        disabled={uploading}
+        className="w-full flex items-center justify-center gap-2 rounded-xl border-2 border-dashed border-white/20 py-4 text-sm font-medium text-white/50 hover:border-primary hover:text-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        {uploading ? (
+          <>
+            <Loader2 className="w-4 h-4 animate-spin" />
+            Subiendo...
+          </>
+        ) : (
+          <>
+            <Upload className="w-4 h-4" />
+            Subir archivos
+          </>
+        )}
+      </button>
+      {!courseSlug.trim() && (
+        <p className="text-xs text-warning/70">
+          Completá el slug del curso antes de subir archivos.
+        </p>
+      )}
+    </section>
+  );
+}
+
 /* ─── Main Page ─── */
 export default function AdminCourseBuilderPage() {
   const { id } = useParams<{ id: string }>();
@@ -343,6 +454,8 @@ export default function AdminCourseBuilderPage() {
     enrolledCount: 0,
     featured: false,
     courseMaterials: [],
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
   });
 
   useEffect(() => {
@@ -464,6 +577,15 @@ export default function AdminCourseBuilderPage() {
                   value={course.title}
                   onChange={(e) => setCourse({ ...course, title: e.target.value })}
                   placeholder="Ej: Sublimación Avanzada"
+                  className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-primary/50"
+                />
+              </Field>
+
+              <Field label="Slug (URL del curso)">
+                <input
+                  value={course.slug}
+                  onChange={(e) => setCourse({ ...course, slug: e.target.value.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '') })}
+                  placeholder="Ej: candy-bar-powerpoint"
                   className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-primary/50"
                 />
               </Field>
@@ -649,38 +771,11 @@ export default function AdminCourseBuilderPage() {
             </section>
 
             {/* Course Materials */}
-            <section className="space-y-4">
-              <h2 className="text-sm font-semibold text-white/40 uppercase tracking-wider">Materiales descargables</h2>
-              <p className="text-xs text-white/30">Agregá las URLs de los archivos en Supabase Storage. Aparecerán en la pestaña Recursos del aula.</p>
-              <div className="space-y-2">
-                {(course.courseMaterials || []).map((mat, i) => (
-                  <div key={i} className="flex gap-2 items-center">
-                    <input
-                      value={mat.url}
-                      onChange={(e) => {
-                        const updated = [...(course.courseMaterials || [])];
-                        updated[i] = { ...updated[i], url: e.target.value, name: e.target.value.split('/').pop()?.replace(/%20/g, ' ') || 'Material' };
-                        setCourse({ ...course, courseMaterials: updated });
-                      }}
-                      placeholder="https://kpnukedjelyfoewpqwpr.supabase.co/storage/v1/object/public/..."
-                      className="flex-1 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-primary/50"
-                    />
-                    <button
-                      onClick={() => setCourse({ ...course, courseMaterials: (course.courseMaterials || []).filter((_, mi) => mi !== i) })}
-                      className="p-2 text-error/50 hover:text-error transition-colors"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-              <button
-                onClick={() => setCourse({ ...course, courseMaterials: [...(course.courseMaterials || []), { name: 'Material', url: '' }] })}
-                className="flex items-center gap-1.5 text-xs text-primary hover:text-primary/80 transition-colors"
-              >
-                <Plus className="w-3.5 h-3.5" /> Agregar material
-              </button>
-            </section>
+            <CourseMaterialsSection
+              materials={course.courseMaterials || []}
+              courseSlug={course.slug}
+              onChange={(updated) => setCourse({ ...course, courseMaterials: updated })}
+            />
           </div>
         </div>
 
