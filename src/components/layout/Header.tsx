@@ -15,7 +15,7 @@ export function Header() {
   const { user, isAuthenticated, isAdminView, toggleAdminView, logout } = useAuthStore();
   const { items, getItemCount, getTotal } = useCartStore();
   const { cartDrawerOpen, setCartDrawerOpen, mobileMenuOpen, setMobileMenuOpen } = useUIStore();
-  const { items: notifications } = useDeliveredNotifications();
+  const { items: notifications, dismissAll } = useDeliveredNotifications();
   const hasNotifications = notifications.length > 0;
   const [profileOpen, setProfileOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -104,7 +104,7 @@ export function Header() {
               {isAuthenticated ? (
                 <div className="relative">
                   <button
-                    onClick={() => setProfileOpen(!profileOpen)}
+                    onClick={() => { setProfileOpen(!profileOpen); if (!profileOpen && hasNotifications) dismissAll(); }}
                     className="flex items-center gap-2 rounded-full hover:bg-sand/50 transition-colors p-1 pr-3"
                   >
                     <div className="relative">
