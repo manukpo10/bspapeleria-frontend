@@ -1,29 +1,8 @@
-import { useMemo, useRef } from 'react';
+import { useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { MapPin, Clock, Phone, Mail, MessageCircle, ExternalLink } from 'lucide-react';
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
-import L from 'leaflet';
+import { MapPin, Clock, Phone, Mail, MessageCircle } from 'lucide-react';
 
 const COORDS: [number, number] = [-34.8500, -58.0833];
-
-const customIcon = L.divIcon({
-  className: 'custom-marker',
-  html: `
-    <div style="position: relative;">
-      <svg width="48" height="60" viewBox="0 0 48 60" fill="none">
-        <path d="M24 0C10.745 0 0 10.745 0 24c0 16 24 36 24 36s24-20 24-36C48 10.745 37.255 0 24 0z" 
-              fill="#98acf8" 
-              filter="drop-shadow(0 4px 8px rgba(152,172,248,0.4))"/>
-        <circle cx="24" cy="22" r="8" fill="#da9ff9"/>
-        <circle cx="24" cy="22" r="4" fill="white"/>
-      </svg>
-      <div class="marker-pulse"></div>
-    </div>
-  `,
-  iconSize: [48, 60],
-  iconAnchor: [24, 60],
-  popupAnchor: [0, -60],
-});
 
 const contactItems = [
   {
@@ -59,15 +38,15 @@ const contactItems = [
 ];
 
 export function VisitUsSection() {
-  const mapRef = useRef<any>(null);
-
   const directionsUrl = useMemo(() => {
     return `https://www.google.com/maps/dir/?api=1&destination=${COORDS[0]},${COORDS[1]}`;
   }, []);
 
+  const embedUrl = `https://www.google.com/maps/embed/v1/place?key=AIzaSyD-placeholder&q=${COORDS[0]},${COORDS[1]}&zoom=14`;
+  const staticMapUrl = `https://maps.google.com/maps?q=${COORDS[0]},${COORDS[1]}&z=14&output=embed`;
+
   return (
     <section className="py-20 relative overflow-hidden">
-      {/* Decorative blob */}
       <div className="absolute top-1/2 right-0 w-[400px] h-[400px] rounded-full bg-accent/15 blur-[100px] pointer-events-none -translate-y-1/2 translate-x-1/2" />
 
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative">
@@ -83,7 +62,7 @@ export function VisitUsSection() {
             Visitanos en nuestro local
           </h2>
           <p className="text-dark/60 max-w-xl">
-            Te esperamos en nuestro local de Bosques para que conozcas nuestros productos de cerca, 
+            Te esperamos en nuestro local de Bosques para que conozcas nuestros productos de cerca,
             retires tus pedidos o nos consultes lo que necesites.
           </p>
         </motion.div>
@@ -131,7 +110,6 @@ export function VisitUsSection() {
               </motion.div>
             ))}
 
-            {/* CTAs */}
             <motion.div
               initial={{ opacity: 0, y: 15 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -156,7 +134,7 @@ export function VisitUsSection() {
             </motion.div>
           </motion.div>
 
-          {/* Right column — Map */}
+          {/* Right column — Google Maps embed (no dependency) */}
           <motion.div
             initial={{ opacity: 0, x: 20 }}
             whileInView={{ opacity: 1, x: 0 }}
@@ -164,58 +142,19 @@ export function VisitUsSection() {
             transition={{ duration: 0.5, delay: 0.2 }}
             className="rounded-3xl overflow-hidden border border-sand shadow-[0_20px_60px_rgba(152,172,248,0.15)] h-[350px] sm:h-[500px]"
           >
-            <MapContainer
-              center={COORDS}
-              zoom={14}
-              scrollWheelZoom={false}
-              style={{ height: '100%', width: '100%' }}
-              ref={mapRef}
-            >
-              <TileLayer
-                attribution='&copy; <a href="https://carto.com/">CARTO</a>'
-                url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
-              />
-              <Marker position={COORDS} icon={customIcon}>
-                <Popup>
-                  <div className="text-center py-2">
-                    <p className="font-display font-bold text-dark text-sm mb-1">BS Papelería</p>
-                    <p className="text-dark/60 text-xs mb-2">Bosques, La Plata</p>
-                    <p className="text-dark/40 text-[11px] mb-3">Lun a Vie: 9-18hs · Sáb: 10-14hs</p>
-                    <a
-                      href={directionsUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:text-secondary transition-colors"
-                    >
-                      <ExternalLink className="w-3 h-3" /> Cómo llegar
-                    </a>
-                  </div>
-                </Popup>
-              </Marker>
-            </MapContainer>
+            <iframe
+              src={staticMapUrl}
+              width="100%"
+              height="100%"
+              style={{ border: 0 }}
+              allowFullScreen
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+              title="Ubicación BS Papelería"
+            />
           </motion.div>
         </div>
       </div>
-
-      {/* Leaflet CSS pulse animation */}
-      <style>{`
-        .custom-marker .marker-pulse {
-          position: absolute;
-          top: 50%;
-          left: 50%;
-          width: 48px;
-          height: 48px;
-          border: 2px solid #98acf8;
-          border-radius: 50%;
-          transform: translate(-50%, -50%);
-          animation: markerPulse 2s infinite;
-          pointer-events: none;
-        }
-        @keyframes markerPulse {
-          0% { transform: translate(-50%, -50%) scale(0.8); opacity: 1; }
-          100% { transform: translate(-50%, -50%) scale(1.6); opacity: 0; }
-        }
-      `}</style>
     </section>
   );
 }

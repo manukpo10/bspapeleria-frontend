@@ -9,6 +9,7 @@ import { Newsletter } from '../components/home/Newsletter';
 import { TrustStrip } from '../components/home/TrustStrip';
 import { SectionDivider } from '../components/home/SectionDivider';
 import { api } from '../services/api';
+import { cachedFetch } from '../lib/apiCache';
 import type { Course, Product } from '../types';
 
 export default function HomePage() {
@@ -16,8 +17,8 @@ export default function HomePage() {
   const [allProducts, setAllProducts] = useState<Product[]>([]);
 
   useEffect(() => {
-    api.getCourses().then(setFeaturedCourses).catch(() => {});
-    api.getProducts().then(setAllProducts).catch(() => {});
+    cachedFetch('home:cursos', () => api.getCourses()).then(setFeaturedCourses).catch(() => {});
+    cachedFetch('home:productos', () => api.getProducts()).then(setAllProducts).catch(() => {});
   }, []);
 
   const digitalProducts = allProducts.filter((p) => p.category === 'archivos-digitales');
