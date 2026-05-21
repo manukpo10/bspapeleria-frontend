@@ -92,16 +92,16 @@ export function Hero() {
               {/* Main image */}
               <div className="absolute top-[5%] left-[10%] w-[65%] aspect-[3/4] rounded-3xl overflow-hidden shadow-2xl border-4 border-white/20 rotate-[-6deg] hover:rotate-0 transition-transform duration-500">
                 <img
-                  src="/images/craft1.jpg"
-                  alt="Productos creativos"
+                  src="https://kpnukedjelyfoewpqwpr.supabase.co/storage/v1/object/public/product-images/home1.webp"
+                  alt="Productos BS Papeleria"
                   className="w-full h-full object-cover"
                 />
               </div>
               {/* Secondary image */}
               <div className="absolute bottom-[10%] right-[5%] w-[50%] aspect-square rounded-3xl overflow-hidden shadow-2xl border-4 border-white/20 rotate-[8deg] hover:rotate-0 transition-transform duration-500">
                 <img
-                  src="/images/lettering1.jpg"
-                  alt="Lettering artístico"
+                  src="https://kpnukedjelyfoewpqwpr.supabase.co/storage/v1/object/public/product-images/home2.webp"
+                  alt="Productos BS Papeleria"
                   className="w-full h-full object-cover"
                 />
               </div>
