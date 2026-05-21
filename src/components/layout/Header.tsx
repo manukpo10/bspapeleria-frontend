@@ -9,11 +9,14 @@ import { useAuthStore } from '../../store/authStore';
 import { useCartStore } from '../../store/cartStore';
 import { useUIStore } from '../../store/uiStore';
 import { formatPrice } from '../../lib/utils';
+import { useDeliveredNotifications } from '../../hooks/useDeliveredNotifications';
 
 export function Header() {
   const { user, isAuthenticated, isAdminView, toggleAdminView, logout } = useAuthStore();
   const { items, getItemCount, getTotal } = useCartStore();
   const { cartDrawerOpen, setCartDrawerOpen, mobileMenuOpen, setMobileMenuOpen } = useUIStore();
+  const { items: notifications } = useDeliveredNotifications();
+  const hasNotifications = notifications.length > 0;
   const [profileOpen, setProfileOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -104,11 +107,16 @@ export function Header() {
                     onClick={() => setProfileOpen(!profileOpen)}
                     className="flex items-center gap-2 rounded-full hover:bg-sand/50 transition-colors p-1 pr-3"
                   >
-                    <img
-                      src={user?.avatar ?? 'https://ui-avatars.com/api/?name=' + encodeURIComponent(user?.name ?? 'U')}
-                      alt={user?.name}
-                      className="h-8 w-8 rounded-full object-cover"
-                    />
+                    <div className="relative">
+                      <img
+                        src={user?.avatar ?? 'https://ui-avatars.com/api/?name=' + encodeURIComponent(user?.name ?? 'U')}
+                        alt={user?.name}
+                        className="h-8 w-8 rounded-full object-cover"
+                      />
+                      {hasNotifications && (
+                        <span className="absolute -top-0.5 -right-0.5 h-3 w-3 rounded-full bg-error border-2 border-white" />
+                      )}
+                    </div>
                     <ChevronDown className="w-4 h-4 text-dark/50" />
                   </button>
 
@@ -126,7 +134,11 @@ export function Header() {
                         </div>
 
                         <Link to="/mi-cuenta/overview" onClick={() => setProfileOpen(false)} className="flex items-center gap-2 px-4 py-2 text-sm text-dark/70 hover:bg-sand/30 transition-colors">
-                          <User className="w-4 h-4" /> Mi cuenta
+                          <User className="w-4 h-4" />
+                          Mi cuenta
+                          {hasNotifications && (
+                            <span className="ml-auto h-2 w-2 rounded-full bg-error" />
+                          )}
                         </Link>
                         <Link to="/mi-cuenta/mis-cursos" onClick={() => setProfileOpen(false)} className="flex items-center gap-2 px-4 py-2 text-sm text-dark/70 hover:bg-sand/30 transition-colors">
                           <BookOpen className="w-4 h-4" /> Mis cursos
