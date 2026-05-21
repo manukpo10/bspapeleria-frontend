@@ -8,22 +8,23 @@ import { Testimonials } from '../components/home/Testimonials';
 import { Newsletter } from '../components/home/Newsletter';
 import { TrustStrip } from '../components/home/TrustStrip';
 import { SectionDivider } from '../components/home/SectionDivider';
-import { products } from '../data/mocks';
 import { api } from '../services/api';
-import type { Course } from '../types';
+import type { Course, Product } from '../types';
 
 export default function HomePage() {
   const [featuredCourses, setFeaturedCourses] = useState<Course[]>([]);
+  const [allProducts, setAllProducts] = useState<Product[]>([]);
 
   useEffect(() => {
     api.getCourses().then(setFeaturedCourses).catch(() => {});
+    api.getProducts().then(setAllProducts).catch(() => {});
   }, []);
 
-  const digitalProducts = products.filter((p) => p.category === 'archivos-digitales');
-  const personalizedProducts = products.filter((p) => p.category === 'personalizados');
-  const sublimationProducts = products.filter((p) => p.category === 'sublimables');
-  const partyProducts = products.filter((p) => p.category === 'fiestas');
-  const signageProducts = products.filter((p) => p.category === 'carteleria');
+  const digitalProducts = allProducts.filter((p) => p.category === 'archivos-digitales');
+  const personalizedProducts = allProducts.filter((p) => p.category === 'personalizados');
+  const sublimationProducts = allProducts.filter((p) => p.category === 'sublimables');
+  const partyProducts = allProducts.filter((p) => p.category === 'fiestas');
+  const signageProducts = allProducts.filter((p) => p.category === 'carteleria');
 
   return (
     <>
