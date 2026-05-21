@@ -4,6 +4,7 @@ import {
   User, MapPin, Bell, ChevronRight
 } from 'lucide-react';
 import { cn } from '../lib/utils';
+import { DeliveredOrdersBanner } from '../components/shared/DeliveredOrdersBanner';
 
 const navItems = [
   { to: '/mi-cuenta/overview', label: 'Resumen', icon: LayoutDashboard },
@@ -70,6 +71,7 @@ export default function DashboardLayoutPage() {
       </div>
 
       <main className="flex-1 p-4 lg:p-8 bg-white">
+        <DeliveredOrdersBanner />
         <Outlet />
       </main>
     </div>
