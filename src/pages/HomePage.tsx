@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { SEO } from '../components/shared/SEO';
 import { Hero } from '../components/home/Hero';
 import { CourseSlider } from '../components/home/CourseSlider';
@@ -7,10 +8,17 @@ import { Testimonials } from '../components/home/Testimonials';
 import { Newsletter } from '../components/home/Newsletter';
 import { TrustStrip } from '../components/home/TrustStrip';
 import { SectionDivider } from '../components/home/SectionDivider';
-import { products, courses } from '../data/mocks';
+import { products } from '../data/mocks';
+import { api } from '../services/api';
+import type { Course } from '../types';
 
 export default function HomePage() {
-  const featuredCourses = courses.filter((c) => c.featured);
+  const [featuredCourses, setFeaturedCourses] = useState<Course[]>([]);
+
+  useEffect(() => {
+    api.getCourses().then(setFeaturedCourses).catch(() => {});
+  }, []);
+
   const digitalProducts = products.filter((p) => p.category === 'archivos-digitales');
   const personalizedProducts = products.filter((p) => p.category === 'personalizados');
   const sublimationProducts = products.filter((p) => p.category === 'sublimables');
