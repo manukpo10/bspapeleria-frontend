@@ -13,18 +13,32 @@ export default function DashboardCoursesPage() {
   const [tab, setTab] = useState<'in-progress' | 'completed' | 'all'>('all');
 
   useEffect(() => {
-    api.getMyProgresos().then((data) => {
-      setEnrollments(data.map((p: any) => ({
-        id: String(p.id),
-        courseId: String(p.cursoId),
-        enrolledAt: p.fechaInscripcion,
-        lastAccessedAt: p.ultimaActividad,
-        completedLessons: p.leccionesCompletadas || [],
-        currentLessonId: p.leccionActualId ? String(p.leccionActualId) : undefined,
-        progress: p.porcentajeProgreso || 0,
-        completedAt: p.fechaCompletado,
-        certificateUnlocked: p.certificadoDesbloqueado || false,
-      })));
+    Promise.all([api.getMyProgresos(), api.getMyOrders()]).then(([progresos, orders]) => {
+      // Solo mostrar cursos con orden pagada o entregada
+      const paidCourseIds = new Set<string>();
+      for (const order of orders) {
+        if (order.status === 'paid' || order.status === 'delivered') {
+          for (const item of order.items) {
+            if (item.type === 'course') paidCourseIds.add(String(item.itemId));
+          }
+        }
+      }
+
+      setEnrollments(
+        progresos
+          .filter((p: any) => paidCourseIds.has(String(p.cursoId)))
+          .map((p: any) => ({
+            id: String(p.id),
+            courseId: String(p.cursoId),
+            enrolledAt: p.fechaInscripcion,
+            lastAccessedAt: p.ultimaActividad,
+            completedLessons: p.leccionesCompletadas || [],
+            currentLessonId: p.leccionActualId ? String(p.leccionActualId) : undefined,
+            progress: p.porcentajeProgreso || 0,
+            completedAt: p.fechaCompletado,
+            certificateUnlocked: p.certificadoDesbloqueado || false,
+          }))
+      );
       setLoading(false);
     }).catch(() => setLoading(false));
   }, []);
