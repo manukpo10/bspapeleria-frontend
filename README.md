@@ -22,11 +22,6 @@ npm install
 npm run dev
 ```
 
-## Credenciales Mock
-
-- Admin: `admin@bspapeleria.com` / `admin123`
-- Usuario: `usuario@test.com` / `user123`
-
 ## Estructura
 
 ```
