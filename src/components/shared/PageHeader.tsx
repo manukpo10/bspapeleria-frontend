@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronRight } from 'lucide-react';
+import { cn } from '../../lib/utils';
 
 export interface Crumb {
   label: string;
@@ -11,9 +12,10 @@ export interface Crumb {
 export function Breadcrumbs({ crumbs }: { crumbs: Crumb[] }) {
   return (
     <nav aria-label="Ruta de navegación">
-      <ol className="flex flex-wrap items-center text-sm text-dark/65">
+      {/* One line always: the earlier crumbs keep their size and the last one (the current page) is the one that truncates */}
+      <ol className="flex items-center text-sm text-dark/65">
         {crumbs.map((crumb, i) => (
-          <li key={crumb.label} className="flex min-w-0 items-center">
+          <li key={crumb.label} className={cn('flex items-center', i === crumbs.length - 1 ? 'min-w-0' : 'shrink-0')}>
             {i > 0 && <ChevronRight className="mx-0.5 size-4 shrink-0 text-dark/40" aria-hidden="true" />}
             {crumb.to ? (
               <Link
@@ -23,7 +25,11 @@ export function Breadcrumbs({ crumbs }: { crumbs: Crumb[] }) {
                 {crumb.label}
               </Link>
             ) : (
-              <span aria-current="page" className="block max-w-[14rem] truncate px-1.5 font-medium text-dark sm:max-w-md">
+              <span
+                aria-current="page"
+                title={crumb.label}
+                className="block min-w-0 truncate px-1.5 font-medium text-dark sm:max-w-md"
+              >
                 {crumb.label}
               </span>
             )}

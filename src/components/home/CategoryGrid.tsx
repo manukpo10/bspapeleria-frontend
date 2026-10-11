@@ -69,7 +69,7 @@ const tiles: Tile[] = [
 
 export function CategoryGrid() {
   return (
-    <section className="py-16 sm:py-20">
+    <section className="py-12 sm:py-20">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <SectionHeader
           script="Explorá"

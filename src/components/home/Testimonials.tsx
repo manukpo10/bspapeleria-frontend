@@ -42,7 +42,7 @@ const testimonials = [
 export function Testimonials() {
   return (
     // The swiper keeps its own 3.5rem of bottom padding (shadows + bullets), so the section needs less
-    <section className="pb-6 pt-16 sm:pb-8 sm:pt-20">
+    <section className="pb-6 pt-12 sm:pb-8 sm:pt-20">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <SectionHeader
           script="Testimonios"

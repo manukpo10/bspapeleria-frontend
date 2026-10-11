@@ -56,6 +56,8 @@ const learnLinks = [
 const columnTitle = 'font-display text-sm font-semibold text-dark';
 const footerLink =
   'flex min-h-11 w-fit items-center text-sm text-dark/65 transition-colors hover:text-iris lg:min-h-9';
+// 44px tall hit area; the -my-1 takes back the 4px each side so the rows keep their spacing next to the 36px icon tiles
+const contactLink = '-my-1 flex min-h-11 min-w-0 items-center transition-colors hover:text-iris';
 const socialButton =
   'grid size-11 place-items-center rounded-full bg-white text-dark ring-1 ring-sand transition-colors hover:bg-sand/40 hover:text-iris';
 
@@ -65,9 +67,10 @@ export function Footer() {
       <div aria-hidden="true" className="h-1.5 w-full bg-ribbon" />
 
       <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8 lg:py-16">
-        <div className="grid grid-cols-1 gap-12 md:grid-cols-2 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.2fr)]">
+        {/* Phones: brand and contact span both columns, the two link lists sit side by side */}
+        <div className="grid grid-cols-2 gap-x-6 gap-y-10 md:gap-12 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.2fr)]">
           {/* Brand */}
-          <div className="space-y-5">
+          <div className="col-span-2 space-y-5 md:col-span-1">
             <Link to="/" aria-label="BS Papelería, ir al inicio" className="inline-block rounded-xl">
               <img src="/brand/logo.webp" alt="BS Papelería" width={1000} height={674} className="h-20 w-auto" />
             </Link>
@@ -114,7 +117,7 @@ export function Footer() {
           </nav>
 
           {/* Contact */}
-          <div>
+          <div className="col-span-2 md:col-span-1">
             <h2 className={columnTitle}>Contacto</h2>
             <ul className="mt-4 space-y-4 text-sm text-dark/65">
               <li className="flex items-start gap-3">
@@ -127,13 +130,13 @@ export function Footer() {
                 <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-white text-iris ring-1 ring-sand">
                   <Mail className="size-4" aria-hidden="true" />
                 </span>
-                <a href={`mailto:${CONTACT_EMAIL}`} className="min-w-0 break-words transition-colors hover:text-iris">{CONTACT_EMAIL}</a>
+                <a href={`mailto:${CONTACT_EMAIL}`} className={`${contactLink} break-words`}>{CONTACT_EMAIL}</a>
               </li>
               <li className="flex items-center gap-3">
                 <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-white text-iris ring-1 ring-sand">
                   <MessageCircle className="size-4" aria-hidden="true" />
                 </span>
-                <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer" className="min-w-0 transition-colors hover:text-iris">
+                <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer" className={contactLink}>
                   <span className="sr-only">WhatsApp: </span>
                   {WHATSAPP_DISPLAY}
                   <span className="sr-only"> (se abre en una pestaña nueva)</span>

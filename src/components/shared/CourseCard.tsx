@@ -108,7 +108,8 @@ export function CourseCard({ course, detailed = false }: CourseCardProps) {
           <span className="text-sm text-dark/70">{course.instructor.name}</span>
         </div>
 
-        <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-dark/65">
+        {/* A new course has no students and no reviews yet: those figures are left out instead of printing zeros */}
+        <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-dark/65 empty:hidden">
           {course.duration && (
             <span className="flex items-center gap-1.5">
               <Clock className="size-3.5" aria-hidden="true" />
@@ -116,17 +117,21 @@ export function CourseCard({ course, detailed = false }: CourseCardProps) {
               {course.duration}
             </span>
           )}
-          <span className="flex items-center gap-1.5">
-            <Users className="size-3.5" aria-hidden="true" />
-            <span className="sr-only">Estudiantes: </span>
-            {course.enrolledCount}
-          </span>
-          <span className="flex items-center gap-1.5">
-            <Star className="size-3.5 fill-amber-400 text-amber-400" aria-hidden="true" />
-            <span className="sr-only">Calificación: </span>
-            {course.rating.toFixed(1)}
-            {detailed && ` (${course.reviewsCount})`}
-          </span>
+          {course.enrolledCount > 0 && (
+            <span className="flex items-center gap-1.5">
+              <Users className="size-3.5" aria-hidden="true" />
+              <span className="sr-only">Estudiantes: </span>
+              {course.enrolledCount}
+            </span>
+          )}
+          {course.reviewsCount > 0 && (
+            <span className="flex items-center gap-1.5">
+              <Star className="size-3.5 fill-amber-400 text-amber-400" aria-hidden="true" />
+              <span className="sr-only">Calificación: </span>
+              {course.rating.toFixed(1)}
+              {detailed && ` (${course.reviewsCount})`}
+            </span>
+          )}
           {detailed && modules > 0 && (
             <span className="flex items-center gap-1.5">
               <BookOpen className="size-3.5" aria-hidden="true" />

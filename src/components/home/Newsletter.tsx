@@ -19,7 +19,7 @@ export function Newsletter() {
   };
 
   return (
-    <section className="py-16 sm:py-20">
+    <section className="py-12 sm:py-20">
       <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
         {/* The photo is the panel's backdrop (bg-ribbon shows while it loads). Its left half is empty paper,
             which is where the copy sits from md up; the plane flies in on the right */}

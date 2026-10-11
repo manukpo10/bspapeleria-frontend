@@ -42,7 +42,7 @@ export function CourseSlider({ title, subtitle, script, courses, loading = false
 
   return (
     // The swiper keeps its own 3.5rem of bottom padding (shadows + bullets), so the section needs less
-    <section className="pb-6 pt-16 sm:pb-8 sm:pt-20">
+    <section className="pb-6 pt-12 sm:pb-8 sm:pt-20">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <SectionHeader
           title={title}
@@ -66,19 +66,22 @@ export function CourseSlider({ title, subtitle, script, courses, loading = false
         ) : (
           <Swiper
             modules={[Navigation, Pagination, Autoplay]}
-            spaceBetween={24}
-            slidesPerView={1}
+            // Phones: a little more than one card so the next one peeks. Swiper does not carry spaceBetween from
+            // one breakpoint to the next, so every breakpoint states its own
+            spaceBetween={12}
+            slidesPerView={1.12}
             navigation={{ prevEl, nextEl }}
             pagination={{ clickable: true }}
             autoplay={{ delay: 5000, disableOnInteraction: false }}
             breakpoints={{
-              640: { slidesPerView: 2 },
-              1024: { slidesPerView: 3 },
+              640: { slidesPerView: 2, spaceBetween: 24 },
+              1024: { slidesPerView: 3, spaceBetween: 24 },
             }}
             className={`${swiperLayout} ${swiperBullets}`}
           >
             {courses.map((course) => (
-              <SwiperSlide key={course.id}>
+              // Swiper sets height: 100% on slides; auto lets the flex row stretch them to the tallest card
+              <SwiperSlide key={course.id} className="h-auto!">
                 <CourseCard course={course} />
               </SwiperSlide>
             ))}

@@ -23,7 +23,7 @@ function ProductSkeleton() {
   return (
     <div className="card overflow-hidden" aria-hidden="true">
       <div className="aspect-square animate-pulse bg-sand/40" />
-      <div className="space-y-3 p-5">
+      <div className="space-y-3 p-3 sm:p-5">
         <div className="h-4 w-4/5 animate-pulse rounded-full bg-sand/40" />
         <div className="h-4 w-3/5 animate-pulse rounded-full bg-sand/40" />
         <div className="h-6 w-2/5 animate-pulse rounded-full bg-sand/40" />
@@ -41,7 +41,7 @@ export function ProductSlider({ title, subtitle, script, products, loading = fal
 
   return (
     // The swiper keeps its own 3.5rem of bottom padding (shadows + bullets), so the section needs less
-    <section className="pb-6 pt-16 sm:pb-8 sm:pt-20">
+    <section className="pb-6 pt-12 sm:pb-8 sm:pt-20">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <SectionHeader
           title={title}
@@ -54,12 +54,9 @@ export function ProductSlider({ title, subtitle, script, products, loading = fal
         {loading ? (
           <div role="status" className="pb-14">
             <span className="sr-only">Cargando productos…</span>
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            <div className="grid grid-cols-2 gap-3 sm:gap-6 lg:grid-cols-3 xl:grid-cols-4">
               {Array.from({ length: 4 }, (_, i) => (
-                <div
-                  key={i}
-                  className={cn(i === 1 && 'max-sm:hidden', i === 2 && 'max-lg:hidden', i === 3 && 'max-xl:hidden')}
-                >
+                <div key={i} className={cn(i === 2 && 'max-lg:hidden', i === 3 && 'max-xl:hidden')}>
                   <ProductSkeleton />
                 </div>
               ))}
@@ -68,20 +65,23 @@ export function ProductSlider({ title, subtitle, script, products, loading = fal
         ) : (
           <Swiper
             modules={[Navigation, Pagination, Autoplay]}
-            spaceBetween={24}
-            slidesPerView={1}
+            // Phones: 1.6 compact cards so the next one peeks. Swiper does not carry spaceBetween from one
+            // breakpoint to the next, so every breakpoint states its own
+            spaceBetween={12}
+            slidesPerView={1.6}
             navigation={{ prevEl, nextEl }}
             pagination={{ clickable: true }}
             autoplay={{ delay: 4000, disableOnInteraction: false }}
             breakpoints={{
-              640: { slidesPerView: 2 },
-              1024: { slidesPerView: 3 },
-              1280: { slidesPerView: 4 },
+              640: { slidesPerView: 2, spaceBetween: 24 },
+              1024: { slidesPerView: 3, spaceBetween: 24 },
+              1280: { slidesPerView: 4, spaceBetween: 24 },
             }}
             className={`${swiperLayout} ${swiperBullets}`}
           >
             {products.map((product) => (
-              <SwiperSlide key={product.id}>
+              // Swiper sets height: 100% on slides; auto lets the flex row stretch them to the tallest card
+              <SwiperSlide key={product.id} className="h-auto!">
                 <ProductCard product={product} />
               </SwiperSlide>
             ))}

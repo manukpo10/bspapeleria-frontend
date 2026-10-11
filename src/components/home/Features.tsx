@@ -26,7 +26,7 @@ const features = [
 
 export function Features() {
   return (
-    <section className="py-16 sm:py-20">
+    <section className="py-12 sm:py-20">
       <div className="mx-auto grid max-w-7xl gap-12 px-4 sm:px-6 lg:grid-cols-12 lg:items-center lg:px-8">
         {/* Photo: a fixed 20rem tall crop on small screens, the full 4:5 portrait beside the copy from lg */}
         <div className="relative mx-auto w-full max-w-sm lg:col-span-5 lg:max-w-none">
@@ -64,12 +64,15 @@ export function Features() {
 
           <ul className="grid grid-cols-1 gap-5 sm:grid-cols-2 sm:gap-6">
             {features.map((feature) => (
-              <li key={feature.title} className="card p-6">
-                <span className="grid size-12 place-items-center rounded-2xl bg-ribbon text-dark">
+              // A row on phones (icon beside the text), the stacked card from sm
+              <li key={feature.title} className="card flex items-start gap-4 p-5 sm:block sm:p-6">
+                <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-ribbon text-dark">
                   <feature.icon className="size-6" aria-hidden="true" />
                 </span>
-                <h3 className="mt-5 font-display text-lg font-semibold text-dark">{feature.title}</h3>
-                <p className="mt-2 text-sm leading-relaxed text-dark/65">{feature.description}</p>
+                <div className="min-w-0">
+                  <h3 className="font-display text-lg font-semibold text-dark sm:mt-5">{feature.title}</h3>
+                  <p className="mt-1 text-sm leading-relaxed text-dark/65 sm:mt-2">{feature.description}</p>
+                </div>
               </li>
             ))}
           </ul>

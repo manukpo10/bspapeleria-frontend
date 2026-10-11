@@ -246,7 +246,9 @@ function QuickViewModal({ product, onClose }: { product: Product; onClose: () =>
             <h2 id="quick-view-title" className="mt-3 font-display text-2xl font-bold leading-snug text-dark">
               {product.name}
             </h2>
-            <StarRating className="mt-2" rating={product.rating} count={product.reviewsCount} size={18} />
+            {product.reviewsCount > 0 && (
+              <StarRating className="mt-2" rating={product.rating} count={product.reviewsCount} size={18} />
+            )}
             <p className="mt-4 line-clamp-3 text-sm text-dark/75">{product.shortDescription}</p>
             <div className="mt-4 flex flex-wrap items-baseline gap-x-3">
               <span className="font-display text-2xl font-bold text-dark">{formatPrice(product.price)}</span>
@@ -294,7 +296,7 @@ function SkeletonCard({ viewMode }: { viewMode: 'grid' | 'list' }) {
   return (
     <div className="card overflow-hidden" aria-hidden="true">
       <div className="aspect-square animate-pulse bg-sand/40" />
-      <div className="space-y-3 p-5">
+      <div className="space-y-3 p-3 sm:p-5">
         <div className={cn(skeletonBlock, 'h-3 w-24')} />
         <div className={cn(skeletonBlock, 'h-4 w-4/5')} />
         <div className={cn(skeletonBlock, 'h-3 w-32')} />
@@ -811,7 +813,7 @@ export default function ProductListPage() {
               <div role="status">
                 <span className="sr-only">Cargando productos…</span>
                 <div className={viewMode === 'grid'
-                  ? 'grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3'
+                  ? 'grid grid-cols-2 gap-3 sm:gap-6 xl:grid-cols-3'
                   : 'flex flex-col gap-6'
                 }>
                   {Array.from({ length: 9 }).map((_, i) => <SkeletonCard key={i} viewMode={viewMode} />)}
@@ -822,7 +824,7 @@ export default function ProductListPage() {
             ) : (
               <>
                 <div className={viewMode === 'grid'
-                  ? 'grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3'
+                  ? 'grid grid-cols-2 gap-3 sm:gap-6 xl:grid-cols-3'
                   : 'flex flex-col gap-6'
                 }>
                   {paginated.map((product) => (

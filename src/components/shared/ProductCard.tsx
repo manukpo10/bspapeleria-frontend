@@ -25,6 +25,11 @@ interface ProductCardProps {
   onQuickView?: (product: Product) => void;
 }
 
+/*
+ * The card answers to its own width, not the viewport's: the root is a size container and below 16rem (`@3xs`)
+ * it turns compact (two per row on phones, the peeking home carousel). From 16rem up every `@3xs:` class puts
+ * back the original value, so wider cards render as they always did.
+ */
 export function ProductCard({ product, layout = 'grid', detailed = false, onQuickView }: ProductCardProps) {
   const addItem = useCartStore((state) => state.addItem);
   const [wished, setWished] = useState(false);
@@ -58,10 +63,10 @@ export function ProductCard({ product, layout = 'grid', detailed = false, onQuic
   };
 
   const priceRow = (
-    <div className="flex flex-wrap items-baseline gap-x-2">
-      <span className="font-display text-lg font-bold text-dark">{formatPrice(product.price)}</span>
+    <div className="flex flex-wrap items-baseline gap-x-1.5 @3xs:gap-x-2">
+      <span className="font-display text-base font-bold text-dark @3xs:text-lg">{formatPrice(product.price)}</span>
       {product.comparePrice != null && product.comparePrice > product.price ? (
-        <del className="text-sm text-dark/65">
+        <del className="text-xs text-dark/65 @3xs:text-sm">
           <span className="sr-only">Precio anterior: </span>
           {formatPrice(product.comparePrice)}
         </del>
@@ -69,15 +74,24 @@ export function ProductCard({ product, layout = 'grid', detailed = false, onQuic
     </div>
   );
 
+  // Compact: "Agregar" on screen, the full label for assistive technology, and a 44px tall target
   const addButton = (
-    <button type="button" onClick={handleAddToCart} className={cn('btn btn-soft', !isList && 'w-full')}>
-      <ShoppingCart className="size-4" aria-hidden="true" /> Agregar al carrito
+    <button
+      type="button"
+      onClick={handleAddToCart}
+      className={cn('btn btn-soft min-h-11 px-3 py-2.5 @3xs:px-6 @3xs:py-3', !isList && 'w-full')}
+    >
+      <ShoppingCart className="size-4" aria-hidden="true" />
+      <span className="@max-3xs:sr-only">Agregar al carrito</span>
+      <span aria-hidden="true" className="@3xs:hidden">Agregar</span>
       <span className="sr-only">: {product.name}</span>
     </button>
   );
 
   return (
-    <article className={cn('card card-hover group flex overflow-hidden', isList ? 'flex-col sm:flex-row' : 'h-full flex-col')}>
+    <article
+      className={cn('card card-hover group @container flex overflow-hidden', isList ? 'flex-col sm:flex-row' : 'h-full flex-col')}
+    >
       <div className={cn('relative', isList && 'sm:w-56 sm:shrink-0')}>
         <Link
           to={href}
@@ -96,22 +110,29 @@ export function ProductCard({ product, layout = 'grid', detailed = false, onQuic
           />
         </Link>
 
-        {discount > 0 && <span className="chip absolute left-3 top-3 bg-dark text-white shadow-soft">-{discount}%</span>}
+        {discount > 0 && (
+          <span className="chip absolute left-2 top-2 bg-dark px-2 text-2xs text-white shadow-soft @3xs:left-3 @3xs:top-3 @3xs:px-3 @3xs:text-[0.8125rem]/[1.125rem]">
+            -{discount}%
+          </span>
+        )}
         {product.isDigital && (
-          <span className="chip absolute right-3 top-3 bg-white/90 text-iris shadow-soft">Digital</span>
+          <span className="chip absolute right-2 top-2 bg-white/90 px-2 text-2xs text-iris shadow-soft @3xs:right-3 @3xs:top-3 @3xs:px-3 @3xs:text-[0.8125rem]/[1.125rem]">
+            Digital
+          </span>
         )}
         {featuredOnImage && (
-          <span className="chip absolute right-3 top-3 bg-white/90 text-iris shadow-soft">
-            <Sparkles className="size-3.5" aria-hidden="true" /> Destacado
+          <span className="chip absolute right-2 top-2 bg-white/90 p-1.5 text-iris shadow-soft @3xs:right-3 @3xs:top-3 @3xs:px-3 @3xs:py-1">
+            <Sparkles className="size-3.5" aria-hidden="true" />
+            <span className="@max-3xs:sr-only">Destacado</span>
           </span>
         )}
 
-        <div className="absolute bottom-3 right-3 flex gap-2">
+        <div className="absolute bottom-2 right-2 flex gap-2 @3xs:bottom-3 @3xs:right-3">
           {onQuickView && (
             <button
               type="button"
               onClick={() => onQuickView(product)}
-              className={cn(overlayButton, 'hover:text-iris')}
+              className={cn(overlayButton, '@max-3xs:hidden hover:text-iris')}
               aria-label={`Vista rápida de ${product.name}`}
             >
               <Eye className="size-5" aria-hidden="true" />
@@ -129,14 +150,15 @@ export function ProductCard({ product, layout = 'grid', detailed = false, onQuic
         </div>
       </div>
 
-      <div className={cn('flex flex-1 flex-col p-5', isList && 'sm:p-6')}>
+      <div className={cn('flex flex-1 flex-col', isList ? 'p-5 sm:p-6' : 'p-3 @3xs:p-5')}>
         {detailed && (
           <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5">
-            <p className="text-xs text-dark/65">{categoryLabel}</p>
+            <p className="text-xs text-dark/65 @max-3xs:hidden">{categoryLabel}</p>
             {isNew && <span className="chip bg-mist text-iris">Nuevo</span>}
             {featuredInText && (
-              <span className="chip bg-mist text-iris">
-                <Sparkles className="size-3.5" aria-hidden="true" /> Destacado
+              <span className="chip bg-mist p-1.5 text-iris @3xs:px-3 @3xs:py-1">
+                <Sparkles className="size-3.5" aria-hidden="true" />
+                <span className="@max-3xs:sr-only">Destacado</span>
               </span>
             )}
             {lowStock && <span className="chip bg-rose-50 text-rose-700">Últimas unidades</span>}
@@ -145,9 +167,10 @@ export function ProductCard({ product, layout = 'grid', detailed = false, onQuic
 
         <h3
           className={cn(
-            'font-display font-semibold leading-snug text-dark line-clamp-2',
+            'font-display font-semibold text-dark line-clamp-2',
             detailed && 'mt-1.5',
-            isList && 'text-lg',
+            // leading-snug has to come after the grid sizes: tailwind-merge drops a leading-* that precedes a text size
+            isList ? 'text-lg' : 'text-xs @3xs:text-sm leading-snug',
           )}
         >
           <Link to={href} className="transition-colors hover:text-iris">
@@ -155,7 +178,14 @@ export function ProductCard({ product, layout = 'grid', detailed = false, onQuic
           </Link>
         </h3>
 
-        {detailed && <StarRating className="mt-2" rating={product.rating} count={product.reviewsCount} />}
+        {/* No stars until a product has real reviews: an empty rating reads as a bad one */}
+        {detailed && product.reviewsCount > 0 && (
+          <StarRating
+            className="mt-1.5 flex-wrap @3xs:mt-2 [&_svg]:size-3.5 @3xs:[&_svg]:size-4"
+            rating={product.rating}
+            count={product.reviewsCount}
+          />
+        )}
         {detailed && isList && product.shortDescription && (
           <p className="mt-2 line-clamp-2 text-sm text-dark/75">{product.shortDescription}</p>
         )}
@@ -168,7 +198,7 @@ export function ProductCard({ product, layout = 'grid', detailed = false, onQuic
         ) : (
           <>
             <div className="mt-2">{priceRow}</div>
-            <div className="mt-auto pt-4">{addButton}</div>
+            <div className="mt-auto pt-3 @3xs:pt-4">{addButton}</div>
           </>
         )}
       </div>
