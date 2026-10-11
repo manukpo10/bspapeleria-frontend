@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { Play, Award, BookOpen } from 'lucide-react';
+import { Play, Award, BookOpen, CircleCheck, GraduationCap } from 'lucide-react';
 import { api } from '../services/api';
-import { toast } from 'sonner';
+import { EmptyState } from '../components/shared/EmptyState';
+import { ProgressBar } from '../components/shared/ProgressBar';
+import { SectionHeading } from '../components/shared/SectionHeading';
+import { cn } from '../lib/utils';
 import type { Course, Enrollment } from '../types';
 
 export default function DashboardCoursesPage() {
@@ -61,11 +63,12 @@ export default function DashboardCoursesPage() {
 
   if (loading) {
     return (
-      <div className="space-y-6">
-        <h1 className="font-display text-2xl font-semibold text-dark">Mis Cursos</h1>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div role="status" className="space-y-6">
+        <span className="sr-only">Cargando tus cursos…</span>
+        <SectionHeading title="Mis cursos" />
+        <div className="space-y-4">
           {[1, 2].map((i) => (
-            <div key={i} className="h-48 rounded-2xl bg-sand/20 animate-pulse" />
+            <div key={i} className="h-48 animate-pulse rounded-3xl bg-sand/40 sm:h-40" />
           ))}
         </div>
       </div>
@@ -73,75 +76,106 @@ export default function DashboardCoursesPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <h1 className="font-display text-2xl font-semibold text-dark">Mis Cursos</h1>
+    <div className="animate-fade-in space-y-6">
+      <SectionHeading title="Mis cursos" />
 
-      <div className="flex gap-2">
+      <div role="group" aria-label="Filtrar cursos" className="flex flex-wrap gap-2">
         {[
           { id: 'all', label: 'Todos' },
           { id: 'in-progress', label: 'En progreso' },
           { id: 'completed', label: 'Completados' },
-        ].map((t) => (
-          <button
-            key={t.id}
-            onClick={() => setTab(t.id as typeof tab)}
-            className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${
-              tab === t.id ? 'bg-primary text-white' : 'bg-sand/30 text-dark/70 hover:bg-sand/50'
-            }`}
-          >
-            {t.label}
-          </button>
-        ))}
+        ].map((t) => {
+          const active = tab === t.id;
+          return (
+            <button
+              key={t.id}
+              type="button"
+              onClick={() => setTab(t.id as typeof tab)}
+              aria-pressed={active}
+              className={cn(
+                'min-h-11 rounded-full px-5 text-sm font-semibold transition-colors',
+                active
+                  ? 'bg-dark text-white shadow-soft'
+                  : 'bg-white text-dark/75 ring-1 ring-sand hover:text-dark hover:ring-secondary',
+              )}
+            >
+              {t.label}
+            </button>
+          );
+        })}
       </div>
 
       {filtered.length === 0 ? (
-        <div className="text-center py-12 rounded-2xl bg-sand/20 border border-sand/50">
-          <BookOpen className="w-12 h-12 text-dark/20 mx-auto mb-3" />
-          <p className="text-dark/60 mb-4">No tenés cursos en esta categoría.</p>
-          <Link to="/cursos" className="text-primary hover:underline text-sm">Explorar cursos</Link>
-        </div>
+        <EmptyState
+          className="card"
+          icon={BookOpen}
+          title="No tenés cursos en esta categoría."
+          action={<Link to="/cursos" className="btn btn-secondary">Explorar cursos</Link>}
+        >
+          Tus cursos van a aparecer acá a medida que avances.
+        </EmptyState>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {filtered.map((e, i) => {
+        <ul className="space-y-4">
+          {filtered.map((e) => {
             const c = courses.get(e.courseId);
             if (!c) return null;
+            const percent = Math.round(e.progress);
+            const done = e.progress >= 100;
             return (
-              <motion.div
-                key={e.courseId}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.05 }}
-                className="rounded-2xl bg-white border border-sand/50 overflow-hidden"
-              >
-                <div className="aspect-video relative">
-                  <img src={c.coverImage || 'https://picsum.photos/seed/course/600/400'} alt={c.title} className="w-full h-full object-cover" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-dark/60 to-transparent" />
-                  <div className="absolute bottom-3 left-3 right-3">
-                    <div className="h-1.5 rounded-full bg-white/30 overflow-hidden">
-                      <div className="h-full rounded-full bg-primary" style={{ width: `${e.progress}%` }} />
-                    </div>
-                    <p className="text-white text-xs mt-1">{e.progress}% completado</p>
+              <li key={e.courseId}>
+                <article className="card flex flex-col gap-4 p-4 sm:flex-row sm:gap-5 sm:p-5">
+                  <div className="aspect-[16/10] w-full shrink-0 overflow-hidden rounded-2xl bg-sand/40 sm:w-56">
+                    {c.coverImage ? (
+                      <img
+                        src={c.coverImage}
+                        alt=""
+                        width={640}
+                        height={400}
+                        loading="lazy"
+                        decoding="async"
+                        className="size-full object-cover"
+                      />
+                    ) : (
+                      <span className="grid size-full place-items-center bg-ribbon text-dark/60">
+                        <GraduationCap className="size-10" aria-hidden="true" />
+                      </span>
+                    )}
                   </div>
-                </div>
-                <div className="p-4">
-                  <h3 className="font-display font-medium text-dark">{c.title}</h3>
-                  <div className="flex items-center gap-3 mt-3">
-                    <Link
-                      to={`/cursos/${c.slug}/aprender`}
-                      className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-primary py-2 text-sm font-medium text-white hover:bg-secondary transition-colors"
-                    >
-                      {e.progress >= 100 ? (
-                        <><Award className="w-4 h-4" /> Ver certificado</>
-                      ) : (
-                        <><Play className="w-4 h-4" /> Continuar</>
+
+                  <div className="flex min-w-0 flex-1 flex-col">
+                    <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-2">
+                      <h3 className="min-w-0 font-display text-lg font-semibold leading-snug text-dark">{c.title}</h3>
+                      {done && (
+                        <span className="chip shrink-0 bg-success/40 text-dark">
+                          <CircleCheck className="size-3.5" aria-hidden="true" /> Completado
+                        </span>
                       )}
-                    </Link>
+                    </div>
+
+                    <div className="mt-4">
+                      <div className="flex items-baseline justify-between gap-3 text-sm">
+                        <span className="text-dark/65">Tu progreso</span>
+                        <span className="font-display font-semibold tabular-nums text-dark">{percent}% completado</span>
+                      </div>
+                      <ProgressBar className="mt-2" value={e.progress} label={`Progreso en ${c.title}`} />
+                    </div>
+
+                    <div className="mt-auto pt-5">
+                      <Link to={`/cursos/${c.slug}/aprender`} className="btn btn-primary btn-sm min-h-11 w-full sm:w-auto">
+                        {done ? (
+                          <><Award className="size-4" aria-hidden="true" /> Ver certificado</>
+                        ) : (
+                          <><Play className="size-4" aria-hidden="true" /> Continuar</>
+                        )}
+                        <span className="sr-only">: {c.title}</span>
+                      </Link>
+                    </div>
                   </div>
-                </div>
-              </motion.div>
+                </article>
+              </li>
             );
           })}
-        </div>
+        </ul>
       )}
     </div>
   );

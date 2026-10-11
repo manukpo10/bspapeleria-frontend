@@ -1,10 +1,13 @@
 import { Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { BookOpen, Award, Package, Play } from 'lucide-react';
+import { BookOpen, Award, CircleCheck, GraduationCap, Package, Play, ShoppingBag } from 'lucide-react';
+import { EmptyState } from '../components/shared/EmptyState';
+import { ProgressBar } from '../components/shared/ProgressBar';
 import { useAuthStore } from '../store/authStore';
 import { useEnrollmentStore } from '../store/enrollmentStore';
 import { courses } from '../data/mocks';
 
+const blockHeading = 'font-display text-xl font-semibold text-dark';
+const seeAllLink = 'inline-flex min-h-11 items-center rounded-lg px-1 text-sm font-semibold text-iris transition-colors hover:text-dark hover:underline';
 
 export default function DashboardOverviewPage() {
   const { user } = useAuthStore();
@@ -21,114 +24,141 @@ export default function DashboardOverviewPage() {
 
   const lastCourse = lastEnrollment ? courses.find((c) => c.id === lastEnrollment.courseId) : null;
 
-  return (
-    <div className="space-y-8">
-      <div>
-        <h1 className="font-display text-2xl font-semibold text-dark">Hola, {user?.name?.split(' ')[0]}</h1>
-        <p className="text-dark/60 text-sm">Este es tu resumen de actividad</p>
-      </div>
+  const stats = [
+    { label: 'Cursos inscritos', value: enrolledCourses, icon: BookOpen },
+    { label: 'En progreso', value: inProgress, icon: Play },
+    { label: 'Completados', value: completed, icon: CircleCheck },
+    { label: 'Certificados', value: certificates, icon: Award },
+  ];
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {[
-          { label: 'Cursos inscritos', value: enrolledCourses, icon: BookOpen, color: 'bg-primary/10 text-primary' },
-          { label: 'En progreso', value: inProgress, icon: Play, color: 'bg-warning/10 text-warning' },
-          { label: 'Completados', value: completed, icon: Award, color: 'bg-success/10 text-success' },
-          { label: 'Certificados', value: certificates, icon: Award, color: 'bg-secondary/10 text-secondary' },
-        ].map((stat, i) => (
-          <motion.div
-            key={stat.label}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.1 }}
-            className="rounded-2xl bg-white border border-sand/50 p-5"
-          >
-            <div className={`w-10 h-10 rounded-xl ${stat.color} flex items-center justify-center mb-3`}>
-              <stat.icon className="w-5 h-5" />
-            </div>
-            <p className="text-2xl font-display font-semibold text-dark">{stat.value}</p>
-            <p className="text-xs text-dark/50">{stat.label}</p>
-          </motion.div>
-        ))}
-      </div>
+  const inProgressEnrollments = enrollments.filter((e) => e.progress > 0 && e.progress < 100);
+
+  return (
+    <div className="animate-fade-in space-y-8">
+      <section aria-labelledby="overview-stats-title">
+        <h2 id="overview-stats-title" className="sr-only">Resumen de actividad</h2>
+        <ul className="grid grid-cols-2 gap-4 xl:grid-cols-4">
+          {stats.map((stat) => (
+            <li key={stat.label} className="card p-5">
+              <span className="grid size-11 place-items-center rounded-xl bg-mist text-iris">
+                <stat.icon className="size-5" aria-hidden="true" />
+              </span>
+              <p className="mt-4 font-display text-2xl font-bold tabular-nums text-dark">{stat.value}</p>
+              <p className="mt-0.5 text-sm text-dark/65">{stat.label}</p>
+            </li>
+          ))}
+        </ul>
+      </section>
 
       {lastCourse && lastEnrollment && (
-        <div className="rounded-2xl bg-white border border-sand/50 p-6">
-          <h3 className="font-display font-semibold text-dark mb-4">Continuar aprendiendo</h3>
-          <div className="flex items-start gap-4">
-            <img src={lastCourse.coverImage} alt={lastCourse.title} className="w-24 h-16 rounded-xl object-cover" />
-            <div className="flex-1">
-              <h4 className="font-display font-medium text-dark">{lastCourse.title}</h4>
-              <div className="flex items-center gap-2 mt-2">
-                <div className="flex-1 h-2 rounded-full bg-sand/50 overflow-hidden">
-                  <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${lastEnrollment.progress}%` }} />
-                </div>
-                <span className="text-xs text-dark/60">{lastEnrollment.progress}%</span>
+        <section aria-labelledby="continue-title" className="card p-5 sm:p-6">
+          <h2 id="continue-title" className={blockHeading}>Continuar aprendiendo</h2>
+          <div className="mt-5 flex flex-col gap-5 sm:flex-row sm:items-center">
+            <img
+              src={lastCourse.coverImage}
+              alt=""
+              width={640}
+              height={400}
+              loading="lazy"
+              decoding="async"
+              className="aspect-[16/10] w-full rounded-2xl bg-sand/40 object-cover sm:w-56 sm:shrink-0"
+            />
+            <div className="min-w-0 flex-1">
+              <h3 className="font-display text-lg font-semibold leading-snug text-dark">{lastCourse.title}</h3>
+              <div className="mt-3 flex items-center gap-3">
+                <ProgressBar value={lastEnrollment.progress} label={`Progreso en ${lastCourse.title}`} />
+                <span className="shrink-0 text-sm font-semibold tabular-nums text-dark">{Math.round(lastEnrollment.progress)}%</span>
               </div>
-              <Link
-                to={`/cursos/${lastCourse.slug}/aprender`}
-                className="inline-flex items-center gap-1 mt-3 text-sm text-primary hover:underline"
-              >
-                <Play className="w-3 h-3" /> Reanudar
+              <Link to={`/cursos/${lastCourse.slug}/aprender`} className="btn btn-primary btn-sm mt-5 min-h-11">
+                <Play className="size-4" aria-hidden="true" /> Reanudar
+                <span className="sr-only">: {lastCourse.title}</span>
               </Link>
             </div>
           </div>
-        </div>
+        </section>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="rounded-2xl bg-white border border-sand/50 p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="font-display font-semibold text-dark">Mis cursos en progreso</h3>
-            <Link to="/mi-cuenta/mis-cursos" className="text-xs text-primary hover:underline">Ver todos</Link>
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+        <section aria-labelledby="in-progress-title" className="card p-5 sm:p-6">
+          <div className="flex items-center justify-between gap-3">
+            <h2 id="in-progress-title" className={blockHeading}>Mis cursos en progreso</h2>
+            <Link to="/mi-cuenta/mis-cursos" className={seeAllLink}>Ver todos</Link>
           </div>
-          <div className="space-y-3">
-            {enrollments.filter((e) => e.progress > 0 && e.progress < 100).slice(0, 3).map((e) => {
-              const c = courses.find((c) => c.id === e.courseId);
-              if (!c) return null;
-              return (
-                <div key={e.courseId} className="flex items-center gap-3">
-                  <img src={c.coverImage} alt={c.title} className="w-12 h-12 rounded-lg object-cover" />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-dark truncate">{c.title}</p>
-                    <div className="flex items-center gap-2 mt-1">
-                      <div className="flex-1 h-1.5 rounded-full bg-sand/50 overflow-hidden">
-                        <div className="h-full rounded-full bg-primary" style={{ width: `${e.progress}%` }} />
+          {inProgressEnrollments.length > 0 ? (
+            <ul className="mt-4 space-y-4">
+              {inProgressEnrollments.slice(0, 3).map((e) => {
+                const c = courses.find((c) => c.id === e.courseId);
+                if (!c) return null;
+                return (
+                  <li key={e.courseId} className="flex items-center gap-3">
+                    <img
+                      src={c.coverImage}
+                      alt=""
+                      width={56}
+                      height={56}
+                      loading="lazy"
+                      decoding="async"
+                      className="size-14 shrink-0 rounded-xl bg-sand/40 object-cover"
+                    />
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium text-dark">{c.title}</p>
+                      <div className="mt-2 flex items-center gap-2">
+                        <ProgressBar size="sm" value={e.progress} label={`Progreso en ${c.title}`} />
+                        <span className="shrink-0 text-xs tabular-nums text-dark/65">{Math.round(e.progress)}%</span>
                       </div>
-                      <span className="text-[10px] text-dark/50">{e.progress}%</span>
                     </div>
-                  </div>
-                  <Link to={`/cursos/${c.slug}/aprender`} className="p-2 rounded-full bg-sand/30 hover:bg-sand/50 transition-colors">
-                    <Play className="w-4 h-4 text-dark" />
-                  </Link>
-                </div>
-              );
-            })}
-            {enrollments.filter((e) => e.progress > 0 && e.progress < 100).length === 0 && (
-              <p className="text-sm text-dark/60">No tenés cursos en progreso.</p>
-            )}
-          </div>
-        </div>
+                    <Link
+                      to={`/cursos/${c.slug}/aprender`}
+                      aria-label={`Continuar ${c.title}`}
+                      className="grid size-11 shrink-0 place-items-center rounded-full bg-mist text-iris transition-colors hover:bg-sand/50 hover:text-dark"
+                    >
+                      <Play className="size-4" aria-hidden="true" />
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          ) : (
+            <EmptyState
+              compact
+              icon={GraduationCap}
+              title="No tenés cursos en progreso."
+              action={<Link to="/cursos" className="btn btn-secondary btn-sm min-h-11">Ver cursos</Link>}
+            />
+          )}
+        </section>
 
-        <div className="rounded-2xl bg-white border border-sand/50 p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="font-display font-semibold text-dark">Últimos pedidos</h3>
-            <Link to="/mi-cuenta/pedidos" className="text-xs text-primary hover:underline">Ver todos</Link>
+        <section aria-labelledby="recent-orders-title" className="card p-5 sm:p-6">
+          <div className="flex items-center justify-between gap-3">
+            <h2 id="recent-orders-title" className={blockHeading}>Últimos pedidos</h2>
+            <Link to="/mi-cuenta/pedidos" className={seeAllLink}>Ver todos</Link>
           </div>
-          <div className="space-y-3">
-            {user?.orders?.slice(0, 3).map((orderId) => (
-              <div key={orderId} className="flex items-center justify-between text-sm">
-                <div className="flex items-center gap-3">
-                  <Package className="w-4 h-4 text-dark/40" />
-                  <span className="text-dark">{orderId}</span>
-                </div>
-                <Link to="/mi-cuenta/pedidos" className="text-primary hover:underline text-xs">Ver</Link>
-              </div>
-            ))}
-            {(!user?.orders || user.orders.length === 0) && (
-              <p className="text-sm text-dark/60">No tenés pedidos aún.</p>
-            )}
-          </div>
-        </div>
+          {user?.orders && user.orders.length > 0 ? (
+            <ul className="mt-4 divide-y divide-sand/60">
+              {user.orders.slice(0, 3).map((orderId) => (
+                <li key={orderId} className="flex items-center justify-between gap-3 py-2">
+                  <div className="flex min-w-0 items-center gap-3">
+                    <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-mist text-iris">
+                      <Package className="size-5" aria-hidden="true" />
+                    </span>
+                    <span className="truncate text-sm font-medium text-dark">{orderId}</span>
+                  </div>
+                  <Link to="/mi-cuenta/pedidos" className="btn btn-ghost btn-sm min-h-11 shrink-0">
+                    Ver
+                    <span className="sr-only"> pedido {orderId}</span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <EmptyState
+              compact
+              icon={ShoppingBag}
+              title="No tenés pedidos aún."
+              action={<Link to="/productos" className="btn btn-secondary btn-sm min-h-11">Ver productos</Link>}
+            />
+          )}
+        </section>
       </div>
     </div>
   );

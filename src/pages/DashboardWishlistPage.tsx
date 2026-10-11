@@ -1,8 +1,11 @@
 import { Link } from 'react-router-dom';
 import { Heart, ShoppingCart, X } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
+import { EmptyState } from '../components/shared/EmptyState';
+import { SectionHeading } from '../components/shared/SectionHeading';
 import { products, courses } from '../data/mocks';
-import { formatPrice } from '../lib/utils';
+import { PRODUCT_CATEGORIES } from '../lib/constants';
+import { cn, formatPrice } from '../lib/utils';
 import { useCartStore } from '../store/cartStore';
 import { toast } from 'sonner';
 
@@ -22,61 +25,95 @@ export default function DashboardWishlistPage() {
   };
 
   return (
-    <div className="space-y-6">
-      <h1 className="font-display text-2xl font-semibold text-dark">Wishlist</h1>
+    <div className="animate-fade-in space-y-6">
+      <SectionHeading title="Wishlist" />
 
       {wishlistItems.length === 0 ? (
-        <div className="text-center py-12 rounded-2xl bg-sand/20 border border-sand/50">
-          <Heart className="w-12 h-12 text-dark/20 mx-auto mb-3" />
-          <p className="text-dark/60 mb-4">Tu wishlist está vacía.</p>
-          <Link to="/productos" className="text-primary hover:underline text-sm">Ver productos</Link>
-        </div>
+        <EmptyState
+          className="card"
+          icon={Heart}
+          title="Tu wishlist está vacía."
+          action={<Link to="/productos" className="btn btn-secondary">Ver productos</Link>}
+        >
+          Guardá lo que te guste y lo vas a encontrar acá.
+        </EmptyState>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <ul className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
           {wishlistItems.map((item) => {
             if (!item) return null;
             const isProduct = 'category' in item;
+            const name = isProduct ? item.name : item.title;
+            const image = isProduct ? item.images[0] : item.coverImage;
+            const href = isProduct ? `/productos/${item.slug}` : `/cursos/${item.slug}`;
+            const kind = isProduct
+              ? PRODUCT_CATEGORIES.find((c) => c.id === item.category)?.name ?? item.category
+              : 'Curso';
             return (
-              <div key={item.id} className="rounded-2xl bg-white border border-sand/50 overflow-hidden">
-                <div className="aspect-video relative">
-                  <img
-                    src={isProduct ? item.images[0] : item.coverImage}
-                    alt={isProduct ? item.name : item.title}
-                    className="w-full h-full object-cover"
-                  />
-                  <button
-                    onClick={() => removeFromWishlist(item.id)}
-                    className="absolute top-2 right-2 p-2 rounded-full bg-white/80 text-error hover:bg-white transition-colors"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                </div>
-                <div className="p-4">
-                  <p className="font-display font-medium text-dark text-sm">{isProduct ? item.name : item.title}</p>
-                  <p className="text-primary font-semibold text-sm mt-1">{formatPrice(item.price)}</p>
-                  <button
-                    onClick={() => {
-                      addItem({
-                        id: `cart-${item.id}`,
-                        type: isProduct ? 'product' : 'course',
-                        itemId: item.id,
-                        name: isProduct ? item.name : item.title,
-                        image: isProduct ? item.images[0] : item.coverImage,
-                        price: item.price,
-                        quantity: 1,
-                        isDigital: isProduct ? item.isDigital : true,
-                      });
-                      toast.success('Agregado al carrito');
-                    }}
-                    className="mt-3 w-full flex items-center justify-center gap-2 rounded-xl bg-sand/50 py-2 text-sm font-medium text-dark hover:bg-primary hover:text-white transition-colors"
-                  >
-                    <ShoppingCart className="w-4 h-4" /> Mover al carrito
-                  </button>
-                </div>
-              </div>
+              <li key={item.id}>
+                <article className="card card-hover group flex h-full flex-col overflow-hidden">
+                  <div className="relative">
+                    <Link
+                      to={href}
+                      tabIndex={-1}
+                      aria-hidden="true"
+                      className={cn('relative block overflow-hidden bg-sand/40', isProduct ? 'aspect-square' : 'aspect-[16/10]')}
+                    >
+                      <img
+                        src={image}
+                        alt=""
+                        width={isProduct ? 600 : 640}
+                        height={isProduct ? 600 : 400}
+                        loading="lazy"
+                        decoding="async"
+                        className="size-full object-cover transition-transform duration-500 group-hover:scale-105"
+                      />
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={() => removeFromWishlist(item.id)}
+                      aria-label={`Quitar ${name} de la wishlist`}
+                      className="absolute right-3 top-3 grid size-11 place-items-center rounded-full bg-white/90 text-dark/70 shadow-soft backdrop-blur-sm transition-colors hover:bg-white hover:text-rose-700"
+                    >
+                      <X className="size-5" aria-hidden="true" />
+                    </button>
+                  </div>
+
+                  <div className="flex flex-1 flex-col p-5">
+                    <p className="text-xs text-dark/65">{kind}</p>
+                    <h3 className="mt-1 font-display font-semibold leading-snug text-dark line-clamp-2">
+                      <Link to={href} className="transition-colors hover:text-iris">
+                        {name}
+                      </Link>
+                    </h3>
+                    <p className="mt-2 font-display text-lg font-bold text-dark">{formatPrice(item.price)}</p>
+                    <div className="mt-auto pt-4">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          addItem({
+                            id: `cart-${item.id}`,
+                            type: isProduct ? 'product' : 'course',
+                            itemId: item.id,
+                            name: isProduct ? item.name : item.title,
+                            image: isProduct ? item.images[0] : item.coverImage,
+                            price: item.price,
+                            quantity: 1,
+                            isDigital: isProduct ? item.isDigital : true,
+                          });
+                          toast.success('Agregado al carrito');
+                        }}
+                        className="btn btn-soft w-full"
+                      >
+                        <ShoppingCart className="size-4" aria-hidden="true" /> Mover al carrito
+                        <span className="sr-only">: {name}</span>
+                      </button>
+                    </div>
+                  </div>
+                </article>
+              </li>
             );
           })}
-        </div>
+        </ul>
       )}
     </div>
   );

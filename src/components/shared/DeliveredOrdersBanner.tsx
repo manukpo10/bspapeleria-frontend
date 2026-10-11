@@ -15,58 +15,57 @@ export function DeliveredOrdersBanner() {
   }, {});
 
   return (
-    <div className="space-y-3 mb-6">
+    <section aria-label="Pedidos entregados" className="mb-6 space-y-3">
       {Object.entries(byOrder).map(([orderId, orderItems]) => {
         const hasCourses = orderItems.some((i) => i.type === 'course');
         const hasProducts = orderItems.some((i) => i.type === 'product');
+        const title = orderItems.length === 1
+          ? `"${orderItems[0].name}" ya está disponible`
+          : `Tu pedido #${orderItems[0].orderNumber} está listo`;
 
         return (
-          <div
+          <article
             key={orderId}
-            className="relative rounded-2xl bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/20 p-4 flex items-start gap-4"
+            className="relative flex items-start gap-4 rounded-3xl bg-ribbon p-5 pr-14 shadow-soft sm:p-6 sm:pr-16"
           >
             {/* Icono */}
-            <div className="shrink-0 w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center">
-              <PartyPopper className="w-5 h-5 text-primary" />
-            </div>
+            <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-white/80 text-iris">
+              <PartyPopper className="size-6" aria-hidden="true" />
+            </span>
 
             {/* Contenido */}
-            <div className="flex-1 min-w-0">
-              <p className="font-display font-semibold text-dark text-sm">
-                {orderItems.length === 1
-                  ? `"${orderItems[0].name}" ya esta disponible`
-                  : `Tu pedido #${orderItems[0].orderNumber} esta listo`}
-              </p>
-              <p className="text-xs text-dark/60 mt-0.5">
+            <div className="min-w-0 flex-1">
+              <h2 className="font-display text-lg font-semibold leading-snug text-dark">{title}</h2>
+              <p className="mt-1 text-sm text-dark/80">
                 {hasCourses && hasProducts
-                  ? 'Tus cursos y productos ya estan disponibles en tu cuenta.'
+                  ? 'Tus cursos y productos ya están disponibles en tu cuenta.'
                   : hasCourses
-                  ? 'Tu curso ya esta disponible. Podes empezar a verlo ahora.'
-                  : 'Tu producto ya esta listo para retirar o fue entregado.'}
+                  ? 'Tu curso ya está disponible. Podés empezar a verlo ahora.'
+                  : 'Tu producto ya está listo para retirar o fue entregado.'}
               </p>
 
               {/* Items */}
-              <div className="flex flex-wrap gap-2 mt-3">
+              <ul className="mt-3 flex flex-wrap gap-2">
                 {orderItems.map((item, i) => (
-                  <div key={i} className="flex items-center gap-1.5 bg-white rounded-lg px-2.5 py-1.5 border border-sand/50 shadow-sm">
+                  <li key={i} className="chip max-w-full bg-white/80 text-dark">
                     {item.type === 'course'
-                      ? <BookOpen className="w-3.5 h-3.5 text-primary shrink-0" />
-                      : <Package className="w-3.5 h-3.5 text-secondary shrink-0" />
+                      ? <BookOpen className="size-3.5 shrink-0 text-iris" aria-hidden="true" />
+                      : <Package className="size-3.5 shrink-0 text-iris" aria-hidden="true" />
                     }
-                    <span className="text-xs text-dark font-medium truncate max-w-[160px]">{item.name}</span>
-                  </div>
+                    <span className="truncate">{item.name}</span>
+                  </li>
                 ))}
-              </div>
+              </ul>
 
               {/* CTAs */}
-              <div className="flex flex-wrap gap-2 mt-3">
+              <div className="mt-4 flex flex-wrap gap-2">
                 {hasCourses && (
                   <Link
                     to="/mi-cuenta/mis-cursos"
                     onClick={() => dismiss(orderId)}
-                    className="inline-flex items-center gap-1.5 rounded-xl bg-primary px-3 py-1.5 text-xs font-medium text-white hover:bg-primary/90 transition-colors"
+                    className="btn btn-primary btn-sm min-h-11"
                   >
-                    <BookOpen className="w-3.5 h-3.5" />
+                    <BookOpen className="size-4" aria-hidden="true" />
                     Ver mis cursos
                   </Link>
                 )}
@@ -74,41 +73,34 @@ export function DeliveredOrdersBanner() {
                   <Link
                     to="/mi-cuenta/mis-productos"
                     onClick={() => dismiss(orderId)}
-                    className="inline-flex items-center gap-1.5 rounded-xl bg-secondary px-3 py-1.5 text-xs font-medium text-white hover:bg-secondary/90 transition-colors"
+                    className={hasCourses ? 'btn btn-secondary btn-sm min-h-11' : 'btn btn-primary btn-sm min-h-11'}
                   >
-                    <Package className="w-3.5 h-3.5" />
+                    <Package className="size-4" aria-hidden="true" />
                     Ver mis productos
                   </Link>
                 )}
-                <button
-                  onClick={() => dismiss(orderId)}
-                  className="inline-flex items-center gap-1.5 rounded-xl border border-sand/50 px-3 py-1.5 text-xs font-medium text-dark/60 hover:text-dark hover:bg-sand/30 transition-colors"
-                >
-                  Cerrar
-                </button>
               </div>
             </div>
 
             {/* X arriba a la derecha */}
             <button
+              type="button"
               onClick={() => dismiss(orderId)}
-              className="shrink-0 p-1 rounded-lg text-dark/30 hover:text-dark/60 hover:bg-white/50 transition-colors"
+              aria-label={`Cerrar aviso: ${title}`}
+              className="absolute right-3 top-3 grid size-11 place-items-center rounded-full text-dark/70 transition-colors hover:bg-white/60 hover:text-dark"
             >
-              <X className="w-4 h-4" />
+              <X className="size-5" aria-hidden="true" />
             </button>
-          </div>
+          </article>
         );
       })}
 
       {/* Dismiss all si hay más de una orden */}
       {Object.keys(byOrder).length > 1 && (
-        <button
-          onClick={dismissAll}
-          className="text-xs text-dark/40 hover:text-dark/60 transition-colors"
-        >
+        <button type="button" onClick={dismissAll} className="btn btn-ghost btn-sm min-h-11">
           Cerrar todas las notificaciones
         </button>
       )}
-    </div>
+    </section>
   );
 }

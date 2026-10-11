@@ -1,17 +1,30 @@
 import { useState } from 'react';
-import { motion } from 'framer-motion';
-import { Plus, MapPin, Trash2, Star } from 'lucide-react';
+import { Plus, MapPin, Trash2, Star, Pencil } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
+import { EmptyState } from '../components/shared/EmptyState';
+import { SectionHeading } from '../components/shared/SectionHeading';
+import { TextField } from '../components/shared/TextField';
 import type { Address } from '../types';
 import { toast } from 'sonner';
+
+const FIRST_FIELD_ID = 'addr-fullName';
 
 export default function DashboardAddressesPage() {
   const { user, updateAddresses } = useAuthStore();
   const [editing, setEditing] = useState<Address | null>(null);
   const [form, setForm] = useState<Partial<Address>>({});
+  // Set when the user tries to save with a required field empty, so the errors show up only then
+  const [attempted, setAttempted] = useState(false);
+
+  const focusForm = () => document.getElementById(FIRST_FIELD_ID)?.focus();
 
   const handleSave = async () => {
-    if (!user || !form.fullName || !form.street || !form.city) return;
+    if (!user) return;
+    if (!form.fullName || !form.street || !form.city) {
+      setAttempted(true);
+      document.getElementById(!form.fullName ? FIRST_FIELD_ID : !form.street ? 'addr-street' : 'addr-city')?.focus();
+      return;
+    }
     const newAddress: Address = {
       id: editing?.id ?? `addr-${Date.now()}`,
       fullName: form.fullName,
@@ -38,6 +51,7 @@ export default function DashboardAddressesPage() {
     toast.success(editing ? 'Dirección actualizada' : 'Dirección agregada');
     setEditing(null);
     setForm({});
+    setAttempted(false);
   };
 
   const handleDelete = (id: string) => {
@@ -46,79 +60,153 @@ export default function DashboardAddressesPage() {
     toast.success('Dirección eliminada');
   };
 
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="font-display text-2xl font-semibold text-dark">Direcciones</h1>
-        <button
-          onClick={() => { setEditing(null); setForm({}); }}
-          className="flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-secondary transition-colors"
-        >
-          <Plus className="w-4 h-4" /> Nueva dirección
-        </button>
-      </div>
+  const requiredError = (value: string | undefined, message: string) => (attempted && !value ? message : undefined);
 
-      {editing !== undefined && (
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="rounded-2xl bg-white border border-sand/50 p-6"
-        >
-          <h3 className="font-display font-medium text-dark mb-4">{editing ? 'Editar dirección' : 'Nueva dirección'}</h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-            <input placeholder="Nombre completo" value={form.fullName ?? ''} onChange={(e) => setForm({ ...form, fullName: e.target.value })} className="rounded-xl border border-sand bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50" />
-            <input placeholder="Calle y número" value={form.street ?? ''} onChange={(e) => setForm({ ...form, street: e.target.value })} className="rounded-xl border border-sand bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50" />
-            <input placeholder="Ciudad" value={form.city ?? ''} onChange={(e) => setForm({ ...form, city: e.target.value })} className="rounded-xl border border-sand bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50" />
-            <input placeholder="Provincia" value={form.province ?? ''} onChange={(e) => setForm({ ...form, province: e.target.value })} className="rounded-xl border border-sand bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50" />
-            <input placeholder="Código postal" value={form.zipCode ?? ''} onChange={(e) => setForm({ ...form, zipCode: e.target.value })} className="rounded-xl border border-sand bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50" />
-            <input placeholder="Teléfono" value={form.phone ?? ''} onChange={(e) => setForm({ ...form, phone: e.target.value })} className="rounded-xl border border-sand bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50" />
-          </div>
-          <label className="flex items-center gap-2 text-sm text-dark/70 mb-4">
-            <input type="checkbox" checked={form.isDefault ?? false} onChange={(e) => setForm({ ...form, isDefault: e.target.checked })} className="rounded border-sand text-primary focus:ring-primary" />
-            Dirección predeterminada
-          </label>
-          <div className="flex gap-3">
-            <button onClick={handleSave} className="rounded-xl bg-primary px-5 py-2 text-sm font-medium text-white hover:bg-secondary transition-colors">Guardar</button>
-            <button onClick={() => setEditing(null)} className="rounded-xl border border-sand px-5 py-2 text-sm font-medium text-dark hover:bg-sand/30 transition-colors">Cancelar</button>
-          </div>
-        </motion.div>
+  return (
+    <div className="animate-fade-in space-y-6">
+      <SectionHeading
+        title="Direcciones"
+        action={
+          <button
+            type="button"
+            onClick={() => { setEditing(null); setForm({}); setAttempted(false); focusForm(); }}
+            className="btn btn-primary btn-sm min-h-11"
+          >
+            <Plus className="size-4" aria-hidden="true" /> Nueva dirección
+          </button>
+        }
+      />
+
+      {user?.addresses && user.addresses.length > 0 ? (
+        <ul className="space-y-4">
+          {user.addresses.map((addr) => (
+            <li key={addr.id}>
+              <article className="card flex flex-col gap-4 p-5 sm:flex-row sm:items-start sm:justify-between sm:p-6">
+                <div className="flex min-w-0 items-start gap-4">
+                  <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-mist text-iris">
+                    <MapPin className="size-5" aria-hidden="true" />
+                  </span>
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
+                      <h3 className="font-display font-semibold text-dark">{addr.fullName}</h3>
+                      {addr.isDefault && (
+                        <span className="chip bg-mist text-iris">
+                          <Star className="size-3.5 fill-current" aria-hidden="true" /> Predeterminada
+                        </span>
+                      )}
+                    </div>
+                    <p className="mt-1 text-sm text-dark/75">{addr.street}, {addr.city}, {addr.province}</p>
+                    <p className="mt-0.5 text-sm text-dark/65">{addr.zipCode} · {addr.phone}</p>
+                  </div>
+                </div>
+                <div className="flex shrink-0 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => { setEditing(addr); setForm(addr); setAttempted(false); focusForm(); }}
+                    className="btn btn-ghost btn-sm min-h-11"
+                  >
+                    <Pencil className="size-4" aria-hidden="true" /> Editar
+                    <span className="sr-only"> dirección de {addr.fullName}</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleDelete(addr.id)}
+                    className="btn btn-sm min-h-11 text-rose-700 hover:bg-rose-50"
+                  >
+                    <Trash2 className="size-4" aria-hidden="true" /> Eliminar
+                    <span className="sr-only"> dirección de {addr.fullName}</span>
+                  </button>
+                </div>
+              </article>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <EmptyState className="card" icon={MapPin} title="No tenés direcciones guardadas.">
+          Completá el formulario de abajo para agregar la primera.
+        </EmptyState>
       )}
 
-      <div className="space-y-3">
-        {user?.addresses.map((addr) => (
-          <motion.div
-            key={addr.id}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="rounded-2xl bg-white border border-sand/50 p-5 flex items-start justify-between"
-          >
-            <div className="flex items-start gap-3">
-              <MapPin className="w-5 h-5 text-primary mt-0.5" />
-              <div>
-                <p className="font-medium text-dark text-sm">{addr.fullName}</p>
-                <p className="text-sm text-dark/60">{addr.street}, {addr.city}, {addr.province}</p>
-                <p className="text-xs text-dark/40">{addr.zipCode} · {addr.phone}</p>
-                {addr.isDefault && (
-                  <span className="inline-flex items-center gap-1 mt-1 text-xs text-primary">
-                    <Star className="w-3 h-3 fill-primary" /> Predeterminada
-                  </span>
-                )}
-              </div>
-            </div>
-            <div className="flex gap-2">
-              <button onClick={() => { setEditing(addr); setForm(addr); }} className="p-2 rounded-full hover:bg-sand/50 transition-colors text-dark/40 hover:text-dark">
-                <Plus className="w-4 h-4" />
-              </button>
-              <button onClick={() => handleDelete(addr.id)} className="p-2 rounded-full hover:bg-error/10 transition-colors text-dark/40 hover:text-error">
-                <Trash2 className="w-4 h-4" />
-              </button>
-            </div>
-          </motion.div>
-        ))}
-        {(!user?.addresses || user.addresses.length === 0) && (
-          <p className="text-sm text-dark/60">No tenés direcciones guardadas.</p>
-        )}
-      </div>
+      {editing !== undefined && (
+        <section aria-labelledby="address-form-title" className="card animate-fade-in p-6 sm:p-8">
+          <h3 id="address-form-title" className="font-display text-xl font-semibold text-dark">
+            {editing ? 'Editar dirección' : 'Nueva dirección'}
+          </h3>
+          <p className="mt-1 text-sm text-dark/65">Los campos con asterisco son obligatorios.</p>
+
+          <div className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2">
+            <TextField
+              id={FIRST_FIELD_ID}
+              label="Nombre completo"
+              required
+              autoComplete="name"
+              value={form.fullName ?? ''}
+              error={requiredError(form.fullName, 'Ingresá el nombre completo.')}
+              onChange={(v) => setForm({ ...form, fullName: v })}
+            />
+            <TextField
+              id="addr-street"
+              label="Calle y número"
+              required
+              autoComplete="street-address"
+              value={form.street ?? ''}
+              error={requiredError(form.street, 'Ingresá la calle y el número.')}
+              onChange={(v) => setForm({ ...form, street: v })}
+            />
+            <TextField
+              id="addr-city"
+              label="Ciudad"
+              required
+              autoComplete="address-level2"
+              value={form.city ?? ''}
+              error={requiredError(form.city, 'Ingresá la ciudad.')}
+              onChange={(v) => setForm({ ...form, city: v })}
+            />
+            <TextField
+              id="addr-province"
+              label="Provincia"
+              autoComplete="address-level1"
+              value={form.province ?? ''}
+              onChange={(v) => setForm({ ...form, province: v })}
+            />
+            <TextField
+              id="addr-zip"
+              label="Código postal"
+              autoComplete="postal-code"
+              value={form.zipCode ?? ''}
+              onChange={(v) => setForm({ ...form, zipCode: v })}
+            />
+            <TextField
+              id="addr-phone"
+              label="Teléfono"
+              type="tel"
+              autoComplete="tel"
+              value={form.phone ?? ''}
+              onChange={(v) => setForm({ ...form, phone: v })}
+            />
+          </div>
+
+          <label htmlFor="addr-default" className="mt-5 flex min-h-11 cursor-pointer items-center gap-3 text-sm font-medium text-dark">
+            <input
+              id="addr-default"
+              type="checkbox"
+              checked={form.isDefault ?? false}
+              onChange={(e) => setForm({ ...form, isDefault: e.target.checked })}
+              className="size-5 shrink-0 rounded accent-iris"
+            />
+            Dirección predeterminada
+          </label>
+
+          <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+            <button type="button" onClick={handleSave} className="btn btn-primary">
+              Guardar
+            </button>
+            <button type="button" onClick={() => setEditing(null)} className="btn btn-secondary">
+              Cancelar
+            </button>
+          </div>
+        </section>
+      )}
     </div>
   );
 }

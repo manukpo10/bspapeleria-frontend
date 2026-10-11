@@ -1,6 +1,8 @@
 import { useState } from 'react';
-import { User, Mail, Phone, Camera } from 'lucide-react';
+import { User, Mail, Phone, Camera, Loader2 } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
+import { SectionHeading } from '../components/shared/SectionHeading';
+import { TextField } from '../components/shared/TextField';
 import { api } from '../services/api';
 import { toast } from 'sonner';
 
@@ -22,90 +24,95 @@ export default function DashboardProfilePage() {
       const updated = await api.updateProfile(user.id, form);
       updateUser(updated);
       toast.success('Perfil actualizado');
-    } catch (err: any) {
-      toast.error(err.message);
+    } catch (err) {
+      toast.error((err as { message?: string }).message);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="space-y-6">
-      <h1 className="font-display text-2xl font-semibold text-dark">Perfil</h1>
+    <div className="animate-fade-in space-y-6">
+      <SectionHeading title="Perfil" />
 
-      <div className="rounded-2xl bg-white border border-sand/50 p-6">
-        <div className="flex items-center gap-4 mb-6">
-          <div className="relative">
-            <img
-              src={user?.avatar ?? `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name ?? 'U')}`}
-              alt={user?.name}
-              className="w-20 h-20 rounded-full object-cover"
-            />
-            <button className="absolute bottom-0 right-0 p-1.5 rounded-full bg-primary text-white hover:bg-secondary transition-colors">
-              <Camera className="w-3 h-3" />
-            </button>
-          </div>
-          <div>
-            <h3 className="font-display font-medium text-dark">{user?.name}</h3>
-            <p className="text-sm text-dark/60">{user?.email}</p>
-          </div>
+      <section aria-label="Tu foto de perfil" className="card flex items-center gap-4 p-6 sm:gap-5 sm:p-8">
+        <div className="relative shrink-0">
+          <img
+            src={user?.avatar ?? `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name ?? 'U')}`}
+            alt=""
+            width={80}
+            height={80}
+            decoding="async"
+            className="size-20 rounded-full object-cover ring-4 ring-mist"
+          />
+          <button
+            type="button"
+            aria-label="Cambiar foto de perfil"
+            className="absolute -bottom-1 -right-1 grid size-9 place-items-center rounded-full bg-dark text-white shadow-soft ring-2 ring-white transition-colors hover:bg-dark/85 after:absolute after:-inset-1"
+          >
+            <Camera className="size-4" aria-hidden="true" />
+          </button>
+        </div>
+        <div className="min-w-0">
+          <p className="truncate font-display text-lg font-semibold text-dark">{user?.name}</p>
+          <p className="truncate text-sm text-dark/65">{user?.email}</p>
+        </div>
+      </section>
+
+      <form onSubmit={handleSubmit} aria-labelledby="profile-data-title" className="card p-6 sm:p-8">
+        <h3 id="profile-data-title" className="font-display text-xl font-semibold text-dark">Tus datos</h3>
+
+        <div className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2">
+          <TextField
+            id="profile-name"
+            label="Nombre"
+            icon={User}
+            autoComplete="name"
+            value={form.name}
+            onChange={(v) => setForm({ ...form, name: v })}
+          />
+          <TextField
+            id="profile-email"
+            label="Email"
+            type="email"
+            icon={Mail}
+            autoComplete="email"
+            value={form.email}
+            onChange={(v) => setForm({ ...form, email: v })}
+          />
+          <TextField
+            id="profile-phone"
+            label="Teléfono"
+            type="tel"
+            icon={Phone}
+            autoComplete="tel"
+            value={form.phone}
+            onChange={(v) => setForm({ ...form, phone: v })}
+          />
+          <TextField
+            id="profile-bio"
+            label="Bio"
+            multiline
+            rows={3}
+            hint="Contanos algo sobre vos. Es opcional."
+            className="sm:col-start-1 sm:col-end-3"
+            value={form.bio}
+            onChange={(v) => setForm({ ...form, bio: v })}
+          />
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm text-dark/60 mb-1">Nombre</label>
-              <div className="relative">
-                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-dark/40" />
-                <input
-                  value={form.name}
-                  onChange={(e) => setForm({ ...form, name: e.target.value })}
-                  className="w-full rounded-xl border border-sand bg-white pl-10 pr-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
-                />
-              </div>
-            </div>
-            <div>
-              <label className="block text-sm text-dark/60 mb-1">Email</label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-dark/40" />
-                <input
-                  type="email"
-                  value={form.email}
-                  onChange={(e) => setForm({ ...form, email: e.target.value })}
-                  className="w-full rounded-xl border border-sand bg-white pl-10 pr-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
-                />
-              </div>
-            </div>
-            <div>
-              <label className="block text-sm text-dark/60 mb-1">Teléfono</label>
-              <div className="relative">
-                <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-dark/40" />
-                <input
-                  value={form.phone}
-                  onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                  className="w-full rounded-xl border border-sand bg-white pl-10 pr-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
-                />
-              </div>
-            </div>
-          </div>
-          <div>
-            <label className="block text-sm text-dark/60 mb-1">Bio</label>
-            <textarea
-              value={form.bio}
-              onChange={(e) => setForm({ ...form, bio: e.target.value })}
-              rows={3}
-              className="w-full rounded-xl border border-sand bg-white px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none"
-            />
-          </div>
-          <button
-            type="submit"
-            disabled={loading}
-            className="rounded-2xl bg-primary px-6 py-2.5 text-sm font-medium text-white hover:bg-secondary transition-colors disabled:opacity-50"
-          >
-            {loading ? 'Guardando...' : 'Guardar cambios'}
+        <div className="mt-8">
+          <button type="submit" disabled={loading} aria-busy={loading} className="btn btn-primary w-full sm:w-auto">
+            {loading ? (
+              <>
+                <Loader2 className="size-5 animate-spin" aria-hidden="true" /> Guardando...
+              </>
+            ) : (
+              'Guardar cambios'
+            )}
           </button>
-        </form>
-      </div>
+        </div>
+      </form>
     </div>
   );
 }

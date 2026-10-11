@@ -1,30 +1,34 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef, useId, type KeyboardEvent } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
 import {
   Play, FileText, HelpCircle, FileDown, Check, ChevronLeft, ChevronRight,
-  ChevronDown, ChevronUp, BookOpen, Award, X, Clock, Download, MessageCircle,
-  ThumbsUp, Edit, Trash, MonitorPlay, Plus, Star
+  ChevronDown, BookOpen, Award, X, Clock, Download, MessageCircle,
+  ThumbsUp, Pencil, Trash2, MonitorPlay, Plus, ClipboardList, LockOpen,
+  Upload, Loader2, type LucideIcon
 } from 'lucide-react';
 import { SEO } from '../components/shared/SEO';
+import { Dialog } from '../components/shared/Dialog';
+import { ProgressBar } from '../components/shared/ProgressBar';
 import { api } from '../services/api';
 import { useAuthStore } from '../store/authStore';
 import { useEnrollmentStore } from '../store/enrollmentStore';
 import type { Course, Lesson, Topic, QAItem } from '../types';
-import { courses } from '../data/mocks';
+import { cn } from '../lib/utils';
 import { toast } from 'sonner';
 
 /* ─── helpers ─── */
 
+const LESSON_META: Record<Lesson['type'], { icon: LucideIcon; label: string }> = {
+  video: { icon: Play, label: 'Video' },
+  text: { icon: FileText, label: 'Lectura' },
+  quiz: { icon: HelpCircle, label: 'Cuestionario' },
+  assignment: { icon: ClipboardList, label: 'Tarea' },
+  file: { icon: FileDown, label: 'Material' },
+};
+
 function LessonIcon({ type }: { type: Lesson['type'] }) {
-  switch (type) {
-    case 'video': return <Play className="w-4 h-4" />;
-    case 'text': return <FileText className="w-4 h-4" />;
-    case 'quiz': return <HelpCircle className="w-4 h-4" />;
-    case 'assignment': return <FileDown className="w-4 h-4" />;
-    case 'file': return <FileDown className="w-4 h-4" />;
-    default: return <Play className="w-4 h-4" />;
-  }
+  const Icon = (LESSON_META[type] ?? LESSON_META.video).icon;
+  return <Icon className="size-4 shrink-0" aria-hidden="true" />;
 }
 
 const TAB_LIST = [
@@ -89,6 +93,22 @@ const MOCK_ANNOUNCEMENTS: MockAnnouncement[] = [
   { id: 'a2', title: 'Sesión en vivo este viernes', content: 'Este viernes 20 de enero a las 19hs haremos una sesión de preguntas y respuestas en vivo. Prepará tus consultas.', date: '2026-01-18' },
 ];
 
+/* ─── shared styles ─── */
+
+const panelTitle = 'font-display text-lg font-semibold text-dark';
+
+// Text lessons arrive as an HTML string and the Typography plugin is not installed, so the elements are styled from here
+const lessonHtml =
+  'max-w-prose text-base text-dark/75 [&>*:first-child]:mt-0 [&_p]:mt-4 ' +
+  '[&_h2]:mt-8 [&_h2]:font-display [&_h2]:text-xl [&_h2]:font-semibold [&_h2]:text-dark ' +
+  '[&_h3]:mt-6 [&_h3]:font-display [&_h3]:text-lg [&_h3]:font-semibold [&_h3]:text-dark ' +
+  '[&_ul]:mt-4 [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:mt-4 [&_ol]:list-decimal [&_ol]:pl-6 [&_li]:mt-1.5 ' +
+  '[&_a]:font-medium [&_a]:text-iris [&_a]:underline [&_strong]:font-semibold [&_strong]:text-dark ' +
+  '[&_img]:mt-4 [&_img]:h-auto [&_img]:max-w-full [&_img]:rounded-2xl [&_pre]:mt-4 [&_pre]:overflow-x-auto';
+
+const iconButton =
+  'grid size-11 shrink-0 place-items-center rounded-full text-dark/70 transition-colors hover:bg-sand/40 hover:text-dark';
+
 /* ─── sub-components (same file) ─── */
 
 function TopicItem({
@@ -102,6 +122,7 @@ function TopicItem({
   currentLessonId: string;
   onSelectLesson: (l: Lesson) => void;
 }) {
+  const panelId = useId();
   const [expanded, setExpanded] = useState(() =>
     topic.lessons.some((l) => l.id === currentLessonId)
   );
@@ -118,85 +139,94 @@ function TopicItem({
   const totalCount = topic.lessons.length;
 
   return (
-    <div className="border-b border-sand/30 last:border-b-0">
+    <li className="border-b border-sand/60 last:border-b-0">
       <button
+        type="button"
+        aria-expanded={expanded}
+        aria-controls={panelId}
         onClick={() => setExpanded(!expanded)}
-        className="w-full flex items-center justify-between p-3 hover:bg-sand/20 transition-colors"
+        className={cn(
+          'flex min-h-14 w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-mist focus-visible:-outline-offset-2',
+          expanded && 'bg-mist',
+        )}
       >
-        <span className="text-sm font-medium text-dark text-left">{topic.title}</span>
-        <div className="flex items-center gap-2 shrink-0">
-          <span className="text-[10px] text-dark/50 whitespace-nowrap">
+        <span className="min-w-0 flex-1">
+          <span className="block font-display text-sm font-semibold leading-snug text-dark">{topic.title}</span>
+          <span className="mt-0.5 block text-xs text-dark/65">
             {completedCount} de {totalCount} completadas
           </span>
-          {expanded ? (
-            <ChevronUp className="w-4 h-4 text-dark/40" />
-          ) : (
-            <ChevronDown className="w-4 h-4 text-dark/40" />
+        </span>
+        <span
+          aria-hidden="true"
+          className={cn(
+            'grid size-8 shrink-0 place-items-center rounded-full transition-all',
+            expanded ? 'rotate-180 bg-dark text-white' : 'bg-mist text-iris',
           )}
-        </div>
+        >
+          <ChevronDown className="size-5" />
+        </span>
       </button>
-      <AnimatePresence>
-        {expanded && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.25 }}
-            className="overflow-hidden"
-          >
-            <div className="divide-y divide-sand/20">
-              {topic.lessons.map((lesson) => {
-                const isActive = lesson.id === currentLessonId;
-                const isDone = enrollment?.completedLessons.includes(lesson.id);
-                return (
-                  <button
-                    key={lesson.id}
-                    onClick={() => onSelectLesson(lesson)}
-                    className={`w-full flex items-center gap-3 p-3 text-left transition-colors ${
-                      isActive
-                        ? 'bg-primary/5 border-l-[3px] border-primary'
-                        : 'hover:bg-sand/10 border-l-[3px] border-transparent'
-                    }`}
-                  >
-                    <span
-                      className={`p-1.5 rounded-md ${
-                        isActive
-                          ? 'bg-primary/10 text-primary'
-                          : 'bg-sand/40 text-dark/40'
-                      }`}
-                    >
-                      <LessonIcon type={lesson.type} />
+      <div id={panelId} hidden={!expanded} className="animate-fade-in">
+        <ul className="space-y-1 px-2 py-2">
+          {topic.lessons.map((lesson) => {
+            const isActive = lesson.id === currentLessonId;
+            const isDone = enrollment?.completedLessons.includes(lesson.id);
+            return (
+              <li key={lesson.id}>
+                <button
+                  type="button"
+                  onClick={() => onSelectLesson(lesson)}
+                  aria-current={isActive ? 'true' : undefined}
+                  className={cn(
+                    'flex min-h-14 w-full items-center gap-3 rounded-2xl px-3 py-2 text-left transition-colors focus-visible:-outline-offset-2',
+                    isActive ? 'bg-sand/50' : 'hover:bg-mist',
+                  )}
+                >
+                  {isDone ? (
+                    <span className="grid size-6 shrink-0 place-items-center rounded-full bg-iris text-white">
+                      <Check className="size-4" strokeWidth={3} aria-hidden="true" />
+                      <span className="sr-only">Completada</span>
                     </span>
-                    <div className="flex-1 min-w-0">
-                      <p
-                        className={`text-xs truncate ${
-                          isActive ? 'text-primary font-medium' : 'text-dark/70'
-                        }`}
-                      >
-                        {lesson.title}
-                      </p>
-                      <p className="text-[10px] text-dark/40 mt-0.5">
-                        {lesson.duration}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-1.5 shrink-0">
+                  ) : (
+                    <span
+                      className={cn(
+                        'grid size-6 shrink-0 place-items-center rounded-full ring-2',
+                        isActive ? 'ring-iris' : 'ring-sand',
+                      )}
+                    >
+                      {isActive && <span aria-hidden="true" className="size-2 rounded-full bg-iris" />}
+                      <span className="sr-only">{isActive ? 'En curso' : 'Pendiente'}</span>
+                    </span>
+                  )}
+                  <span className="min-w-0 flex-1">
+                    <span
+                      className={cn(
+                        'line-clamp-2 block text-sm leading-snug text-dark',
+                        isActive ? 'font-semibold' : 'font-medium',
+                      )}
+                    >
+                      {lesson.title}
+                    </span>
+                    <span className="mt-1 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-xs text-dark/65">
+                      <span className="inline-flex items-center gap-1.5">
+                        <LessonIcon type={lesson.type} />
+                        {(LESSON_META[lesson.type] ?? LESSON_META.video).label}
+                        {lesson.duration && ` · ${lesson.duration}`}
+                      </span>
                       {lesson.isPreview && (
-                        <span className="text-[10px] bg-accent/20 text-accent px-1.5 py-0.5 rounded-full font-medium">
-                          🔓 Preview
+                        <span className="chip bg-mist text-iris">
+                          <LockOpen className="size-3.5" aria-hidden="true" /> Vista previa
                         </span>
                       )}
-                      {isDone && (
-                        <Check className="w-3.5 h-3.5 text-success" />
-                      )}
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
+                    </span>
+                  </span>
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
+    </li>
   );
 }
 
@@ -216,58 +246,56 @@ function SidebarContent({
   const progress = enrollment?.progress ?? 0;
   return (
     <>
-      <div className="p-4 border-b border-sand/50">
-        <div className="flex items-start gap-3 mb-3">
+      <div className="border-b border-sand/60 p-4">
+        <div className="flex items-start gap-3">
           <img
             src={course.coverImage}
-            alt={course.title}
-            className="w-[50px] h-[50px] rounded-lg object-cover shrink-0"
+            alt=""
+            width={56}
+            height={56}
+            decoding="async"
+            className="size-14 shrink-0 rounded-2xl bg-sand/40 object-cover"
           />
           <div className="min-w-0">
-            <h3 className="font-display font-semibold text-dark text-sm leading-tight">
+            <p className="font-display text-sm font-semibold leading-snug text-dark">
               {course.title}
-            </h3>
-            <p className="text-xs text-dark/60 mt-0.5">
+            </p>
+            <p className="mt-0.5 text-xs text-dark/65">
               {course.instructor.name}
             </p>
           </div>
         </div>
-        <div className="mb-2">
-          <div className="flex items-center justify-between text-xs text-dark/60 mb-1.5">
-            <span>Tu progreso</span>
-            <span className="font-medium text-dark">{Math.round(progress)}%</span>
+        <div className="mt-4">
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-dark/65">Tu progreso</span>
+            <span className="font-display font-semibold tabular-nums text-dark">{Math.round(progress)}%</span>
           </div>
-          <div className="h-1.5 rounded-full bg-sand/50 overflow-hidden">
-            <motion.div
-              className="h-full rounded-full bg-primary"
-              initial={{ width: 0 }}
-              animate={{ width: `${progress}%` }}
-              transition={{ duration: 0.6, ease: 'easeOut' }}
-            />
-          </div>
+          <ProgressBar className="mt-2" value={progress} label="Progreso del curso" />
         </div>
         <Link
           to={`/cursos/${course.slug}`}
           onClick={onClose}
-          className="inline-flex items-center gap-1 text-xs text-primary hover:text-secondary font-medium transition-colors"
+          className="btn btn-ghost btn-sm -ml-3 mt-3 min-h-11"
         >
-          <ChevronLeft className="w-3 h-3" /> Volver al curso
+          <ChevronLeft className="size-4" aria-hidden="true" /> Volver al curso
         </Link>
       </div>
-      <div className="divide-y divide-sand/30">
-        {course.topics.map((topic) => (
-          <TopicItem
-            key={topic.id}
-            topic={topic}
-            enrollment={enrollment}
-            currentLessonId={currentLessonId}
-            onSelectLesson={(l) => {
-              onSelectLesson(l);
-              onClose?.();
-            }}
-          />
-        ))}
-      </div>
+      <nav aria-label="Temario del curso">
+        <ul>
+          {course.topics.map((topic) => (
+            <TopicItem
+              key={topic.id}
+              topic={topic}
+              enrollment={enrollment}
+              currentLessonId={currentLessonId}
+              onSelectLesson={(l) => {
+                onSelectLesson(l);
+                onClose?.();
+              }}
+            />
+          ))}
+        </ul>
+      </nav>
     </>
   );
 }
@@ -294,7 +322,8 @@ export default function CourseLearnPage() {
   const [showQuickNote, setShowQuickNote] = useState(false);
   const [quickNoteContent, setQuickNoteContent] = useState('');
   const [notesList, setNotesList] = useState<LocalNote[]>(INITIAL_NOTES);
-  const [qaList, setQaList] = useState<QAItem[]>([]);
+  const [qaList] = useState<QAItem[]>([]);
+  const tabRefs = useRef<Partial<Record<TabKey, HTMLButtonElement | null>>>({});
 
   const enrollment = useMemo(
     () => enrollments.find((e) => e.courseId === course?.id),
@@ -346,8 +375,8 @@ export default function CourseLearnPage() {
         setShowCertificate(true);
         toast.success('¡Felicitaciones! Completaste el curso');
       }
-    } catch (err: any) {
-      toast.error(err.message);
+    } catch (err) {
+      toast.error((err as { message?: string }).message);
     }
   };
 
@@ -386,8 +415,8 @@ export default function CourseLearnPage() {
       } else {
         toast.error(`No aprobaste. Puntaje: ${result.score}`);
       }
-    } catch (err: any) {
-      toast.error(err.message);
+    } catch (err) {
+      toast.error((err as { message?: string }).message);
     }
   };
 
@@ -411,13 +440,20 @@ export default function CourseLearnPage() {
         },
         ...prev,
       ]);
-    } catch (err: any) {
-      toast.error(err.message);
+    } catch (err) {
+      toast.error((err as { message?: string }).message);
     }
   };
 
   if (!course || !currentLesson) {
-    return <div className="p-8 text-center">Cargando aula...</div>;
+    return (
+      <div role="status" className="grid min-h-[50vh] place-items-center p-8 text-center">
+        <div className="flex flex-col items-center gap-3 text-dark/75">
+          <Loader2 className="size-8 animate-spin text-iris" aria-hidden="true" />
+          <p>Cargando aula...</p>
+        </div>
+      </div>
+    );
   }
 
   const isCompleted = enrollment?.completedLessons.includes(currentLesson.id) ?? false;
@@ -430,257 +466,305 @@ export default function CourseLearnPage() {
       ? qaList.slice(0, 3)
       : [...qaList, ...FALLBACK_QAS].slice(0, 3);
 
+  const overallProgress = enrollment?.progress ?? 0;
+
+  const selectLesson = (l: Lesson) => {
+    setCurrentLesson(l);
+    setQuizSubmitted(false);
+    setQuizResult(null);
+    setQuizAnswers({});
+  };
+
+  // Arrow keys, Home and End move between tabs, as in the ARIA tabs pattern
+  const handleTabKeyDown = (e: KeyboardEvent<HTMLButtonElement>, current: TabKey) => {
+    const index = TAB_LIST.findIndex((t) => t.key === current);
+    let next: number;
+    switch (e.key) {
+      case 'ArrowRight':
+        next = (index + 1) % TAB_LIST.length;
+        break;
+      case 'ArrowLeft':
+        next = (index - 1 + TAB_LIST.length) % TAB_LIST.length;
+        break;
+      case 'Home':
+        next = 0;
+        break;
+      case 'End':
+        next = TAB_LIST.length - 1;
+        break;
+      default:
+        return;
+    }
+    e.preventDefault();
+    const nextKey = TAB_LIST[next].key;
+    setActiveTab(nextKey);
+    tabRefs.current[nextKey]?.focus();
+  };
+
+  const resources = (
+    course.courseMaterials && course.courseMaterials.length > 0
+      ? course.courseMaterials.map((f) => ({
+          name: f.name,
+          size: 'Descargable',
+          url: f.url,
+        }))
+      : currentLesson.files && currentLesson.files.length > 0
+      ? currentLesson.files.map((f) => ({
+          name: f.name,
+          size: 'Descargable',
+          url: f.url,
+        }))
+      : MOCK_RESOURCES.map((r) => ({ ...r, url: '#' }))
+  );
+
   return (
     <>
       <SEO title={`Aula - ${course.title}`} />
-      <div className="flex h-[calc(100vh-4rem)]">
+      <div className="flex h-[calc(100dvh-5.0625rem)]">
         {/* Desktop Sidebar */}
-        <AnimatePresence>
-          {sidebarOpen && (
-            <motion.aside
-              initial={{ width: 0, opacity: 0 }}
-              animate={{ width: 320, opacity: 1 }}
-              exit={{ width: 0, opacity: 0 }}
-              transition={{ duration: 0.3, ease: 'easeInOut' }}
-              className="hidden lg:flex border-r border-sand/50 bg-white overflow-y-auto shrink-0 flex-col"
-            >
-              <SidebarContent
-                course={course}
-                enrollment={enrollment}
-                currentLessonId={currentLesson.id}
-                onSelectLesson={(l) => {
-                  setCurrentLesson(l);
-                  setQuizSubmitted(false);
-                  setQuizResult(null);
-                  setQuizAnswers({});
-                }}
-              />
-            </motion.aside>
-          )}
-        </AnimatePresence>
+        {sidebarOpen && (
+          <aside
+            aria-label="Temario del curso"
+            className="hidden w-80 shrink-0 flex-col overflow-y-auto border-r border-sand/60 bg-white lg:flex"
+          >
+            <SidebarContent
+              course={course}
+              enrollment={enrollment}
+              currentLessonId={currentLesson.id}
+              onSelectLesson={selectLesson}
+            />
+          </aside>
+        )}
 
         {/* Mobile Sidebar Drawer */}
-        <AnimatePresence>
-          {mobileSidebarOpen && (
-            <>
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="fixed inset-0 z-40 bg-dark/40 backdrop-blur-sm lg:hidden"
-                onClick={() => setMobileSidebarOpen(false)}
-              />
-              <motion.aside
-                initial={{ x: '-100%' }}
-                animate={{ x: 0 }}
-                exit={{ x: '-100%' }}
-                transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-                className="fixed left-0 top-0 bottom-0 z-50 w-[320px] bg-white overflow-y-auto lg:hidden shadow-2xl flex flex-col"
-              >
-                <div className="p-4 border-b border-sand/50 flex items-center justify-between">
-                  <span className="font-display font-semibold text-sm text-dark">Temario</span>
-                  <button
-                    onClick={() => setMobileSidebarOpen(false)}
-                    className="p-1 text-dark/40 hover:text-dark"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                </div>
-                <SidebarContent
-                  course={course}
-                  enrollment={enrollment}
-                  currentLessonId={currentLesson.id}
-                  onSelectLesson={(l) => {
-                    setCurrentLesson(l);
-                    setQuizSubmitted(false);
-                    setQuizResult(null);
-                    setQuizAnswers({});
-                  }}
-                  onClose={() => setMobileSidebarOpen(false)}
-                />
-              </motion.aside>
-            </>
-          )}
-        </AnimatePresence>
+        <Dialog
+          open={mobileSidebarOpen}
+          onClose={() => setMobileSidebarOpen(false)}
+          labelledBy="mobile-toc-title"
+          placement="left"
+          scrimClassName="lg:hidden"
+        >
+          <div className="flex items-center justify-between border-b border-sand/60 py-2 pl-4 pr-2">
+            <p id="mobile-toc-title" className="font-display text-lg font-semibold text-dark">Temario</p>
+            <button
+              type="button"
+              onClick={() => setMobileSidebarOpen(false)}
+              aria-label="Cerrar temario"
+              className={iconButton}
+            >
+              <X className="size-5" aria-hidden="true" />
+            </button>
+          </div>
+          <SidebarContent
+            course={course}
+            enrollment={enrollment}
+            currentLessonId={currentLesson.id}
+            onSelectLesson={selectLesson}
+            onClose={() => setMobileSidebarOpen(false)}
+          />
+        </Dialog>
 
         {/* Floating desktop reopen button */}
         {!sidebarOpen && (
-          <button
-            onClick={() => setSidebarOpen(true)}
-            className="hidden lg:flex fixed left-4 bottom-4 z-10 p-3 rounded-full bg-primary text-white shadow-lg hover:bg-secondary transition-colors"
-          >
-            <BookOpen className="w-5 h-5" />
-          </button>
+          <div className="fixed bottom-4 left-4 z-10 hidden lg:block">
+            <button
+              type="button"
+              onClick={() => setSidebarOpen(true)}
+              aria-label="Mostrar temario"
+              className="grid size-12 place-items-center rounded-full bg-dark text-white shadow-lift transition-colors hover:bg-dark/85"
+            >
+              <BookOpen className="size-5" aria-hidden="true" />
+            </button>
+          </div>
         )}
 
         {/* Main Content */}
-        <div className="flex-1 flex flex-col overflow-y-auto bg-cream/20">
+        <div className="flex min-w-0 flex-1 flex-col overflow-y-auto bg-mist">
           {/* Mobile top bar */}
-          <div className="lg:hidden sticky top-0 z-20 bg-cream/20 backdrop-blur-sm px-4 py-3 border-b border-sand/30">
+          <div className="sticky top-0 z-20 flex items-center gap-3 border-b border-sand/60 bg-white/90 px-4 py-2 backdrop-blur-sm lg:hidden">
             <button
+              type="button"
               onClick={() => setMobileSidebarOpen(true)}
-              className="flex items-center gap-2 rounded-xl bg-white border border-sand px-4 py-2 text-sm font-medium text-dark shadow-sm"
+              aria-haspopup="dialog"
+              aria-expanded={mobileSidebarOpen}
+              className="btn btn-secondary btn-sm min-h-11 shrink-0"
             >
-              <BookOpen className="w-4 h-4 text-primary" /> 📋 Temario
+              <BookOpen className="size-4 text-iris" aria-hidden="true" /> Temario
             </button>
+            <ProgressBar size="sm" value={overallProgress} label="Progreso del curso" />
+            <span className="shrink-0 text-sm font-semibold tabular-nums text-dark">{Math.round(overallProgress)}%</span>
           </div>
 
-          <div className="flex-1 p-4 lg:p-8">
-            <div className="max-w-4xl mx-auto space-y-6">
-              {/* Breadcrumb */}
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="flex items-center gap-2 text-xs text-dark/50"
-              >
-                <span className="capitalize">{course.title}</span>
-                <ChevronRight className="w-3 h-3" />
-                <span>
-                  Lección {currentIndex + 1} de {allLessons.length}
-                </span>
-              </motion.div>
-
-              {/* Title */}
-              <motion.h1
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 }}
-                className="font-display text-xl lg:text-2xl font-semibold text-dark"
-              >
-                {currentLesson.title}
-              </motion.h1>
+          <div className="flex-1 p-4 sm:p-6 lg:p-8">
+            <div className="mx-auto max-w-4xl animate-fade-in space-y-6">
+              {/* Breadcrumb + title */}
+              <div>
+                <p className="flex flex-wrap items-center gap-x-1.5 gap-y-1 text-sm text-dark/65">
+                  <span className="min-w-0">{course.title}</span>
+                  <ChevronRight className="size-4 shrink-0 text-dark/40" aria-hidden="true" />
+                  <span className="font-medium text-dark/75">
+                    Lección {currentIndex + 1} de {allLessons.length}
+                  </span>
+                </p>
+                <h1 className="mt-2 font-display text-2xl font-bold tracking-tight text-dark sm:text-3xl">
+                  {currentLesson.title}
+                </h1>
+              </div>
 
               {/* Lesson Player */}
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 }}
-                className="rounded-2xl bg-white border border-sand shadow-[0_8px_30px_rgba(152,172,248,0.08)] overflow-hidden"
+              <div
+                className={cn(
+                  'overflow-hidden rounded-3xl',
+                  currentLesson.type === 'video' ? 'bg-dark shadow-lift' : 'card',
+                )}
               >
-                {currentLesson.type === 'video' && embedUrl && (
+                {currentLesson.type === 'video' && (
                   <div className="aspect-video bg-dark">
-                    <iframe
-                      src={embedUrl}
-                      className="w-full h-full"
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                      allowFullScreen
-                      title={currentLesson.title}
-                    />
+                    {embedUrl ? (
+                      <iframe
+                        src={embedUrl}
+                        className="size-full"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                        title={currentLesson.title}
+                      />
+                    ) : (
+                      <div className="grid size-full place-items-center p-6 text-center text-white">
+                        <div>
+                          <MonitorPlay className="mx-auto size-10" aria-hidden="true" />
+                          <p className="mt-3">El video de esta lección todavía no está disponible.</p>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
                 {currentLesson.type === 'text' && currentLesson.content && (
-                  <div
-                    className="p-6 prose prose-sm max-w-none text-dark/70"
-                    dangerouslySetInnerHTML={{ __html: currentLesson.content }}
-                  />
+                  <div className="p-6 sm:p-8">
+                    <div
+                      className={lessonHtml}
+                      dangerouslySetInnerHTML={{ __html: currentLesson.content }}
+                    />
+                  </div>
                 )}
                 {currentLesson.type === 'quiz' && currentLesson.quiz && (
-                  <div className="p-6">
+                  <div className="p-6 sm:p-8">
                     {!quizSubmitted ? (
-                      <div className="space-y-6">
+                      <div className="space-y-5">
                         {currentLesson.quiz.questions.map((q, i) => (
-                          <div key={q.id} className="rounded-xl bg-sand/20 p-4">
-                            <p className="font-medium text-dark mb-3">
-                              {i + 1}. {q.question}
-                            </p>
-                            {q.type === 'multiple-choice' && q.options && (
-                              <div className="space-y-2">
-                                {q.options.map((opt) => (
-                                  <label
-                                    key={opt}
-                                    className="flex items-center gap-2 text-sm text-dark/70 cursor-pointer hover:text-dark"
-                                  >
-                                    <input
-                                      type="radio"
-                                      name={q.id}
-                                      value={opt}
-                                      onChange={(e) =>
-                                        setQuizAnswers({
-                                          ...quizAnswers,
-                                          [q.id]: e.target.value,
-                                        })
-                                      }
-                                      className="text-primary focus:ring-primary"
-                                    />
-                                    {opt}
-                                  </label>
-                                ))}
-                              </div>
-                            )}
-                            {q.type === 'true-false' && (
-                              <div className="flex gap-4">
-                                {['true', 'false'].map((opt) => (
-                                  <label
-                                    key={opt}
-                                    className="flex items-center gap-2 text-sm text-dark/70 cursor-pointer"
-                                  >
-                                    <input
-                                      type="radio"
-                                      name={q.id}
-                                      value={opt}
-                                      onChange={(e) =>
-                                        setQuizAnswers({
-                                          ...quizAnswers,
-                                          [q.id]: e.target.value,
-                                        })
-                                      }
-                                      className="text-primary focus:ring-primary"
-                                    />
-                                    {opt === 'true' ? 'Verdadero' : 'Falso'}
-                                  </label>
-                                ))}
-                              </div>
-                            )}
-                            {q.type === 'short-answer' && (
-                              <input
-                                type="text"
-                                placeholder="Tu respuesta"
-                                onChange={(e) =>
-                                  setQuizAnswers({
-                                    ...quizAnswers,
-                                    [q.id]: e.target.value,
-                                  })
-                                }
-                                className="w-full rounded-xl border border-sand bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
-                              />
+                          <div key={q.id} className="rounded-2xl bg-mist p-5">
+                            {q.type === 'short-answer' ? (
+                              <>
+                                <label htmlFor={`quiz-${q.id}`} className="block font-medium text-dark">
+                                  {i + 1}. {q.question}
+                                </label>
+                                <input
+                                  id={`quiz-${q.id}`}
+                                  name={q.id}
+                                  type="text"
+                                  autoComplete="off"
+                                  placeholder="Tu respuesta"
+                                  onChange={(e) =>
+                                    setQuizAnswers({
+                                      ...quizAnswers,
+                                      [q.id]: e.target.value,
+                                    })
+                                  }
+                                  className="field mt-3"
+                                />
+                              </>
+                            ) : (
+                              <fieldset>
+                                <legend className="font-medium text-dark">
+                                  {i + 1}. {q.question}
+                                </legend>
+                                {q.type === 'multiple-choice' && q.options && (
+                                  <div className="mt-3 space-y-2">
+                                    {q.options.map((opt) => (
+                                      <label
+                                        key={opt}
+                                        className="flex min-h-11 cursor-pointer items-center gap-3 rounded-xl bg-white px-4 py-2 text-dark/80 ring-1 ring-sand transition-colors hover:text-dark hover:ring-secondary has-checked:text-dark has-checked:ring-2 has-checked:ring-iris"
+                                      >
+                                        <input
+                                          type="radio"
+                                          name={q.id}
+                                          value={opt}
+                                          onChange={(e) =>
+                                            setQuizAnswers({
+                                              ...quizAnswers,
+                                              [q.id]: e.target.value,
+                                            })
+                                          }
+                                          className="size-5 shrink-0 accent-iris"
+                                        />
+                                        {opt}
+                                      </label>
+                                    ))}
+                                  </div>
+                                )}
+                                {q.type === 'true-false' && (
+                                  <div className="mt-3 flex flex-wrap gap-2">
+                                    {['true', 'false'].map((opt) => (
+                                      <label
+                                        key={opt}
+                                        className="flex min-h-11 cursor-pointer items-center gap-3 rounded-xl bg-white px-4 py-2 text-dark/80 ring-1 ring-sand transition-colors hover:text-dark hover:ring-secondary has-checked:text-dark has-checked:ring-2 has-checked:ring-iris"
+                                      >
+                                        <input
+                                          type="radio"
+                                          name={q.id}
+                                          value={opt}
+                                          onChange={(e) =>
+                                            setQuizAnswers({
+                                              ...quizAnswers,
+                                              [q.id]: e.target.value,
+                                            })
+                                          }
+                                          className="size-5 shrink-0 accent-iris"
+                                        />
+                                        {opt === 'true' ? 'Verdadero' : 'Falso'}
+                                      </label>
+                                    ))}
+                                  </div>
+                                )}
+                              </fieldset>
                             )}
                           </div>
                         ))}
                         <button
+                          type="button"
                           onClick={handleQuizSubmit}
-                          className="rounded-2xl bg-primary px-6 py-3 text-sm font-semibold text-white shadow-glow hover:bg-secondary transition-colors"
+                          className="btn btn-primary"
                         >
                           Enviar respuestas
                         </button>
                       </div>
                     ) : (
-                      <div className="text-center py-8">
-                        <div
-                          className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 ${
-                            quizResult?.passed
-                              ? 'bg-success/10'
-                              : 'bg-error/10'
-                          }`}
+                      <div role="status" className="py-6 text-center">
+                        <span
+                          className={cn(
+                            'mx-auto grid size-16 place-items-center rounded-full text-dark',
+                            quizResult?.passed ? 'bg-success/40' : 'bg-error/40',
+                          )}
                         >
                           {quizResult?.passed ? (
-                            <Check className="w-8 h-8 text-success" />
+                            <Check className="size-8" aria-hidden="true" />
                           ) : (
-                            <X className="w-8 h-8 text-error" />
+                            <X className="size-8" aria-hidden="true" />
                           )}
-                        </div>
-                        <h3 className="font-display text-xl font-semibold text-dark mb-2">
+                        </span>
+                        <h2 className="mt-4 font-display text-2xl font-bold tracking-tight text-dark">
                           {quizResult?.passed ? '¡Aprobaste!' : 'No aprobaste'}
-                        </h3>
-                        <p className="text-dark/60 mb-4">
+                        </h2>
+                        <p className="mt-1 text-dark/75">
                           Puntaje: {quizResult?.score} puntos
                         </p>
                         {!quizResult?.passed && (
                           <button
+                            type="button"
                             onClick={() => {
                               setQuizSubmitted(false);
                               setQuizAnswers({});
                             }}
-                            className="rounded-2xl border border-sand px-6 py-2.5 text-sm font-medium text-dark hover:bg-sand/30 transition-colors"
+                            className="btn btn-secondary mt-6"
                           >
                             Reintentar
                           </button>
@@ -690,260 +774,259 @@ export default function CourseLearnPage() {
                   </div>
                 )}
                 {currentLesson.type === 'assignment' && currentLesson.assignment && (
-                  <div className="p-6">
-                    <h3 className="font-display font-semibold text-dark mb-2">
+                  <div className="p-6 sm:p-8">
+                    <h2 className="font-display text-xl font-semibold text-dark">
                       {currentLesson.assignment.title}
-                    </h3>
-                    <p className="text-dark/70 mb-4">
+                    </h2>
+                    <p className="mt-2 max-w-prose text-dark/75">
                       {currentLesson.assignment.description}
                     </p>
-                    <div className="rounded-xl border-2 border-dashed border-sand p-8 text-center">
-                      <FileDown className="w-8 h-8 text-dark/30 mx-auto mb-2" />
-                      <p className="text-sm text-dark/60">
+                    <div className="mt-6 rounded-2xl border-2 border-dashed border-sand bg-mist p-8 text-center">
+                      <Upload className="mx-auto size-8 text-iris" aria-hidden="true" />
+                      <p className="mt-2 text-sm text-dark/75">
                         Arrastrá tu archivo aquí o hacé clic para subir
                       </p>
-                      <input type="file" className="hidden" />
+                      <input type="file" className="hidden" aria-label="Archivo de la tarea" />
                     </div>
                   </div>
                 )}
                 {currentLesson.type === 'file' && currentLesson.files && (
-                  <div className="p-6">
-                    <h3 className="font-display font-semibold text-dark mb-4">
+                  <div className="p-6 sm:p-8">
+                    <h2 className="font-display text-xl font-semibold text-dark">
                       Recursos descargables
-                    </h3>
-                    <div className="space-y-2">
+                    </h2>
+                    <ul className="mt-4 space-y-2">
                       {currentLesson.files.map((file) => (
-                        <a
-                          key={file.name}
-                          href={file.url}
-                          className="flex items-center gap-3 rounded-xl bg-sand/20 p-3 hover:bg-sand/40 transition-colors"
-                        >
-                          <FileDown className="w-5 h-5 text-primary" />
-                          <span className="text-sm text-dark">{file.name}</span>
-                        </a>
+                        <li key={file.name}>
+                          <a
+                            href={file.url}
+                            className="flex min-h-14 items-center gap-3 rounded-2xl bg-mist px-4 py-3 text-dark transition-colors hover:bg-sand/40"
+                          >
+                            <FileDown className="size-5 shrink-0 text-iris" aria-hidden="true" />
+                            <span className="min-w-0 text-sm font-medium">{file.name}</span>
+                          </a>
+                        </li>
                       ))}
-                    </div>
+                    </ul>
                   </div>
                 )}
-              </motion.div>
+              </div>
 
               {/* Instructor Card */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.4 }}
-                className="rounded-2xl bg-white border border-sand shadow-[0_8px_30px_rgba(152,172,248,0.08)] p-4 lg:p-5"
-              >
+              <section aria-label="Instructor" className="card p-5 sm:p-6">
                 <div className="flex items-center gap-4">
                   <img
                     src={course.instructor.avatar}
-                    alt={course.instructor.name}
-                    className="w-[60px] h-[60px] rounded-full object-cover border-2 border-sand shrink-0"
+                    alt=""
+                    width={56}
+                    height={56}
+                    loading="lazy"
+                    decoding="async"
+                    className="size-14 shrink-0 rounded-full object-cover ring-2 ring-sand"
                   />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-dark">
+                  <div className="min-w-0 flex-1">
+                    <p className="font-display font-semibold text-dark">
                       {course.instructor.name} · Instructora de Sublimación
                     </p>
-                    <p className="text-xs text-dark/60 mt-0.5">
+                    <p className="mt-0.5 text-sm text-dark/65">
                       Más de 8 años enseñando técnicas creativas
                     </p>
                   </div>
-                  <button
-                    onClick={() => toast.info('Perfil del instructor próximamente')}
-                    className="hidden sm:flex items-center rounded-xl border border-sand px-3 py-1.5 text-xs font-medium text-dark hover:bg-sand/30 transition-colors shrink-0"
-                  >
-                    Ver perfil
-                  </button>
+                  <div className="hidden shrink-0 sm:block">
+                    <button
+                      type="button"
+                      onClick={() => toast.info('Perfil del instructor próximamente')}
+                      className="btn btn-secondary btn-sm min-h-11"
+                    >
+                      Ver perfil
+                    </button>
+                  </div>
                 </div>
-                <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-dark/60">
-                  <span className="flex items-center gap-1">
-                    <MonitorPlay className="w-3.5 h-3.5" /> Video ·{' '}
+                <ul className="mt-4 flex flex-wrap gap-x-5 gap-y-2 border-t border-sand/60 pt-4 text-sm text-dark/65">
+                  <li className="flex items-center gap-1.5">
+                    <MonitorPlay className="size-4 text-iris" aria-hidden="true" /> Video ·{' '}
                     {currentLesson.duration}
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <FileDown className="w-3.5 h-3.5" />{' '}
+                  </li>
+                  <li className="flex items-center gap-1.5">
+                    <FileDown className="size-4 text-iris" aria-hidden="true" />{' '}
                     {currentLesson.files?.length ?? 3} recursos
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <MessageCircle className="w-3.5 h-3.5" /> 12 preguntas Q&A
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <Edit className="w-3.5 h-3.5" /> Tomá notas
-                  </span>
-                </div>
-              </motion.div>
+                  </li>
+                  <li className="flex items-center gap-1.5">
+                    <MessageCircle className="size-4 text-iris" aria-hidden="true" /> 12 preguntas Q&A
+                  </li>
+                  <li className="flex items-center gap-1.5">
+                    <Pencil className="size-4 text-iris" aria-hidden="true" /> Tomá notas
+                  </li>
+                </ul>
+              </section>
 
               {/* Tabs */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.4, delay: 0.1 }}
-              >
-                <div className="flex gap-1 border-b border-sand/50 overflow-x-auto">
+              <div>
+                <div
+                  role="tablist"
+                  aria-label="Información de la lección"
+                  className="flex gap-1 overflow-x-auto border-b border-sand/70 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+                >
                   {TAB_LIST.map((tab) => (
                     <button
                       key={tab.key}
+                      ref={(el) => { tabRefs.current[tab.key] = el; }}
+                      id={`learn-tab-${tab.key}`}
+                      type="button"
+                      role="tab"
+                      aria-selected={activeTab === tab.key}
+                      aria-controls={activeTab === tab.key ? `learn-panel-${tab.key}` : undefined}
+                      tabIndex={activeTab === tab.key ? 0 : -1}
                       onClick={() => setActiveTab(tab.key)}
-                      className={`relative pb-3 px-3 text-sm font-medium whitespace-nowrap transition-colors ${
+                      onKeyDown={(e) => handleTabKeyDown(e, tab.key)}
+                      className={cn(
+                        'min-h-12 shrink-0 border-b-[3px] px-4 font-display text-sm font-semibold transition-colors sm:px-6',
                         activeTab === tab.key
-                          ? 'text-primary'
-                          : 'text-dark/60 hover:text-dark'
-                      }`}
+                          ? 'border-iris text-dark'
+                          : 'border-transparent text-dark/65 hover:text-dark',
+                      )}
                     >
                       {tab.label}
-                      {activeTab === tab.key && (
-                        <motion.div
-                          layoutId="learn-tab-indicator"
-                          className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary rounded-full"
-                        />
-                      )}
                     </button>
                   ))}
                 </div>
 
-                <AnimatePresence mode="wait">
-                  <motion.div
-                    key={activeTab}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    transition={{ duration: 0.2 }}
-                    className="mt-6"
-                  >
-                    {activeTab === 'summary' && (
-                      <div className="space-y-6">
-                        <div className="rounded-2xl bg-white border border-sand shadow-[0_8px_30px_rgba(152,172,248,0.08)] p-5 lg:p-6">
-                          <h3 className="font-display font-semibold text-dark mb-3">
-                            Sobre esta lección
-                          </h3>
-                          <p className="text-sm text-dark/70 leading-relaxed">
-                            {currentLesson.type === 'video'
-                              ? 'En esta lección vamos a profundizar en los conceptos fundamentales a través de un video explicativo paso a paso. Preparate para tomar notas y pausar cuando sea necesario.'
-                              : currentLesson.type === 'text'
-                              ? 'Esta lección teórica cubre los conceptos esenciales que necesitás dominar antes de pasar a la práctica. Asegurate de leer atentamente y consultar los recursos adjuntos.'
-                              : currentLesson.type === 'quiz'
-                              ? 'Es momento de poner a prueba tus conocimientos. Respondé las preguntas con atención y recordá que podés reintentar si no apruebas en el primer intento.'
-                              : 'En esta lección aplicarás todo lo aprendido en un proyecto práctico. Seguí las instrucciones cuidadosamente y no dudes en consultar el foro de preguntas.'}
-                          </p>
-                        </div>
-                        <div className="rounded-2xl bg-white border border-sand shadow-[0_8px_30px_rgba(152,172,248,0.08)] p-5 lg:p-6">
-                          <h3 className="font-display font-semibold text-dark mb-3">
-                            Qué vas a aprender
-                          </h3>
-                          <ul className="space-y-2">
-                            {course.whatYouWillLearn
-                              .slice(0, 5)
-                              .map((item, i) => (
-                                <li
-                                  key={i}
-                                  className="flex items-start gap-2 text-sm text-dark/70"
-                                >
-                                  <Check className="w-4 h-4 text-success shrink-0 mt-0.5" />
-                                  {item}
-                                </li>
-                              ))}
-                          </ul>
-                        </div>
-                        <div className="rounded-2xl bg-white border border-sand shadow-[0_8px_30px_rgba(152,172,248,0.08)] p-5 lg:p-6">
-                          <h3 className="font-display font-semibold text-dark mb-3">
-                            Antes de empezar
-                          </h3>
-                          <ul className="space-y-2">
-                            {course.requirements.map((req, i) => (
+                <div
+                  key={activeTab}
+                  role="tabpanel"
+                  id={`learn-panel-${activeTab}`}
+                  aria-labelledby={`learn-tab-${activeTab}`}
+                  tabIndex={0}
+                  className="animate-fade-in pt-6"
+                >
+                  {activeTab === 'summary' && (
+                    <div className="space-y-6">
+                      <div className="card p-5 sm:p-6">
+                        <h2 className={panelTitle}>Sobre esta lección</h2>
+                        <p className="mt-3 max-w-prose text-dark/75">
+                          {currentLesson.type === 'video'
+                            ? 'En esta lección vamos a profundizar en los conceptos fundamentales a través de un video explicativo paso a paso. Preparate para tomar notas y pausar cuando sea necesario.'
+                            : currentLesson.type === 'text'
+                            ? 'Esta lección teórica cubre los conceptos esenciales que necesitás dominar antes de pasar a la práctica. Asegurate de leer atentamente y consultar los recursos adjuntos.'
+                            : currentLesson.type === 'quiz'
+                            ? 'Es momento de poner a prueba tus conocimientos. Respondé las preguntas con atención y recordá que podés reintentar si no apruebas en el primer intento.'
+                            : 'En esta lección aplicarás todo lo aprendido en un proyecto práctico. Seguí las instrucciones cuidadosamente y no dudes en consultar el foro de preguntas.'}
+                        </p>
+                      </div>
+                      <div className="card p-5 sm:p-6">
+                        <h2 className={panelTitle}>Qué vas a aprender</h2>
+                        <ul className="mt-4 space-y-3">
+                          {course.whatYouWillLearn
+                            .slice(0, 5)
+                            .map((item, i) => (
                               <li
                                 key={i}
-                                className="flex items-start gap-2 text-sm text-dark/70"
+                                className="flex items-start gap-3 text-dark/75"
                               >
-                                <Star className="w-4 h-4 text-warning shrink-0 mt-0.5" />
-                                {req}
+                                <span className="mt-0.5 grid size-6 shrink-0 place-items-center rounded-full bg-mist text-iris">
+                                  <Check className="size-4" strokeWidth={3} aria-hidden="true" />
+                                </span>
+                                {item}
                               </li>
                             ))}
-                          </ul>
-                        </div>
+                        </ul>
                       </div>
-                    )}
-
-                    {activeTab === 'resources' && (
-                      <div className="space-y-3">
-                        {(course.courseMaterials && course.courseMaterials.length > 0
-                          ? course.courseMaterials.map((f) => ({
-                              name: f.name,
-                              size: 'Descargable',
-                              url: f.url,
-                            }))
-                          : currentLesson.files && currentLesson.files.length > 0
-                          ? currentLesson.files.map((f) => ({
-                              name: f.name,
-                              size: 'Descargable',
-                              url: f.url,
-                            }))
-                          : MOCK_RESOURCES.map((r) => ({ ...r, url: '#' }))
-                        ).map((file, i) => (
-                          <div
-                            key={i}
-                            className="flex items-center gap-4 rounded-2xl bg-white border border-sand shadow-[0_8px_30px_rgba(152,172,248,0.08)] p-4"
-                          >
-                            <div className="p-2.5 rounded-xl bg-sand/30 text-primary">
-                              <FileDown className="w-5 h-5" />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium text-dark truncate">
-                                {file.name}
-                              </p>
-                              <p className="text-xs text-dark/50">
-                                {file.size}
-                              </p>
-                            </div>
-                            <a
-                              href={file.url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="flex items-center gap-1.5 rounded-xl bg-primary px-3 py-2 text-xs font-medium text-white hover:bg-secondary transition-colors shrink-0"
+                      <div className="card p-5 sm:p-6">
+                        <h2 className={panelTitle}>Antes de empezar</h2>
+                        <ul className="mt-4 space-y-3">
+                          {course.requirements.map((req, i) => (
+                            <li
+                              key={i}
+                              className="flex items-start gap-3 text-dark/75"
                             >
-                              <Download className="w-3.5 h-3.5" /> Descargar
-                            </a>
-                          </div>
-                        ))}
+                              <span aria-hidden="true" className="mt-2.5 size-1.5 shrink-0 rounded-full bg-secondary" />
+                              {req}
+                            </li>
+                          ))}
+                        </ul>
                       </div>
-                    )}
+                    </div>
+                  )}
 
-                    {activeTab === 'qa' && (
-                      <div className="space-y-4">
+                  {activeTab === 'resources' && (
+                    <ul className="space-y-3">
+                      {resources.map((file, i) => (
+                        <li
+                          key={i}
+                          className="card flex items-center gap-4 p-4"
+                        >
+                          <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-mist text-iris">
+                            <FileDown className="size-5" aria-hidden="true" />
+                          </span>
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate text-sm font-medium text-dark">
+                              {file.name}
+                            </p>
+                            <p className="text-xs text-dark/65">
+                              {file.size}
+                            </p>
+                          </div>
+                          <a
+                            href={file.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="btn btn-soft btn-sm min-h-11 shrink-0"
+                          >
+                            <Download className="size-4" aria-hidden="true" /> Descargar
+                            <span className="sr-only">: {file.name} (se abre en una pestaña nueva)</span>
+                          </a>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+
+                  {activeTab === 'qa' && (
+                    <div className="space-y-4">
+                      <ul className="space-y-4">
                         {displayQAs.map((qa) => (
-                          <div
+                          <li
                             key={qa.id}
-                            className="rounded-2xl bg-white border border-sand shadow-[0_8px_30px_rgba(152,172,248,0.08)] p-5"
+                            className="card p-5"
                           >
                             <div className="flex items-start gap-3">
-                              <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold text-primary shrink-0">
+                              <span
+                                aria-hidden="true"
+                                className="grid size-10 shrink-0 place-items-center rounded-full bg-mist font-display text-sm font-bold text-iris"
+                              >
                                 {qa.userName
                                   .split(' ')
                                   .map((n) => n[0])
                                   .join('')
                                   .slice(0, 2)
                                   .toUpperCase()}
-                              </div>
-                              <div className="flex-1 min-w-0">
+                              </span>
+                              <div className="min-w-0 flex-1">
                                 <div className="flex items-center justify-between gap-2">
-                                  <p className="text-sm font-medium text-dark">
+                                  <p className="text-sm font-semibold text-dark">
                                     {qa.userName}
                                   </p>
-                                  <span className="text-[10px] text-dark/40 shrink-0">
+                                  <span className="shrink-0 text-xs text-dark/65">
                                     {new Date(qa.createdAt).toLocaleDateString(
                                       'es-AR'
                                     )}
                                   </span>
                                 </div>
-                                <p className="text-sm text-dark/80 mt-1">
+                                <p className="mt-1 text-dark/75">
                                   {qa.question}
                                 </p>
-                                <div className="flex items-center gap-3 mt-2">
-                                  <button className="flex items-center gap-1 text-xs text-dark/50 hover:text-primary transition-colors">
-                                    <ThumbsUp className="w-3.5 h-3.5" /> 3
+                                <div className="-ml-3 mt-1 flex items-center gap-1">
+                                  <button
+                                    type="button"
+                                    aria-label="Me gusta (3)"
+                                    className="btn btn-ghost btn-sm min-h-11"
+                                  >
+                                    <ThumbsUp className="size-4" aria-hidden="true" /> 3
                                   </button>
-                                  <button className="text-xs text-dark/50 hover:text-primary transition-colors">
+                                  <button
+                                    type="button"
+                                    aria-label={`Responder a ${qa.userName}`}
+                                    className="btn btn-ghost btn-sm min-h-11"
+                                  >
                                     Responder
                                   </button>
                                 </div>
@@ -952,295 +1035,321 @@ export default function CourseLearnPage() {
                             {qa.answers.map((ans, ai) => (
                               <div
                                 key={ai}
-                                className="mt-4 ml-12 flex items-start gap-3"
+                                className="mt-4 flex items-start gap-3 rounded-2xl bg-mist p-4 sm:ml-12"
                               >
                                 <img
                                   src={course.instructor.avatar}
-                                  alt={ans.userName}
-                                  className="w-8 h-8 rounded-full object-cover border border-sand shrink-0"
+                                  alt=""
+                                  width={32}
+                                  height={32}
+                                  loading="lazy"
+                                  decoding="async"
+                                  className="size-8 shrink-0 rounded-full object-cover ring-2 ring-white"
                                 />
-                                <div className="flex-1 rounded-xl bg-sand/20 p-3">
-                                  <div className="flex items-center gap-2 mb-1 flex-wrap">
-                                    <span className="text-xs font-medium text-dark">
+                                <div className="min-w-0 flex-1">
+                                  <div className="mb-1 flex flex-wrap items-center gap-x-2 gap-y-1">
+                                    <span className="text-sm font-semibold text-dark">
                                       {ans.userName}
                                     </span>
-                                    <span className="text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded-full font-medium">
+                                    <span className="chip bg-white text-iris">
                                       Instructora
                                     </span>
-                                    <span className="text-[10px] text-dark/40">
+                                    <span className="text-xs text-dark/65">
                                       {new Date(
                                         ans.createdAt
                                       ).toLocaleDateString('es-AR')}
                                     </span>
                                   </div>
-                                  <p className="text-sm text-dark/70">
+                                  <p className="text-dark/75">
                                     {ans.content}
                                   </p>
                                 </div>
                               </div>
                             ))}
-                          </div>
+                          </li>
                         ))}
-                        <button
-                          onClick={() =>
-                            toast.info('Hacer una pregunta próximamente')
-                          }
-                          className="w-full flex items-center justify-center gap-2 rounded-2xl border border-sand bg-white px-5 py-3 text-sm font-medium text-dark hover:bg-sand/20 transition-colors"
-                        >
-                          <Plus className="w-4 h-4" /> Hacer una pregunta
-                        </button>
-                      </div>
-                    )}
+                      </ul>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          toast.info('Hacer una pregunta próximamente')
+                        }
+                        className="btn btn-secondary w-full"
+                      >
+                        <Plus className="size-4" aria-hidden="true" /> Hacer una pregunta
+                      </button>
+                    </div>
+                  )}
 
-                    {activeTab === 'notes' && (
-                      <div className="space-y-4">
-                        <div className="rounded-2xl bg-white border border-sand shadow-[0_8px_30px_rgba(152,172,248,0.08)] p-5">
-                          <textarea
-                            value={noteContent}
-                            onChange={(e) => setNoteContent(e.target.value)}
-                            placeholder="Escribí una nota sobre esta lección..."
-                            rows={4}
-                            className="w-full rounded-xl border border-sand bg-cream/20 px-4 py-3 text-sm text-dark placeholder:text-dark/30 focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none"
-                          />
-                          <div className="flex justify-end mt-3">
-                            <button
-                              onClick={() => handleAddNote()}
-                              disabled={!noteContent.trim()}
-                              className="flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-secondary transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                            >
-                              Guardar nota con timestamp
-                            </button>
-                          </div>
+                  {activeTab === 'notes' && (
+                    <div className="space-y-4">
+                      <div className="card p-5 sm:p-6">
+                        <label htmlFor="lesson-note" className="mb-1.5 block text-sm font-medium text-dark">
+                          Nueva nota
+                        </label>
+                        <textarea
+                          id="lesson-note"
+                          value={noteContent}
+                          onChange={(e) => setNoteContent(e.target.value)}
+                          placeholder="Escribí una nota sobre esta lección..."
+                          rows={4}
+                          className="field min-h-28 resize-y"
+                        />
+                        <div className="mt-3 flex justify-end">
+                          <button
+                            type="button"
+                            onClick={() => handleAddNote()}
+                            disabled={!noteContent.trim()}
+                            className="btn btn-primary btn-sm min-h-11"
+                          >
+                            Guardar nota con timestamp
+                          </button>
                         </div>
+                      </div>
+                      <ul className="space-y-4">
                         {notesList.map((note) => (
-                          <motion.div
+                          <li
                             key={note.id}
-                            layout
-                            className="rounded-2xl bg-white border border-sand shadow-[0_8px_30px_rgba(152,172,248,0.08)] p-5"
+                            className="card p-5"
                           >
                             <div className="flex items-start justify-between gap-3">
                               <div className="min-w-0">
-                                <span className="inline-flex items-center gap-1 text-xs font-medium text-primary bg-primary/10 px-2 py-1 rounded-full">
-                                  <Clock className="w-3 h-3" />{' '}
+                                <span className="chip bg-mist text-iris">
+                                  <Clock className="size-3.5" aria-hidden="true" />{' '}
                                   {note.timestamp}
                                 </span>
-                                <p className="text-sm text-dark/80 mt-2">
+                                <p className="mt-3 text-dark/75">
                                   {note.content}
                                 </p>
                               </div>
-                              <div className="flex items-center gap-1 shrink-0">
+                              <div className="-mr-2 -mt-2 flex shrink-0 items-center">
                                 <button
+                                  type="button"
                                   onClick={() =>
                                     toast.info('Editar nota próximamente')
                                   }
-                                  className="p-1.5 rounded-lg hover:bg-sand/30 text-dark/40 hover:text-dark transition-colors"
+                                  aria-label={`Editar la nota de las ${note.timestamp}`}
+                                  className={iconButton}
                                 >
-                                  <Edit className="w-3.5 h-3.5" />
+                                  <Pencil className="size-4" aria-hidden="true" />
                                 </button>
                                 <button
+                                  type="button"
                                   onClick={() =>
                                     setNotesList((prev) =>
                                       prev.filter((n) => n.id !== note.id)
                                     )
                                   }
-                                  className="p-1.5 rounded-lg hover:bg-error/10 text-dark/40 hover:text-error transition-colors"
+                                  aria-label={`Eliminar la nota de las ${note.timestamp}`}
+                                  className={cn(iconButton, 'hover:bg-rose-50 hover:text-rose-700')}
                                 >
-                                  <Trash className="w-3.5 h-3.5" />
+                                  <Trash2 className="size-4" aria-hidden="true" />
                                 </button>
                               </div>
                             </div>
-                          </motion.div>
+                          </li>
                         ))}
-                      </div>
-                    )}
+                      </ul>
+                    </div>
+                  )}
 
-                    {activeTab === 'announcements' && (
-                      <div className="space-y-4">
-                        {MOCK_ANNOUNCEMENTS.map((ann) => (
-                          <div
-                            key={ann.id}
-                            className="rounded-2xl bg-white border border-sand shadow-[0_8px_30px_rgba(152,172,248,0.08)] p-5"
-                          >
-                            <div className="flex items-center gap-2 mb-2">
-                              <span className="text-xs font-medium text-primary bg-primary/10 px-2 py-1 rounded-full">
-                                {ann.date}
-                              </span>
-                            </div>
-                            <h3 className="font-display font-semibold text-dark mb-2">
-                              {ann.title}
-                            </h3>
-                            <p className="text-sm text-dark/70 leading-relaxed">
-                              {ann.content}
-                            </p>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </motion.div>
-                </AnimatePresence>
-              </motion.div>
+                  {activeTab === 'announcements' && (
+                    <ul className="space-y-4">
+                      {MOCK_ANNOUNCEMENTS.map((ann) => (
+                        <li
+                          key={ann.id}
+                          className="card p-5 sm:p-6"
+                        >
+                          <time dateTime={ann.date} className="chip bg-mist text-iris">
+                            {ann.date}
+                          </time>
+                          <h2 className={cn(panelTitle, 'mt-3')}>
+                            {ann.title}
+                          </h2>
+                          <p className="mt-2 max-w-prose text-dark/75">
+                            {ann.content}
+                          </p>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
 
           {/* Footer Navigation */}
-          <div className="border-t border-sand/50 p-4 bg-white">
-            <div className="max-w-4xl mx-auto flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-              <button
-                onClick={handlePrevLesson}
-                disabled={currentIndex === 0}
-                className="flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium text-dark hover:bg-sand/30 disabled:opacity-30 transition-colors"
-              >
-                <ChevronLeft className="w-4 h-4" /> Anterior
-              </button>
-
-              <div className="flex items-center justify-center gap-3 flex-wrap">
+          <div className="border-t border-sand/60 bg-white px-4 py-4 sm:px-6 lg:px-8">
+            <div className="mx-auto max-w-4xl">
+              <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3">
                 <button
-                  onClick={handleCompleteLesson}
-                  disabled={isCompleted}
-                  className={`flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-medium transition-colors ${
-                    isCompleted
-                      ? 'bg-success/10 text-success cursor-default'
-                      : 'bg-primary text-white hover:bg-secondary'
-                  }`}
+                  type="button"
+                  onClick={handlePrevLesson}
+                  disabled={currentIndex === 0}
+                  aria-label="Lección anterior"
+                  className="btn btn-secondary min-h-11 max-sm:size-11 max-sm:p-0"
                 >
-                  <Check className="w-4 h-4" />
-                  {isCompleted ? '✓ Completada' : 'Marcar como completada'}
+                  <ChevronLeft className="size-4" aria-hidden="true" />
+                  <span className="max-sm:sr-only">Anterior</span>
                 </button>
 
-                <div className="flex items-center gap-2">
-                  <label className="flex items-center gap-1.5 text-xs text-dark/60 cursor-pointer select-none">
-                    <input
-                      type="checkbox"
-                      checked={autoPlay}
-                      onChange={(e) => setAutoPlay(e.target.checked)}
-                      className="rounded border-sand text-primary focus:ring-primary"
-                    />
-                    Autoplay
-                  </label>
-                  <select
-                    value={playbackSpeed}
-                    onChange={(e) => setPlaybackSpeed(e.target.value)}
-                    className="rounded-xl border border-sand bg-white px-2 py-1.5 text-xs text-dark focus:outline-none focus:ring-2 focus:ring-primary/50"
-                  >
-                    <option value="0.5">0.5x</option>
-                    <option value="0.75">0.75x</option>
-                    <option value="1">1x</option>
-                    <option value="1.25">1.25x</option>
-                    <option value="1.5">1.5x</option>
-                    <option value="2">2x</option>
-                  </select>
-                </div>
+                <button
+                  type="button"
+                  onClick={handleCompleteLesson}
+                  disabled={isCompleted}
+                  className={cn(
+                    'btn min-h-11 w-full whitespace-normal text-center max-sm:py-2',
+                    isCompleted ? 'btn-soft disabled:opacity-100' : 'btn-primary',
+                  )}
+                >
+                  <Check className="size-4 shrink-0" aria-hidden="true" />
+                  {isCompleted ? 'Completada' : 'Marcar como completada'}
+                </button>
 
                 <button
-                  onClick={() => setShowQuickNote(true)}
-                  className="flex items-center gap-1.5 rounded-xl border border-sand px-3 py-2 text-xs font-medium text-dark hover:bg-sand/30 transition-colors"
+                  type="button"
+                  onClick={handleNextLesson}
+                  disabled={currentIndex === allLessons.length - 1}
+                  aria-label="Lección siguiente"
+                  className={cn(
+                    'btn min-h-11 max-sm:size-11 max-sm:p-0',
+                    isCompleted ? 'btn-primary' : 'btn-secondary',
+                  )}
                 >
-                  <Edit className="w-3.5 h-3.5" /> Tomar nota rápida
+                  <span className="max-sm:sr-only">Siguiente</span>
+                  <ChevronRight className="size-4" aria-hidden="true" />
                 </button>
               </div>
 
-              <button
-                onClick={handleNextLesson}
-                disabled={currentIndex === allLessons.length - 1}
-                className="flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium text-dark hover:bg-sand/30 disabled:opacity-30 transition-colors"
-              >
-                Siguiente <ChevronRight className="w-4 h-4" />
-              </button>
+              <div className="mt-3 flex flex-wrap items-center justify-center gap-x-5 gap-y-1">
+                <label className="flex min-h-11 cursor-pointer select-none items-center gap-2 text-sm text-dark/75">
+                  <input
+                    type="checkbox"
+                    checked={autoPlay}
+                    onChange={(e) => setAutoPlay(e.target.checked)}
+                    className="size-5 shrink-0 accent-iris"
+                  />
+                  Autoplay
+                </label>
+                <div className="flex items-center gap-2">
+                  <label htmlFor="playback-speed" className="text-sm text-dark/75">Velocidad</label>
+                  <div className="w-28">
+                    <select
+                      id="playback-speed"
+                      value={playbackSpeed}
+                      onChange={(e) => setPlaybackSpeed(e.target.value)}
+                      className="field min-h-11 py-2"
+                    >
+                      <option value="0.5">0.5x</option>
+                      <option value="0.75">0.75x</option>
+                      <option value="1">1x</option>
+                      <option value="1.25">1.25x</option>
+                      <option value="1.5">1.5x</option>
+                      <option value="2">2x</option>
+                    </select>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowQuickNote(true)}
+                  aria-haspopup="dialog"
+                  className="btn btn-ghost btn-sm min-h-11"
+                >
+                  <Pencil className="size-4" aria-hidden="true" /> Tomar nota rápida
+                </button>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
       {/* Certificate Modal */}
-      <AnimatePresence>
-        {showCertificate && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-dark/60 backdrop-blur-sm flex items-center justify-center p-4"
+      <Dialog
+        open={showCertificate}
+        onClose={() => setShowCertificate(false)}
+        labelledBy="certificate-title"
+        className="max-w-lg"
+      >
+        <div className="card relative overflow-hidden text-center">
+          <button
+            type="button"
             onClick={() => setShowCertificate(false)}
+            aria-label="Cerrar"
+            className="absolute right-3 top-3 z-10 grid size-11 place-items-center rounded-full bg-white/80 text-dark/70 transition-colors hover:bg-white hover:text-dark"
           >
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              onClick={(e) => e.stopPropagation()}
-              className="bg-white rounded-3xl p-8 lg:p-10 max-w-lg w-full text-center shadow-2xl border border-sand"
+            <X className="size-5" aria-hidden="true" />
+          </button>
+          <div className="relative bg-ribbon px-6 pb-14 pt-10">
+            <div aria-hidden="true" className="absolute inset-0 bg-stars opacity-50" />
+            <span className="relative mx-auto grid size-20 place-items-center rounded-full bg-white text-iris shadow-soft">
+              <Award className="size-10" aria-hidden="true" />
+            </span>
+          </div>
+          <div className="px-6 pb-8 pt-8 sm:px-10">
+            <h2 id="certificate-title" className="font-display text-3xl font-bold tracking-tight text-dark">
+              ¡Felicitaciones!
+            </h2>
+            <p className="mt-3 text-dark/75">
+              Completaste el curso <strong className="font-semibold text-dark">{course.title}</strong>. Tu
+              certificado está disponible.
+            </p>
+            <button
+              type="button"
+              data-autofocus
+              onClick={() => toast.info('Descarga de certificado próximamente')}
+              className="btn btn-primary btn-lg mt-6"
             >
-              <div className="w-20 h-20 rounded-full bg-success/10 flex items-center justify-center mx-auto mb-6">
-                <Award className="w-10 h-10 text-success" />
-              </div>
-              <h2 className="font-display text-2xl lg:text-3xl font-semibold text-dark mb-2">
-                ¡Felicitaciones!
-              </h2>
-              <p className="text-dark/60 mb-6">
-                Completaste el curso <strong>{course.title}</strong>. Tu
-                certificado está disponible.
-              </p>
-              <button
-                onClick={() => toast.info('Descarga de certificado próximamente')}
-                className="rounded-2xl bg-primary px-8 py-3 text-sm font-semibold text-white shadow-glow hover:bg-secondary transition-colors"
-              >
-                Descargar certificado
-              </button>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+              Descargar certificado
+            </button>
+          </div>
+        </div>
+      </Dialog>
 
       {/* Quick Note Modal */}
-      <AnimatePresence>
-        {showQuickNote && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-dark/40 backdrop-blur-sm flex items-center justify-center p-4"
-            onClick={() => setShowQuickNote(false)}
-          >
-            <motion.div
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
-              onClick={(e) => e.stopPropagation()}
-              className="bg-white rounded-2xl border border-sand shadow-[0_8px_30px_rgba(152,172,248,0.12)] p-6 w-full max-w-md"
+      <Dialog
+        open={showQuickNote}
+        onClose={() => setShowQuickNote(false)}
+        labelledBy="quick-note-title"
+      >
+        <div className="card p-6 sm:p-8">
+          <h2 id="quick-note-title" className="font-display text-xl font-semibold text-dark">
+            Nota rápida
+          </h2>
+          <label htmlFor="quick-note" className="sr-only">Tu nota</label>
+          <textarea
+            id="quick-note"
+            data-autofocus
+            value={quickNoteContent}
+            onChange={(e) => setQuickNoteContent(e.target.value)}
+            placeholder="Escribí tu nota..."
+            rows={5}
+            className="field mt-4 resize-y"
+          />
+          <div className="mt-6 flex justify-end gap-2">
+            <button
+              type="button"
+              onClick={() => setShowQuickNote(false)}
+              className="btn btn-ghost"
             >
-              <h3 className="font-display font-semibold text-dark mb-3">
-                Nota rápida
-              </h3>
-              <textarea
-                value={quickNoteContent}
-                onChange={(e) => setQuickNoteContent(e.target.value)}
-                placeholder="Escribí tu nota..."
-                rows={5}
-                className="w-full rounded-xl border border-sand bg-cream/20 px-4 py-3 text-sm text-dark placeholder:text-dark/30 focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none"
-              />
-              <div className="flex justify-end gap-2 mt-4">
-                <button
-                  onClick={() => setShowQuickNote(false)}
-                  className="rounded-xl px-4 py-2 text-sm font-medium text-dark hover:bg-sand/30 transition-colors"
-                >
-                  Cancelar
-                </button>
-                <button
-                  onClick={() => {
-                    if (quickNoteContent.trim()) {
-                      handleAddNote(quickNoteContent);
-                      setQuickNoteContent('');
-                      setShowQuickNote(false);
-                    }
-                  }}
-                  disabled={!quickNoteContent.trim()}
-                  className="rounded-xl bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-secondary transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                >
-                  Guardar
-                </button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+              Cancelar
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                if (quickNoteContent.trim()) {
+                  handleAddNote(quickNoteContent);
+                  setQuickNoteContent('');
+                  setShowQuickNote(false);
+                }
+              }}
+              disabled={!quickNoteContent.trim()}
+              className="btn btn-primary"
+            >
+              Guardar
+            </button>
+          </div>
+        </div>
+      </Dialog>
     </>
   );
 }
