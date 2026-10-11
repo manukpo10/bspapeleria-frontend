@@ -2,8 +2,7 @@ import type {
   Product, Course, User, Order, CartItem, Address,
   ProductFilters, CourseFilters
 } from '../types';
-
-const API_URL = 'https://bspapeleria-backend.onrender.com';
+import { API_URL } from '../lib/constants';
 
 function getToken() {
   if (typeof window !== 'undefined') {

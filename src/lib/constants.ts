@@ -3,6 +3,9 @@ export const APP_DESCRIPTION = 'Papelería boutique moderna con productos person
 export const APP_URL = 'https://bspapeleria.com';
 export const CONTACT_EMAIL = 'hola@bspapeleria.com';
 
+// Backend origin without the /api suffix (the older VITE_API_URL variable included it, so it is not reused)
+export const API_URL = (import.meta.env.VITE_BACKEND_URL || 'https://bspapeleria-backend-m8u8.onrender.com').replace(/\/+$/, '');
+
 export const PRODUCT_CATEGORIES = [
   { id: 'personalizados', name: 'Productos Personalizados', description: 'Agendas, tazas, llaveros y más con tu toque personal.' },
   { id: 'sublimables', name: 'Productos Sublimables', description: 'Remeras, mates y accesorios con sublimación de calidad.' },
