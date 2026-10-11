@@ -9,6 +9,7 @@ import { SEO } from '../components/shared/SEO';
 import { Breadcrumbs } from '../components/shared/PageHeader';
 import { CourseCard } from '../components/shared/CourseCard';
 import { StarRating } from '../components/shared/StarRating';
+import { MobileBuyBar, mobileBuyBarClearance } from '../components/shared/MobileBuyBar';
 import { api } from '../services/api';
 import { useCartStore } from '../store/cartStore';
 import { useUIStore } from '../store/uiStore';
@@ -59,6 +60,8 @@ export default function CourseDetailPage() {
   const [activeTab, setActiveTab] = useState<TabId>('reviews');
   const [playingPreview, setPlayingPreview] = useState(false);
   const tabRefs = useRef<Partial<Record<TabId, HTMLButtonElement | null>>>({});
+  // The page's own main call to action: the phone buy bar watches it
+  const [ctaEl, setCtaEl] = useState<HTMLElement | null>(null);
 
   useEffect(() => {
     if (isAuthenticated) fetchUser();
@@ -80,7 +83,8 @@ export default function CourseDetailPage() {
       });
   }, [slug]);
 
-  const isEnrolled = isAuthenticated && user?.enrollments.some((e) => e.courseId === course?.id);
+  // A session stored by an older version of the site may have no enrollments list
+  const isEnrolled = isAuthenticated && user?.enrollments?.some((e) => e.courseId === course?.id);
 
   const handleAddToCart = () => {
     if (!course) return;
@@ -147,6 +151,19 @@ export default function CourseDetailPage() {
   const showAbout = Boolean(course.description) && course.description !== heroText;
   const relatedCourses = courses.filter((c) => c.id !== course.id).slice(0, 2);
   const instructor = course.instructor;
+
+  // The main action is defined once and rendered twice: in the purchase card and in the phone buy bar
+  const renderMainAction = (className: string, ref?: (el: HTMLElement | null) => void) =>
+    isEnrolled ? (
+      <Link ref={ref} to={`/cursos/${course.slug}/aprender`} className={className}>
+        <Play className="size-5" aria-hidden="true" /> Continuar aprendiendo
+      </Link>
+    ) : (
+      <button ref={ref} type="button" onClick={handleAddToCart} className={className}>
+        <ShoppingCart className="size-5" aria-hidden="true" /> Agregar al carrito
+      </button>
+    );
+  const mainActionClass = 'btn btn-primary btn-lg w-full whitespace-normal text-center';
 
   // Arrow keys, Home and End move between tabs, as in the ARIA tabs pattern
   const handleTabKeyDown = (e: KeyboardEvent<HTMLButtonElement>, current: TabId) => {
@@ -215,12 +232,17 @@ export default function CourseDetailPage() {
               <p className="mt-4 max-w-2xl text-base text-dark/75">{heroText}</p>
 
               <ul className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-3 text-sm text-dark/75">
-                <li>
-                  <StarRating rating={course.rating} count={course.reviewsCount} size={18} />
-                </li>
-                <li className="flex items-center gap-2">
-                  <Users className="size-5 text-iris" aria-hidden="true" /> {course.enrolledCount} estudiantes
-                </li>
+                {/* A new course has no reviews and no students yet: those figures are left out instead of printing zeros */}
+                {course.reviewsCount > 0 && (
+                  <li>
+                    <StarRating rating={course.rating} count={course.reviewsCount} size={18} />
+                  </li>
+                )}
+                {course.enrolledCount > 0 && (
+                  <li className="flex items-center gap-2">
+                    <Users className="size-5 text-iris" aria-hidden="true" /> {course.enrolledCount} estudiantes
+                  </li>
+                )}
                 {course.duration && (
                   <li className="flex items-center gap-2">
                     <Clock className="size-5 text-iris" aria-hidden="true" /> {course.duration}
@@ -304,14 +326,10 @@ export default function CourseDetailPage() {
                 </div>
 
                 {isEnrolled ? (
-                  <Link to={`/cursos/${course.slug}/aprender`} className="btn btn-primary btn-lg mt-5 w-full whitespace-normal text-center">
-                    <Play className="size-5" aria-hidden="true" /> Continuar aprendiendo
-                  </Link>
+                  renderMainAction(cn(mainActionClass, 'mt-5'), setCtaEl)
                 ) : (
                   <div className="mt-5 grid gap-3">
-                    <button type="button" onClick={handleAddToCart} className="btn btn-primary btn-lg w-full whitespace-normal text-center">
-                      <ShoppingCart className="size-5" aria-hidden="true" /> Agregar al carrito
-                    </button>
+                    {renderMainAction(mainActionClass, setCtaEl)}
                     <button
                       type="button"
                       onClick={() => { handleAddToCart(); navigate('/checkout'); }}
@@ -345,7 +363,12 @@ export default function CourseDetailPage() {
             </aside>
 
             {/* Body */}
-            <div className="col-start-1 row-start-3 min-w-0 space-y-12 py-10 lg:col-end-3 lg:row-start-2 lg:py-12">
+            <div
+              className={cn(
+                'col-start-1 row-start-3 min-w-0 space-y-12 py-10 lg:col-end-3 lg:row-start-2 lg:py-12',
+                mobileBuyBarClearance,
+              )}
+            >
               {/* About */}
               {showAbout && (
                 <section aria-labelledby="about-heading">
@@ -611,6 +634,25 @@ export default function CourseDetailPage() {
           </div>
         </div>
       </div>
+
+      <MobileBuyBar
+        watch={ctaEl}
+        // An enrolled student does not need the price: the whole bar is the way back to the classroom
+        price={
+          isEnrolled ? undefined : (
+            <>
+              <p className="font-display text-xl font-bold leading-tight text-dark">{formatPrice(course.price)}</p>
+              {course.comparePrice ? (
+                <del className="text-xs text-dark/65">
+                  <span className="sr-only">Precio anterior: </span>
+                  {formatPrice(course.comparePrice)}
+                </del>
+              ) : null}
+            </>
+          )
+        }
+        action={renderMainAction('btn btn-primary w-full whitespace-normal px-4 text-center')}
+      />
     </>
   );
 }

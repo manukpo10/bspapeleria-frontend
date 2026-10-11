@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, type KeyboardEvent } from 'react';
+import { useState, useEffect, useRef, type KeyboardEvent, type Ref } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import {
   ShoppingCart, Heart, Minus, Plus, Star, Truck, ShieldCheck, RotateCcw, PackageCheck, PackageX,
@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { SEO } from '../components/shared/SEO';
 import { Breadcrumbs } from '../components/shared/PageHeader';
+import { MobileBuyBar, mobileBuyBarClearance } from '../components/shared/MobileBuyBar';
 import { api } from '../services/api';
 import { useCartStore } from '../store/cartStore';
 import { useUIStore } from '../store/uiStore';
@@ -41,6 +42,8 @@ export default function ProductDetailPage() {
   const [activeImage, setActiveImage] = useState(0);
   const [activeTab, setActiveTab] = useState<TabId>('description');
   const tabRefs = useRef<Partial<Record<TabId, HTMLButtonElement | null>>>({});
+  // The page's own "Agregar al carrito" button: the phone buy bar watches it
+  const [ctaEl, setCtaEl] = useState<HTMLButtonElement | null>(null);
 
   useEffect(() => {
     if (!slug) return;
@@ -117,6 +120,13 @@ export default function ProductDetailPage() {
     navigate('/checkout');
   };
 
+  // The main action is defined once and rendered twice: in the page and in the phone buy bar
+  const renderAddToCart = (className: string, ref?: Ref<HTMLButtonElement>) => (
+    <button ref={ref} type="button" onClick={handleAddToCart} className={className}>
+      <ShoppingCart className="size-5" aria-hidden="true" /> Agregar al carrito
+    </button>
+  );
+
   // Arrow keys, Home and End move between tabs, as in the ARIA tabs pattern
   const handleTabKeyDown = (e: KeyboardEvent<HTMLButtonElement>, current: TabId) => {
     const index = tabs.findIndex((t) => t.id === current);
@@ -146,6 +156,9 @@ export default function ProductDetailPage() {
   const discount = product.comparePrice
     ? Math.round((1 - product.price / product.comparePrice) * 100)
     : 0;
+  // Only a compare price above the price is shown (page and buy bar)
+  const comparePrice =
+    product.comparePrice != null && product.comparePrice > product.price ? product.comparePrice : null;
   const categoryName = PRODUCT_CATEGORIES.find((c) => c.id === product.category)?.name ?? product.category;
   const inStock = product.stock > 0;
 
@@ -172,7 +185,7 @@ export default function ProductDetailPage() {
         </div>
       </div>
 
-      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
+      <div className={cn('mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-12', mobileBuyBarClearance)}>
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-2 lg:gap-14">
           {/* Gallery */}
           <div className="min-w-0">
@@ -216,27 +229,29 @@ export default function ProductDetailPage() {
               {product.name}
             </h1>
 
-            <div className="mt-3 flex items-center gap-2">
-              <div className="flex items-center gap-0.5" aria-hidden="true">
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <Star
-                    key={i}
-                    className={cn('size-5', i < Math.round(product.rating) ? 'fill-amber-400 text-amber-400' : 'text-sand')}
-                  />
-                ))}
+            {product.reviewsCount > 0 && (
+              <div className="mt-3 flex items-center gap-2">
+                <div className="flex items-center gap-0.5" aria-hidden="true">
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <Star
+                      key={i}
+                      className={cn('size-5', i < Math.round(product.rating) ? 'fill-amber-400 text-amber-400' : 'text-sand')}
+                    />
+                  ))}
+                </div>
+                <span className="text-sm text-dark/65">
+                  <span className="sr-only">Calificación {product.rating.toFixed(1)} de 5. </span>
+                  ({product.reviewsCount} reseñas)
+                </span>
               </div>
-              <span className="text-sm text-dark/65">
-                <span className="sr-only">Calificación {product.rating.toFixed(1)} de 5. </span>
-                ({product.reviewsCount} reseñas)
-              </span>
-            </div>
+            )}
 
             <div className="mt-6 flex flex-wrap items-center gap-x-4 gap-y-2">
               <p className="font-display text-3xl font-bold text-dark">{formatPrice(product.price)}</p>
-              {product.comparePrice != null && product.comparePrice > product.price ? (
+              {comparePrice !== null ? (
                 <del className="font-display text-xl text-dark/65">
                   <span className="sr-only">Precio anterior: </span>
-                  {formatPrice(product.comparePrice)}
+                  {formatPrice(comparePrice)}
                 </del>
               ) : null}
               {discount > 0 && <span className="chip bg-dark text-white">-{discount}%</span>}
@@ -276,9 +291,7 @@ export default function ProductDetailPage() {
 
             {/* Actions */}
             <div className="mt-6 grid max-w-xl grid-cols-[1fr_auto] gap-3">
-              <button type="button" onClick={handleAddToCart} className="btn btn-primary btn-lg col-span-2">
-                <ShoppingCart className="size-5" aria-hidden="true" /> Agregar al carrito
-              </button>
+              {renderAddToCart('btn btn-primary btn-lg col-span-2', setCtaEl)}
               <button type="button" onClick={handleBuyNow} className="btn btn-secondary btn-lg">
                 Comprar ahora
               </button>
@@ -374,6 +387,26 @@ export default function ProductDetailPage() {
           </div>
         </div>
       </div>
+
+      <MobileBuyBar
+        watch={ctaEl}
+        price={
+          <>
+            <p className="font-display text-xl font-bold leading-tight text-dark">
+              {formatPrice(product.price)}
+              {/* The button adds the quantity chosen above, so the bar says how many */}
+              {quantity > 1 && <span className="ml-1.5 text-xs font-medium text-dark/65">× {quantity}</span>}
+            </p>
+            {comparePrice !== null && (
+              <del className="text-xs text-dark/65">
+                <span className="sr-only">Precio anterior: </span>
+                {formatPrice(comparePrice)}
+              </del>
+            )}
+          </>
+        }
+        action={renderAddToCart('btn btn-primary w-full whitespace-normal px-4 text-center')}
+      />
     </>
   );
 }
