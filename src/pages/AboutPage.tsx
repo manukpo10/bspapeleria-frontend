@@ -7,6 +7,33 @@ import { VisitUsSection } from '../components/about/VisitUsSection';
 import { SocialMediaSection } from '../components/about/SocialMediaSection';
 import { InstagramFeedSection } from '../components/about/InstagramFeedSection';
 
+const team = [
+  {
+    name: 'Clari',
+    // Her own words, from the shop's Instagram
+    text: 'Mi nombre es Claribel, pero todos me llaman Clari. Soy Licenciada en Artes Audiovisuales por la UNLP, fan de Volver al Futuro y de los perros.',
+    caption: 'El día que retiré mi título, uno de mis mayores logros.',
+    image: {
+      src: '/images/brand/clari.webp',
+      size: 564,
+      alt: 'Clari sonriendo, con su título de la Universidad Nacional de La Plata en las manos',
+    },
+    tilt: '-rotate-2',
+  },
+  {
+    name: 'Darío',
+    // PLACEHOLDER: invented intro until Darío writes his own; replace the whole text
+    text: 'Mi nombre es Darío y soy parte del equipo de BS Papelería. Me ocupo de que cada pedido salga prolijo y llegue a tiempo. Fan del mate y de los asados con amigos.',
+    caption: null,
+    image: {
+      src: '/images/brand/dario.webp',
+      size: 694,
+      alt: 'Darío sonriendo, con una campera azul, al aire libre',
+    },
+    tilt: 'rotate-2',
+  },
+];
+
 const stories = [
   {
     eyebrow: 'Nuestra pasión',
@@ -103,36 +130,36 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* Meet Clari: no bottom padding, the stories section's own top padding spaces what follows */}
-      <section aria-labelledby="clari-heading" className="pt-12 sm:pt-16">
-        <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
-          <div className="card grid items-center gap-8 p-6 sm:grid-cols-[auto_minmax(0,1fr)] sm:gap-10 sm:p-10">
-            {/* The only source is a small crop of an Instagram story, so the photo stays small to look sharp */}
-            <figure className="mx-auto w-44 sm:mx-0 sm:w-48">
-              <img
-                src="/images/brand/clari.webp"
-                alt="Clari sonriendo, con su título de la Universidad Nacional de La Plata en las manos"
-                width={564}
-                height={564}
-                loading="lazy"
-                decoding="async"
-                className="aspect-square w-full -rotate-2 rounded-3xl object-cover shadow-lift ring-4 ring-white"
-              />
-              <figcaption className="mt-4 text-center text-xs text-dark/65">
-                El día que retiré mi título, uno de mis mayores logros.
-              </figcaption>
-            </figure>
-            <div className="text-center sm:text-left">
-              <p className="eyebrow">Quiénes somos</p>
-              <h2 id="clari-heading" className="mt-3 font-display text-3xl font-bold tracking-tight text-dark sm:text-4xl">
-                Hola, soy Clari
-              </h2>
-              <p className="mt-4 text-base text-dark/75">
-                Mi nombre es Claribel, pero todos me llaman Clari. Soy Licenciada en Artes Audiovisuales por la UNLP, fan de Volver al Futuro y de los perros.
-              </p>
-              <p className="mt-3 font-script text-3xl text-iris">Clari</p>
-            </div>
+      {/* Meet the team: no bottom padding, the stories section's own top padding spaces what follows */}
+      <section aria-labelledby="team-heading" className="pt-12 sm:pt-16">
+        <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
+          <div className="text-center">
+            <p className="eyebrow">Quiénes somos</p>
+            <h2 id="team-heading" className="mt-3 font-display text-3xl font-bold tracking-tight text-dark sm:text-4xl">
+              Hola, somos Clari y Darío
+            </h2>
           </div>
+          <ul className="mt-10 grid gap-6 md:grid-cols-2">
+            {team.map((person) => (
+              <li key={person.name} className="card p-6 text-center sm:p-10">
+                {/* The sources are small crops, so the photos stay small to look sharp */}
+                <figure className="mx-auto w-44 sm:w-48">
+                  <img
+                    src={person.image.src}
+                    alt={person.image.alt}
+                    width={person.image.size}
+                    height={person.image.size}
+                    loading="lazy"
+                    decoding="async"
+                    className={cn('aspect-square w-full rounded-3xl object-cover shadow-lift ring-4 ring-white', person.tilt)}
+                  />
+                  {person.caption && <figcaption className="mt-4 text-xs text-dark/65">{person.caption}</figcaption>}
+                </figure>
+                <h3 className="mt-6 font-display text-2xl font-semibold text-dark">{person.name}</h3>
+                <p className="mt-3 text-base text-dark/75">{person.text}</p>
+              </li>
+            ))}
+          </ul>
         </div>
       </section>
 
