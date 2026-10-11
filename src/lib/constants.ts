@@ -3,6 +3,11 @@ export const APP_DESCRIPTION = 'Papelería boutique moderna con productos person
 export const APP_URL = 'https://bspapeleria.com';
 export const CONTACT_EMAIL = 'hola@bspapeleria.com';
 
+// The shop's WhatsApp line, which is also the phone number shown on the site
+export const PHONE_DISPLAY = '+54 9 2213 18-0884';
+export const PHONE_HREF = 'tel:+5492213180884';
+export const WHATSAPP_URL = 'https://wa.me/5492213180884';
+
 // Backend origin without the /api suffix (the older VITE_API_URL variable included it, so it is not reused)
 export const API_URL = (import.meta.env.VITE_BACKEND_URL || 'https://bspapeleria-backend-m8u8.onrender.com').replace(/\/+$/, '');
 

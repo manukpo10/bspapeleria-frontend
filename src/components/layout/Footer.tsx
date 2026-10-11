@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Mail, MapPin, Phone } from 'lucide-react';
+import { PHONE_DISPLAY } from '../../lib/constants';
 
 // lucide-react 1.x dropped brand icons, so these two glyphs are drawn here in the same stroke style
 function InstagramIcon({ className }: { className?: string }) {
@@ -126,7 +127,7 @@ export function Footer() {
                 <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-white text-iris ring-1 ring-sand">
                   <Phone className="size-4" aria-hidden="true" />
                 </span>
-                <span>+54 11 1234-5678</span>
+                <span>{PHONE_DISPLAY}</span>
               </li>
             </ul>
           </div>

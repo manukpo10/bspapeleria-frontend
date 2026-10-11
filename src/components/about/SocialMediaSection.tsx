@@ -1,4 +1,5 @@
 import { MessageCircle } from 'lucide-react';
+import { WHATSAPP_URL } from '../../lib/constants';
 
 const InstagramIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="size-8">
@@ -63,7 +64,7 @@ const networks = [
     name: 'WhatsApp',
     handle: 'Escribinos directo',
     followers: 'Respondemos al toque',
-    url: 'https://wa.me/5491112345678',
+    url: WHATSAPP_URL,
     color: '#25D366',
     Icon: () => <MessageCircle className="size-8" aria-hidden="true" />,
   },

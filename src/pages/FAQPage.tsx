@@ -4,6 +4,7 @@ import { SEO } from '../components/shared/SEO';
 import { PageHeader } from '../components/shared/PageHeader';
 import { faqs } from '../data/mocks';
 import { cn } from '../lib/utils';
+import { WHATSAPP_URL } from '../lib/constants';
 
 const categories = [
   { id: 'all', name: 'Todas' },
@@ -150,7 +151,7 @@ export default function FAQPage() {
               <Mail className="size-4" aria-hidden="true" /> Escribinos por email
             </a>
             <a
-              href="https://wa.me/5491112345678"
+              href={WHATSAPP_URL}
               target="_blank"
               rel="noopener noreferrer"
               className="btn btn-secondary"

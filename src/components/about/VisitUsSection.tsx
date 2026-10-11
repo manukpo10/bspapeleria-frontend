@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { MapPin, Clock, Phone, Mail, MessageCircle } from 'lucide-react';
+import { PHONE_DISPLAY, PHONE_HREF, WHATSAPP_URL } from '../../lib/constants';
 
 const COORDS: [number, number] = [-34.8500, -58.0833];
 
@@ -19,8 +20,8 @@ const contactItems = [
   {
     icon: Phone,
     label: 'Teléfono',
-    lines: ['+54 11 1234-5678'],
-    href: 'tel:+541112345678',
+    lines: [PHONE_DISPLAY],
+    href: PHONE_HREF,
   },
   {
     icon: Mail,
@@ -32,7 +33,7 @@ const contactItems = [
     icon: MessageCircle,
     label: 'WhatsApp',
     lines: ['Escribinos por WhatsApp'],
-    href: 'https://wa.me/5491112345678',
+    href: WHATSAPP_URL,
   },
 ];
 
@@ -98,7 +99,7 @@ export function VisitUsSection() {
                 <MapPin className="size-4" aria-hidden="true" /> Cómo llegar
                 <span className="sr-only"> (se abre en una pestaña nueva)</span>
               </a>
-              <a href="tel:+541112345678" className="btn btn-secondary">
+              <a href={PHONE_HREF} className="btn btn-secondary">
                 <Phone className="size-4" aria-hidden="true" /> Llamanos
               </a>
             </div>
