@@ -3,9 +3,8 @@ export const APP_DESCRIPTION = 'Papelería boutique moderna con productos person
 export const APP_URL = 'https://bspapeleria.com';
 export const CONTACT_EMAIL = 'hola@bspapeleria.com';
 
-// The shop's WhatsApp line, which is also the phone number shown on the site
-export const PHONE_DISPLAY = '+54 9 2213 18-0884';
-export const PHONE_HREF = 'tel:+5492213180884';
+// The shop is reached by WhatsApp only: the site offers no phone-call links
+export const WHATSAPP_DISPLAY = '+54 9 2213 18-0884';
 export const WHATSAPP_URL = 'https://wa.me/5492213180884';
 
 // Backend origin without the /api suffix (the older VITE_API_URL variable included it, so it is not reused)

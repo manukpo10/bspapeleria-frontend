@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
-import { MapPin, Clock, Phone, Mail, MessageCircle } from 'lucide-react';
-import { PHONE_DISPLAY, PHONE_HREF, WHATSAPP_URL } from '../../lib/constants';
+import { MapPin, Clock, Mail, MessageCircle } from 'lucide-react';
+import { WHATSAPP_DISPLAY, WHATSAPP_URL } from '../../lib/constants';
 
 const COORDS: [number, number] = [-34.8500, -58.0833];
 
@@ -18,12 +18,6 @@ const contactItems = [
     href: null,
   },
   {
-    icon: Phone,
-    label: 'Teléfono',
-    lines: [PHONE_DISPLAY],
-    href: PHONE_HREF,
-  },
-  {
     icon: Mail,
     label: 'Email',
     lines: ['hola@bspapeleria.com'],
@@ -32,7 +26,7 @@ const contactItems = [
   {
     icon: MessageCircle,
     label: 'WhatsApp',
-    lines: ['Escribinos por WhatsApp'],
+    lines: [WHATSAPP_DISPLAY],
     href: WHATSAPP_URL,
   },
 ];
@@ -99,8 +93,9 @@ export function VisitUsSection() {
                 <MapPin className="size-4" aria-hidden="true" /> Cómo llegar
                 <span className="sr-only"> (se abre en una pestaña nueva)</span>
               </a>
-              <a href={PHONE_HREF} className="btn btn-secondary">
-                <Phone className="size-4" aria-hidden="true" /> Llamanos
+              <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer" className="btn btn-secondary">
+                <MessageCircle className="size-4" aria-hidden="true" /> Escribinos por WhatsApp
+                <span className="sr-only"> (se abre en una pestaña nueva)</span>
               </a>
             </div>
           </div>

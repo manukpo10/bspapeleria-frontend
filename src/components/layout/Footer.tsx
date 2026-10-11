@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
-import { Mail, MapPin, Phone } from 'lucide-react';
-import { PHONE_DISPLAY } from '../../lib/constants';
+import { Mail, MapPin, MessageCircle } from 'lucide-react';
+import { WHATSAPP_DISPLAY, WHATSAPP_URL } from '../../lib/constants';
 
 // lucide-react 1.x dropped brand icons, so these two glyphs are drawn here in the same stroke style
 function InstagramIcon({ className }: { className?: string }) {
@@ -125,9 +125,13 @@ export function Footer() {
               </li>
               <li className="flex items-center gap-3">
                 <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-white text-iris ring-1 ring-sand">
-                  <Phone className="size-4" aria-hidden="true" />
+                  <MessageCircle className="size-4" aria-hidden="true" />
                 </span>
-                <span>{PHONE_DISPLAY}</span>
+                <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer" className="min-w-0 transition-colors hover:text-iris">
+                  <span className="sr-only">WhatsApp: </span>
+                  {WHATSAPP_DISPLAY}
+                  <span className="sr-only"> (se abre en una pestaña nueva)</span>
+                </a>
               </li>
             </ul>
           </div>
