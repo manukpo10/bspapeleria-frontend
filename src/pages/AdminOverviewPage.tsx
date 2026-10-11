@@ -1,8 +1,15 @@
 import { useEffect, useState } from 'react';
-import { motion } from 'framer-motion';
-import { Users, BookOpen, ShoppingBag, DollarSign, Activity } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Users, BookOpen, ShoppingBag, DollarSign, Package, Plus, type LucideIcon } from 'lucide-react';
 import { api } from '../services/api';
 import { formatPrice } from '../lib/utils';
+
+const quickLinks: { to: string; label: string; icon: LucideIcon }[] = [
+  { to: '/admin/productos/nuevo', label: 'Nuevo producto', icon: Plus },
+  { to: '/admin/cursos/nuevo', label: 'Nuevo curso', icon: Plus },
+  { to: '/admin/pedidos', label: 'Revisar pedidos', icon: ShoppingBag },
+  { to: '/admin/productos', label: 'Ver productos', icon: Package },
+];
 
 export default function AdminOverviewPage() {
   const [stats, setStats] = useState({ totalSales: 0, newStudents: 0, activeCourses: 0, productsSold: 0 });
@@ -11,32 +18,48 @@ export default function AdminOverviewPage() {
     api.getAdminStats().then(setStats);
   }, []);
 
-  return (
-    <div className="space-y-8">
-      <h1 className="font-display text-2xl font-semibold text-white">Dashboard</h1>
+  const tiles: { label: string; value: string | number; icon: LucideIcon }[] = [
+    { label: 'Ventas totales', value: formatPrice(stats.totalSales), icon: DollarSign },
+    { label: 'Nuevos estudiantes', value: stats.newStudents, icon: Users },
+    { label: 'Cursos activos', value: stats.activeCourses, icon: BookOpen },
+    { label: 'Productos vendidos', value: stats.productsSold, icon: ShoppingBag },
+  ];
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {[
-          { label: 'Ventas totales', value: formatPrice(stats.totalSales), icon: DollarSign, color: 'bg-primary/20 text-primary' },
-          { label: 'Nuevos estudiantes', value: stats.newStudents, icon: Users, color: 'bg-secondary/20 text-secondary' },
-          { label: 'Cursos activos', value: stats.activeCourses, icon: BookOpen, color: 'bg-accent/20 text-accent' },
-          { label: 'Productos vendidos', value: stats.productsSold, icon: ShoppingBag, color: 'bg-success/20 text-success' },
-        ].map((stat, i) => (
-          <motion.div
-            key={stat.label}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.1 }}
-            className="rounded-2xl bg-white/5 border border-white/10 p-5"
-          >
-            <div className={`w-10 h-10 rounded-xl ${stat.color} flex items-center justify-center mb-3`}>
-              <stat.icon className="w-5 h-5" />
-            </div>
-            <p className="text-2xl font-display font-semibold text-white">{stat.value}</p>
-            <p className="text-xs text-white/50">{stat.label}</p>
-          </motion.div>
-        ))}
-      </div>
+  return (
+    <div className="animate-fade-in space-y-8">
+      <section aria-labelledby="overview-kpis">
+        <h2 id="overview-kpis" className="sr-only">
+          Números de la tienda
+        </h2>
+        <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          {tiles.map((tile) => (
+            <li key={tile.label} className="card p-5">
+              <span className="grid size-11 place-items-center rounded-xl bg-mist text-iris">
+                <tile.icon className="size-5" aria-hidden="true" />
+              </span>
+              <p className="mt-4 font-display text-2xl font-bold text-dark">{tile.value}</p>
+              <p className="mt-0.5 text-sm text-dark/65">{tile.label}</p>
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <section aria-labelledby="overview-shortcuts" className="card p-6 sm:p-8">
+        <h2 id="overview-shortcuts" className="font-display text-xl font-semibold text-dark">
+          Accesos rápidos
+        </h2>
+        <p className="mt-1 text-sm text-dark/65">Lo que más se usa en el día a día de la tienda.</p>
+        <ul className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {quickLinks.map((link) => (
+            <li key={link.to + link.label}>
+              <Link to={link.to} className="btn btn-soft w-full justify-start">
+                <link.icon className="size-5 shrink-0 text-iris" aria-hidden="true" />
+                {link.label}
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </section>
     </div>
   );
 }

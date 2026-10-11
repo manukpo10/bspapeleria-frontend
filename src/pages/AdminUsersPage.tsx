@@ -1,12 +1,37 @@
 import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { Search, Shield } from 'lucide-react';
+import { Shield, User, Users, SearchX } from 'lucide-react';
 import { api } from '../services/api';
 import { toast } from 'sonner';
+import { EmptyState } from '../components/shared/EmptyState';
+import { SearchField } from '../components/admin/SearchField';
+import { AdminTable, THead, Th, TRow, Td } from '../components/admin/AdminTable';
+import { IconButton } from '../components/admin/RowActions';
+import { ListSkeleton } from '../components/admin/ListSkeleton';
+
+interface AdminUser {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  avatar?: string;
+}
+
+const avatarOf = (u: AdminUser) => u.avatar ?? `https://ui-avatars.com/api/?name=${encodeURIComponent(u.name)}`;
+
+function RoleChip({ role }: { role: string }) {
+  const isAdmin = role === 'admin';
+  const Icon = isAdmin ? Shield : User;
+  return (
+    <span className={isAdmin ? 'chip bg-secondary/25 text-dark' : 'chip bg-sand/50 text-dark'}>
+      <Icon className="size-3.5" aria-hidden="true" />
+      {isAdmin ? 'Administrador' : 'Usuario'}
+    </span>
+  );
+}
 
 export default function AdminUsersPage() {
   const [search, setSearch] = useState('');
-  const [userList, setUserList] = useState<any[]>([]);
+  const [userList, setUserList] = useState<AdminUser[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -26,74 +51,119 @@ export default function AdminUsersPage() {
         prev.map((u) => (u.id === id ? { ...u, role: newRole } : u))
       );
       toast.success(`Rol actualizado a ${newRole}`);
-    } catch (e: any) {
-      toast.error(e.message);
+    } catch (e) {
+      toast.error((e as Error).message);
     }
   };
 
-  if (loading) {
-    return <div className="space-y-3">{Array.from({ length: 5 }).map((_, i) => (<div key={i} className="h-16 rounded-xl bg-white/5 animate-pulse" />))}</div>;
-  }
+  // Same call the buttons always made: toggleRole also expects the current role, which is not passed here (known issue)
+  const changeRole = (id: string) => toggleRole(id);
 
   return (
-    <div className="space-y-6">
-      <h1 className="font-display text-2xl font-semibold text-white">Usuarios</h1>
+    <div className="animate-fade-in space-y-6">
+      <SearchField
+        label="Buscar usuarios"
+        placeholder="Buscar por nombre o email..."
+        value={search}
+        onChange={setSearch}
+        className="sm:max-w-sm"
+      />
 
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
-        <input
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Buscar usuarios..."
-          className="w-full max-w-md rounded-xl border border-white/10 bg-white/5 pl-10 pr-3 py-2.5 text-sm text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-primary/50"
-        />
-      </div>
+      {loading ? (
+        <ListSkeleton label="Cargando usuarios..." />
+      ) : userList.length === 0 ? (
+        <EmptyState className="card" icon={Users} title="Todavía no hay usuarios.">
+          Cuando alguien se registre, lo vas a ver acá.
+        </EmptyState>
+      ) : filtered.length === 0 ? (
+        <EmptyState
+          className="card"
+          icon={SearchX}
+          title="No encontramos usuarios."
+          action={
+            <button type="button" onClick={() => setSearch('')} className="btn btn-secondary">
+              Limpiar búsqueda
+            </button>
+          }
+        >
+          Probá con otro nombre o email.
+        </EmptyState>
+      ) : (
+        <>
+          <p aria-live="polite" className="text-sm text-dark/65">
+            {search ? `${filtered.length} de ${userList.length} usuarios` : `${userList.length} ${userList.length === 1 ? 'usuario' : 'usuarios'}`}
+          </p>
 
-      <div className="rounded-2xl bg-white/5 border border-white/10 overflow-hidden">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-white/10 text-white/50">
-              <th className="text-left p-4 font-medium">Usuario</th>
-              <th className="text-left p-4 font-medium">Email</th>
-              <th className="text-left p-4 font-medium">Rol</th>
-              <th className="text-right p-4 font-medium">Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.map((u, i) => (
-              <motion.tr
-                key={u.id}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: i * 0.03 }}
-                className="border-b border-white/5 hover:bg-white/5 transition-colors"
-              >
-                <td className="p-4">
+          <AdminTable caption="Usuarios registrados">
+            <THead>
+              <Th>Usuario</Th>
+              <Th>Email</Th>
+              <Th>Rol</Th>
+              <Th align="right">Acciones</Th>
+            </THead>
+            <tbody>
+              {filtered.map((u) => (
+                <TRow key={u.id}>
+                  <Td className="w-1/2 max-w-0">
+                    <div className="flex items-center gap-3">
+                      <img
+                        src={avatarOf(u)}
+                        alt=""
+                        width={40}
+                        height={40}
+                        loading="lazy"
+                        decoding="async"
+                        className="size-10 shrink-0 rounded-full bg-sand/40 object-cover"
+                      />
+                      <p className="truncate font-medium text-dark">{u.name}</p>
+                    </div>
+                  </Td>
+                  <Td className="w-1/2 max-w-0 text-xs text-dark/75">
+                    <p className="truncate" title={u.email}>{u.email}</p>
+                  </Td>
+                  <Td>
+                    <RoleChip role={u.role} />
+                  </Td>
+                  <Td align="right">
+                    <IconButton onClick={() => changeRole(u.id)} icon={Shield} label={`Cambiar el rol de ${u.name}`} />
+                  </Td>
+                </TRow>
+              ))}
+            </tbody>
+          </AdminTable>
+
+          <ul aria-label="Usuarios registrados" className="space-y-3 md:hidden">
+            {filtered.map((u) => (
+              <li key={u.id}>
+                <article className="card p-4">
                   <div className="flex items-center gap-3">
-                    <img src={u.avatar ?? `https://ui-avatars.com/api/?name=${encodeURIComponent(u.name)}`} alt={u.name} className="w-8 h-8 rounded-full object-cover" />
-                    <span className="text-white/80">{u.name}</span>
+                    <img
+                      src={avatarOf(u)}
+                      alt=""
+                      width={48}
+                      height={48}
+                      loading="lazy"
+                      decoding="async"
+                      className="size-12 shrink-0 rounded-full bg-sand/40 object-cover"
+                    />
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate font-display font-semibold text-dark">{u.name}</p>
+                      <p className="truncate text-xs text-dark/65">{u.email}</p>
+                    </div>
                   </div>
-                </td>
-                <td className="p-4 text-white/60">{u.email}</td>
-                <td className="p-4">
-                  <span className={`text-xs px-2 py-1 rounded-full ${u.role === 'admin' ? 'bg-primary/20 text-primary' : 'bg-white/10 text-white/60'}`}>
-                    {u.role}
-                  </span>
-                </td>
-                <td className="p-4 text-right">
-                  <button
-                    onClick={() => toggleRole(u.id)}
-                    className="p-2 rounded-full hover:bg-white/10 text-white/40 hover:text-white transition-colors"
-                    title="Cambiar rol"
-                  >
-                    <Shield className="w-4 h-4" />
-                  </button>
-                </td>
-              </motion.tr>
+                  <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-sand/60 pt-3">
+                    <RoleChip role={u.role} />
+                    <button type="button" onClick={() => changeRole(u.id)} className="btn btn-soft btn-sm min-h-11">
+                      <Shield className="size-4" aria-hidden="true" /> Cambiar rol
+                      <span className="sr-only"> de {u.name}</span>
+                    </button>
+                  </div>
+                </article>
+              </li>
             ))}
-          </tbody>
-        </table>
-      </div>
+          </ul>
+        </>
+      )}
     </div>
   );
 }

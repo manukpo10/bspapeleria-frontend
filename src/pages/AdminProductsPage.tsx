@@ -1,11 +1,19 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { Plus, Search, Pencil, Trash2, Image } from 'lucide-react';
+import { Plus, Pencil, Trash2, Package, SearchX } from 'lucide-react';
 import { api } from '../services/api';
 import { formatPrice } from '../lib/utils';
+import { PRODUCT_CATEGORIES } from '../lib/constants';
 import type { Product } from '../types';
 import { toast } from 'sonner';
+import { EmptyState } from '../components/shared/EmptyState';
+import { SearchField } from '../components/admin/SearchField';
+import { AdminTable, THead, Th, TRow, Td } from '../components/admin/AdminTable';
+import { IconButton, IconLink } from '../components/admin/RowActions';
+import { ListSkeleton } from '../components/admin/ListSkeleton';
+import { Thumb } from '../components/admin/Thumb';
+
+const categoryLabel = (category: string) => PRODUCT_CATEGORIES.find((c) => c.id === category)?.name ?? category;
 
 export default function AdminProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -25,88 +33,128 @@ export default function AdminProductsPage() {
     toast.success('Producto eliminado');
   };
 
+  const stockCell = (stock: number) => (stock === 0 ? <span className="chip bg-error/40 text-dark">Sin stock</span> : stock);
+
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="font-display text-2xl font-semibold text-white">Productos</h1>
-        <Link
-          to="/admin/productos/nuevo"
-          className="flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-secondary transition-colors"
-        >
-          <Plus className="w-4 h-4" /> Nuevo producto
+    <div className="animate-fade-in space-y-6">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <SearchField
+          label="Buscar productos"
+          placeholder="Buscar productos..."
+          value={search}
+          onChange={setSearch}
+          className="sm:w-full sm:max-w-sm"
+        />
+        <Link to="/admin/productos/nuevo" className="btn btn-primary">
+          <Plus className="size-5" aria-hidden="true" /> Nuevo producto
         </Link>
       </div>
 
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
-        <input
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Buscar productos..."
-          className="w-full max-w-md rounded-xl border border-white/10 bg-white/5 pl-10 pr-3 py-2.5 text-sm text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-primary/50"
-        />
-      </div>
-
       {loading ? (
-        <div className="space-y-3">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} className="h-16 rounded-xl bg-white/5 animate-pulse" />
-          ))}
-        </div>
+        <ListSkeleton label="Cargando productos..." />
+      ) : products.length === 0 ? (
+        <EmptyState
+          className="card"
+          icon={Package}
+          title="Todavía no hay productos."
+          action={
+            <Link to="/admin/productos/nuevo" className="btn btn-secondary">
+              Crear el primero
+            </Link>
+          }
+        >
+          Cuando cargues productos, los vas a ver acá para editarlos o eliminarlos.
+        </EmptyState>
+      ) : filtered.length === 0 ? (
+        <EmptyState
+          className="card"
+          icon={SearchX}
+          title="No encontramos productos."
+          action={
+            <button type="button" onClick={() => setSearch('')} className="btn btn-secondary">
+              Limpiar búsqueda
+            </button>
+          }
+        >
+          Probá con otro nombre o limpiá la búsqueda.
+        </EmptyState>
       ) : (
-        <div className="rounded-2xl bg-white/5 border border-white/10 overflow-hidden">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-white/10 text-white/50">
-                <th className="text-left p-4 font-medium">Producto</th>
-                <th className="text-left p-4 font-medium">Categoría</th>
-                <th className="text-left p-4 font-medium">Precio</th>
-                <th className="text-left p-4 font-medium">Stock</th>
-                <th className="text-right p-4 font-medium">Acciones</th>
-              </tr>
-            </thead>
+        <>
+          <p aria-live="polite" className="text-sm text-dark/65">
+            {search ? `${filtered.length} de ${products.length} productos` : `${products.length} ${products.length === 1 ? 'producto' : 'productos'}`}
+          </p>
+
+          <AdminTable caption="Productos de la tienda">
+            <THead>
+              <Th>Producto</Th>
+              <Th>Categoría</Th>
+              <Th align="right">Precio</Th>
+              <Th align="right">Stock</Th>
+              <Th align="right">Acciones</Th>
+            </THead>
             <tbody>
-              {filtered.map((p, i) => (
-                <motion.tr
-                  key={p.id}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: i * 0.03 }}
-                  className="border-b border-white/5 hover:bg-white/5 transition-colors"
-                >
-                  <td className="p-4">
+              {filtered.map((p) => (
+                <TRow key={p.id}>
+                  <Td className="w-full max-w-0">
                     <div className="flex items-center gap-3">
-                      {p.images[0] ? (
-                        <img src={p.images[0]} alt={p.name} className="w-10 h-10 rounded-lg object-cover" />
-                      ) : (
-                        <div className="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center">
-                          <Image className="w-4 h-4 text-white/30" />
-                        </div>
-                      )}
-                      <span className="text-white/80">{p.name}</span>
+                      <Thumb src={p.images[0]} />
+                      <p className="line-clamp-2 min-w-0 font-medium text-dark">{p.name}</p>
                     </div>
-                  </td>
-                  <td className="p-4 text-white/60 capitalize">{p.category}</td>
-                  <td className="p-4 text-white/80">{formatPrice(p.price)}</td>
-                  <td className="p-4 text-white/60">{p.stock}</td>
-                  <td className="p-4 text-right">
-                    <div className="flex items-center justify-end gap-2">
-                      <Link
-                        to={`/admin/productos/${p.id}/builder`}
-                        className="p-2 rounded-full hover:bg-white/10 text-white/40 hover:text-white transition-colors"
-                      >
-                        <Pencil className="w-4 h-4" />
-                      </Link>
-                      <button onClick={() => handleDelete(p.id)} className="p-2 rounded-full hover:bg-error/10 text-white/40 hover:text-error transition-colors">
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                  </Td>
+                  <Td className="text-xs text-dark/75">{categoryLabel(p.category)}</Td>
+                  <Td align="right" className="whitespace-nowrap font-display font-semibold text-dark">{formatPrice(p.price)}</Td>
+                  <Td align="right" className="whitespace-nowrap font-display text-dark">{stockCell(p.stock)}</Td>
+                  <Td align="right">
+                    <div className="flex items-center justify-end gap-1">
+                      <IconLink to={`/admin/productos/${p.id}/builder`} icon={Pencil} label={`Editar ${p.name}`} />
+                      <IconButton onClick={() => handleDelete(p.id)} icon={Trash2} tone="danger" label={`Eliminar ${p.name}`} />
                     </div>
-                  </td>
-                </motion.tr>
+                  </Td>
+                </TRow>
               ))}
             </tbody>
-          </table>
-        </div>
+          </AdminTable>
+
+          <ul aria-label="Productos de la tienda" className="space-y-3 md:hidden">
+            {filtered.map((p) => (
+              <li key={p.id}>
+                <article className="card p-4">
+                  <div className="flex items-start gap-3">
+                    <Thumb src={p.images[0]} />
+                    <div className="min-w-0 flex-1">
+                      <p className="line-clamp-2 font-display font-semibold text-dark">{p.name}</p>
+                      <p className="mt-0.5 text-xs text-dark/65">{categoryLabel(p.category)}</p>
+                    </div>
+                  </div>
+                  <dl className="mt-4 grid grid-cols-2 gap-3 border-t border-sand/60 pt-4">
+                    <div>
+                      <dt className="text-xs text-dark/65">Precio</dt>
+                      <dd className="font-display font-semibold text-dark">{formatPrice(p.price)}</dd>
+                    </div>
+                    <div>
+                      <dt className="text-xs text-dark/65">Stock</dt>
+                      <dd className="font-display font-semibold text-dark">{stockCell(p.stock)}</dd>
+                    </div>
+                  </dl>
+                  <div className="mt-4 flex flex-wrap gap-2 border-t border-sand/60 pt-3">
+                    <Link to={`/admin/productos/${p.id}/builder`} className="btn btn-soft btn-sm min-h-11">
+                      <Pencil className="size-4" aria-hidden="true" /> Editar
+                      <span className="sr-only"> {p.name}</span>
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={() => handleDelete(p.id)}
+                      className="btn btn-sm min-h-11 text-rose-700 hover:bg-rose-50"
+                    >
+                      <Trash2 className="size-4" aria-hidden="true" /> Eliminar
+                      <span className="sr-only"> {p.name}</span>
+                    </button>
+                  </div>
+                </article>
+              </li>
+            ))}
+          </ul>
+        </>
       )}
     </div>
   );

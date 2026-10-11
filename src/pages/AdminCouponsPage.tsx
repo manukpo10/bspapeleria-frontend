@@ -1,10 +1,26 @@
 import { useState } from 'react';
-import { motion } from 'framer-motion';
-import { Plus, Search, Trash2 } from 'lucide-react';
+import { Ban, CircleCheck, Info, Plus, Tag, Trash2, SearchX } from 'lucide-react';
 import { formatPrice } from '../lib/utils';
 import type { Coupon } from '../types';
 import { coupons as mockCoupons } from '../data/mocks';
 import { toast } from 'sonner';
+import { EmptyState } from '../components/shared/EmptyState';
+import { SearchField } from '../components/admin/SearchField';
+import { AdminTable, THead, Th, TRow, Td } from '../components/admin/AdminTable';
+import { IconButton } from '../components/admin/RowActions';
+import { FormField } from '../components/admin/FormField';
+
+function ActiveChip({ active }: { active: boolean }) {
+  const Icon = active ? CircleCheck : Ban;
+  return (
+    <span className={active ? 'chip bg-success/40 text-dark' : 'chip bg-sand/60 text-dark'}>
+      <Icon className="size-3.5" aria-hidden="true" />
+      {active ? 'Activo' : 'Inactivo'}
+    </span>
+  );
+}
+
+const discountText = (c: Coupon) => (c.discountType === 'percentage' ? `${c.discountValue}%` : formatPrice(c.discountValue));
 
 export default function AdminCouponsPage() {
   const [coupons, setCoupons] = useState<Coupon[]>(mockCoupons);
@@ -39,82 +55,157 @@ export default function AdminCouponsPage() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="font-display text-2xl font-semibold text-white">Cupones</h1>
+    <div className="animate-fade-in space-y-6">
+      <p className="flex items-start gap-2 text-sm text-dark/65">
+        <Info className="mt-0.5 size-4 shrink-0 text-iris" aria-hidden="true" />
+        Por ahora los cupones son de prueba: los cambios no se guardan en el servidor.
+      </p>
+
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <SearchField
+          label="Buscar cupones"
+          placeholder="Buscar cupones..."
+          value={search}
+          onChange={setSearch}
+          className="sm:w-full sm:max-w-sm"
+        />
         <button
+          type="button"
           onClick={() => setShowForm(!showForm)}
-          className="flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-secondary transition-colors"
+          aria-expanded={showForm}
+          aria-controls="coupon-form"
+          className="btn btn-primary"
         >
-          <Plus className="w-4 h-4" /> Nuevo cupón
+          <Plus className="size-5" aria-hidden="true" /> Nuevo cupón
         </button>
       </div>
 
       {showForm && (
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="rounded-2xl bg-white/5 border border-white/10 p-6"
-        >
-          <h3 className="font-display font-medium text-white mb-4">Nuevo cupón</h3>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
-            <input placeholder="Código" value={form.code ?? ''} onChange={(e) => setForm({ ...form, code: e.target.value })} className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-primary/50" />
-            <select value={form.discountType} onChange={(e) => setForm({ ...form, discountType: e.target.value as 'percentage' | 'fixed' })} className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-primary/50">
-              <option value="percentage" className="bg-dark">Porcentaje</option>
-              <option value="fixed" className="bg-dark">Fijo</option>
-            </select>
-            <input type="number" placeholder="Valor" value={form.discountValue ?? ''} onChange={(e) => setForm({ ...form, discountValue: Number(e.target.value) })} className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-primary/50" />
+        <section id="coupon-form" aria-labelledby="coupon-form-title" className="card animate-fade-in p-6 sm:p-8">
+          <h2 id="coupon-form-title" className="font-display text-xl font-semibold text-dark">Nuevo cupón</h2>
+          <div className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-3">
+            <FormField label="Código">
+              {(control) => (
+                <input
+                  {...control}
+                  placeholder="Ej: BIENVENIDA10"
+                  value={form.code ?? ''}
+                  onChange={(e) => setForm({ ...form, code: e.target.value })}
+                  className="field"
+                />
+              )}
+            </FormField>
+            <FormField label="Tipo de descuento">
+              {(control) => (
+                <select
+                  {...control}
+                  value={form.discountType}
+                  onChange={(e) => setForm({ ...form, discountType: e.target.value as 'percentage' | 'fixed' })}
+                  className="field"
+                >
+                  <option value="percentage">Porcentaje</option>
+                  <option value="fixed">Fijo</option>
+                </select>
+              )}
+            </FormField>
+            <FormField label="Valor" hint={form.discountType === 'fixed' ? 'Monto a descontar, en pesos.' : 'Porcentaje a descontar.'}>
+              {(control) => (
+                <input
+                  {...control}
+                  type="number"
+                  placeholder="Valor"
+                  value={form.discountValue ?? ''}
+                  onChange={(e) => setForm({ ...form, discountValue: Number(e.target.value) })}
+                  className="field"
+                />
+              )}
+            </FormField>
           </div>
-          <div className="flex gap-3">
-            <button onClick={handleCreate} className="rounded-xl bg-success px-5 py-2 text-sm font-medium text-white hover:bg-success/90 transition-colors">Crear</button>
-            <button onClick={() => setShowForm(false)} className="rounded-xl border border-white/10 px-5 py-2 text-sm font-medium text-white hover:bg-white/5 transition-colors">Cancelar</button>
+          <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+            <button type="button" onClick={handleCreate} className="btn btn-primary">Crear</button>
+            <button type="button" onClick={() => setShowForm(false)} className="btn btn-secondary">Cancelar</button>
           </div>
-        </motion.div>
+        </section>
       )}
 
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
-        <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar cupones..." className="w-full max-w-md rounded-xl border border-white/10 bg-white/5 pl-10 pr-3 py-2.5 text-sm text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-primary/50" />
-      </div>
+      {coupons.length === 0 ? (
+        <EmptyState className="card" icon={Tag} title="Todavía no hay cupones.">
+          Creá el primero con el botón &ldquo;Nuevo cupón&rdquo;.
+        </EmptyState>
+      ) : filtered.length === 0 ? (
+        <EmptyState
+          className="card"
+          icon={SearchX}
+          title="No encontramos cupones."
+          action={
+            <button type="button" onClick={() => setSearch('')} className="btn btn-secondary">
+              Limpiar búsqueda
+            </button>
+          }
+        >
+          Probá con otro código.
+        </EmptyState>
+      ) : (
+        <>
+          <AdminTable caption="Cupones de descuento">
+            <THead>
+              <Th>Código</Th>
+              <Th>Descuento</Th>
+              <Th align="right">Usos</Th>
+              <Th>Estado</Th>
+              <Th align="right">Acciones</Th>
+            </THead>
+            <tbody>
+              {filtered.map((c) => (
+                <TRow key={c.id}>
+                  <Td className="font-display font-semibold text-dark">{c.code}</Td>
+                  <Td className="text-dark">{discountText(c)}</Td>
+                  <Td align="right" className="whitespace-nowrap font-display text-dark">{c.usedCount} / {c.maxUses}</Td>
+                  <Td>
+                    <ActiveChip active={c.active} />
+                  </Td>
+                  <Td align="right">
+                    <IconButton onClick={() => handleDelete(c.id)} icon={Trash2} tone="danger" label={`Eliminar cupón ${c.code}`} />
+                  </Td>
+                </TRow>
+              ))}
+            </tbody>
+          </AdminTable>
 
-      <div className="rounded-2xl bg-white/5 border border-white/10 overflow-hidden">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-white/10 text-white/50">
-              <th className="text-left p-4 font-medium">Código</th>
-              <th className="text-left p-4 font-medium">Descuento</th>
-              <th className="text-left p-4 font-medium">Usos</th>
-              <th className="text-left p-4 font-medium">Estado</th>
-              <th className="text-right p-4 font-medium">Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.map((c, i) => (
-              <motion.tr
-                key={c.id}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: i * 0.03 }}
-                className="border-b border-white/5 hover:bg-white/5 transition-colors"
-              >
-                <td className="p-4 text-white/80 font-medium">{c.code}</td>
-                <td className="p-4 text-white/60">{c.discountType === 'percentage' ? `${c.discountValue}%` : formatPrice(c.discountValue)}</td>
-                <td className="p-4 text-white/60">{c.usedCount} / {c.maxUses}</td>
-                <td className="p-4">
-                  <span className={`text-xs px-2 py-1 rounded-full ${c.active ? 'bg-success/20 text-success' : 'bg-error/20 text-error'}`}>
-                    {c.active ? 'Activo' : 'Inactivo'}
-                  </span>
-                </td>
-                <td className="p-4 text-right">
-                  <button onClick={() => handleDelete(c.id)} className="p-2 rounded-full hover:bg-error/10 text-white/40 hover:text-error transition-colors">
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </td>
-              </motion.tr>
+          <ul aria-label="Cupones de descuento" className="space-y-3 md:hidden">
+            {filtered.map((c) => (
+              <li key={c.id}>
+                <article className="card p-4">
+                  <header className="flex items-start justify-between gap-3">
+                    <p className="min-w-0 break-words font-display font-semibold text-dark">{c.code}</p>
+                    <ActiveChip active={c.active} />
+                  </header>
+                  <dl className="mt-4 grid grid-cols-2 gap-3 border-t border-sand/60 pt-4">
+                    <div>
+                      <dt className="text-xs text-dark/65">Descuento</dt>
+                      <dd className="font-display font-semibold text-dark">{discountText(c)}</dd>
+                    </div>
+                    <div>
+                      <dt className="text-xs text-dark/65">Usos</dt>
+                      <dd className="font-display font-semibold text-dark">{c.usedCount} / {c.maxUses}</dd>
+                    </div>
+                  </dl>
+                  <div className="mt-4 border-t border-sand/60 pt-3">
+                    <button
+                      type="button"
+                      onClick={() => handleDelete(c.id)}
+                      className="btn btn-sm min-h-11 text-rose-700 hover:bg-rose-50"
+                    >
+                      <Trash2 className="size-4" aria-hidden="true" /> Eliminar
+                      <span className="sr-only"> cupón {c.code}</span>
+                    </button>
+                  </div>
+                </article>
+              </li>
             ))}
-          </tbody>
-        </table>
-      </div>
+          </ul>
+        </>
+      )}
     </div>
   );
 }

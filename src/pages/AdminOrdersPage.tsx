@@ -1,13 +1,29 @@
 import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { ShoppingBag, SearchX } from 'lucide-react';
 import { api } from '../services/api';
 import { formatPrice, formatDate } from '../lib/utils';
 import type { Order } from '../types';
+import { Dialog } from '../components/shared/Dialog';
+import { EmptyState } from '../components/shared/EmptyState';
+import { StatusChip } from '../components/shared/StatusChip';
+import { SearchField } from '../components/admin/SearchField';
+import { AdminTable, THead, Th, TRow, Td } from '../components/admin/AdminTable';
+import { ListSkeleton } from '../components/admin/ListSkeleton';
+
+const STATUS_OPTIONS: { value: Order['status']; label: string }[] = [
+  { value: 'pending', label: 'Pendiente' },
+  { value: 'paid', label: 'Pagado' },
+  { value: 'shipped', label: 'Enviado' },
+  { value: 'delivered', label: 'Entregado' },
+  { value: 'cancelled', label: 'Cancelado' },
+];
 
 export default function AdminOrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [pendingChange, setPendingChange] = useState<{ orderId: string; newStatus: Order['status'] } | null>(null);
+  const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'all' | Order['status']>('all');
 
   useEffect(() => {
     api.getAllOrders().then((data) => { setOrders(data); setLoading(false); });
@@ -27,89 +43,164 @@ export default function AdminOrdersPage() {
     setPendingChange(null);
   };
 
+  const query = search.trim().toLowerCase();
+  const filtered = orders.filter(
+    (o) =>
+      (statusFilter === 'all' || o.status === statusFilter) &&
+      (!query || (o.orderNumber ?? '').toLowerCase().includes(query) || (o.userId ?? '').toLowerCase().includes(query)),
+  );
+  const isFiltering = query !== '' || statusFilter !== 'all';
+
+  const clearFilters = () => {
+    setSearch('');
+    setStatusFilter('all');
+  };
+
+  // The select is the control the admin uses; the chip beside it is the state at a glance
+  const statusSelect = (order: Order) => (
+    <select
+      value={order.status}
+      onChange={(e) => setPendingChange({ orderId: order.id, newStatus: e.target.value as Order['status'] })}
+      aria-label={`Cambiar el estado del pedido ${order.orderNumber}`}
+      className="field w-full py-2 md:w-auto"
+    >
+      {STATUS_OPTIONS.map((o) => (
+        <option key={o.value} value={o.value}>{o.label}</option>
+      ))}
+    </select>
+  );
+
   return (
-    <div className="space-y-6">
-      <h1 className="font-display text-2xl font-semibold text-white">Pedidos</h1>
+    <div className="animate-fade-in space-y-6">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+        <SearchField
+          label="Buscar pedidos por número"
+          placeholder="Buscar por número de pedido..."
+          value={search}
+          onChange={setSearch}
+          className="sm:w-full sm:max-w-sm"
+        />
+        <div className="sm:ml-auto">
+          <label htmlFor="orders-status-filter" className="sr-only">
+            Filtrar por estado
+          </label>
+          <select
+            id="orders-status-filter"
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value as 'all' | Order['status'])}
+            className="field w-full sm:w-auto sm:min-w-48"
+          >
+            <option value="all">Todos los estados</option>
+            {STATUS_OPTIONS.map((o) => (
+              <option key={o.value} value={o.value}>{o.label}</option>
+            ))}
+          </select>
+        </div>
+      </div>
 
       {loading ? (
-        <div className="space-y-3">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} className="h-16 rounded-xl bg-white/5 animate-pulse" />
-          ))}
-        </div>
+        <ListSkeleton label="Cargando pedidos..." />
+      ) : orders.length === 0 ? (
+        <EmptyState className="card" icon={ShoppingBag} title="Todavía no hay pedidos.">
+          Cuando alguien compre en la tienda, el pedido va a aparecer acá.
+        </EmptyState>
+      ) : filtered.length === 0 ? (
+        <EmptyState
+          className="card"
+          icon={SearchX}
+          title="No encontramos pedidos."
+          action={
+            <button type="button" onClick={clearFilters} className="btn btn-secondary">
+              Limpiar filtros
+            </button>
+          }
+        >
+          Probá con otro número o con otro estado.
+        </EmptyState>
       ) : (
-        <div className="rounded-2xl bg-white/5 border border-white/10 overflow-hidden">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-white/10 text-white/50">
-                <th className="text-left p-4 font-medium">Orden</th>
-                <th className="text-left p-4 font-medium">Cliente</th>
-                <th className="text-left p-4 font-medium">Total</th>
-                <th className="text-left p-4 font-medium">Estado</th>
-                <th className="text-left p-4 font-medium">Fecha</th>
-              </tr>
-            </thead>
+        <>
+          <p aria-live="polite" className="text-sm text-dark/65">
+            {isFiltering ? `${filtered.length} de ${orders.length} pedidos` : `${orders.length} ${orders.length === 1 ? 'pedido' : 'pedidos'}`}
+          </p>
+
+          <AdminTable caption="Pedidos de la tienda">
+            <THead>
+              <Th>Pedido</Th>
+              <Th>Cliente</Th>
+              <Th>Fecha</Th>
+              <Th align="right">Total</Th>
+              <Th>Estado</Th>
+            </THead>
             <tbody>
-              {orders.map((order, i) => (
-                <motion.tr
-                  key={order.id}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: i * 0.03 }}
-                  className="border-b border-white/5 hover:bg-white/5 transition-colors"
-                >
-                  <td className="p-4 text-white/80">{order.orderNumber}</td>
-                  <td className="p-4 text-white/60">{order.userId}</td>
-                  <td className="p-4 text-white/80">{formatPrice(order.total)}</td>
-                  <td className="p-4">
-                    <select
-                      value={order.status}
-                      onChange={(e) => setPendingChange({ orderId: order.id, newStatus: e.target.value as Order['status'] })}
-                      className="bg-transparent text-white/80 text-xs border border-white/10 rounded-lg px-2 py-1 focus:outline-none"
-                    >
-                      <option value="pending" className="bg-dark">Pendiente</option>
-                      <option value="paid" className="bg-dark">Pagado</option>
-                      <option value="shipped" className="bg-dark">Enviado</option>
-                      <option value="delivered" className="bg-dark">Entregado</option>
-                      <option value="cancelled" className="bg-dark">Cancelado</option>
-                    </select>
-                  </td>
-                  <td className="p-4 text-white/40 text-xs">{formatDate(order.createdAt)}</td>
-                </motion.tr>
+              {filtered.map((order) => (
+                <TRow key={order.id}>
+                  <Td className="whitespace-nowrap font-display font-semibold text-dark">#{order.orderNumber}</Td>
+                  <Td className="text-xs text-dark/75">{order.userId || '—'}</Td>
+                  <Td className="text-xs text-dark/75">
+                    <time dateTime={order.createdAt}>{formatDate(order.createdAt)}</time>
+                  </Td>
+                  <Td align="right" className="whitespace-nowrap font-display font-semibold text-dark">{formatPrice(order.total)}</Td>
+                  <Td>
+                    {/* Stacked until xl: chip and select side by side would not fit next to the sidebar */}
+                    <div className="flex flex-col items-start gap-2 xl:flex-row xl:items-center xl:gap-3">
+                      <StatusChip status={order.status} />
+                      {statusSelect(order)}
+                    </div>
+                  </Td>
+                </TRow>
               ))}
             </tbody>
-          </table>
-        </div>
+          </AdminTable>
+
+          <ul aria-label="Pedidos de la tienda" className="space-y-3 md:hidden">
+            {filtered.map((order) => (
+              <li key={order.id}>
+                <article className="card p-4">
+                  <header className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="font-display font-semibold text-dark">Pedido #{order.orderNumber}</p>
+                      <p className="mt-0.5 text-xs text-dark/65">
+                        <time dateTime={order.createdAt}>{formatDate(order.createdAt)}</time>
+                      </p>
+                    </div>
+                    <StatusChip status={order.status} className="shrink-0" />
+                  </header>
+                  <dl className="mt-4 grid grid-cols-2 gap-3 border-t border-sand/60 pt-4">
+                    <div>
+                      <dt className="text-xs text-dark/65">Total</dt>
+                      <dd className="font-display font-semibold text-dark">{formatPrice(order.total)}</dd>
+                    </div>
+                    <div className="min-w-0">
+                      <dt className="text-xs text-dark/65">Cliente</dt>
+                      <dd className="truncate text-sm text-dark">{order.userId || '—'}</dd>
+                    </div>
+                  </dl>
+                  <div className="mt-4 border-t border-sand/60 pt-3">{statusSelect(order)}</div>
+                </article>
+              </li>
+            ))}
+          </ul>
+        </>
       )}
 
-      {pendingChange && (
-        <div className="fixed inset-0 bg-dark/50 flex items-center justify-center z-50">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="bg-white rounded-2xl p-6 max-w-sm w-full mx-4 shadow-xl"
-          >
-            <h3 className="font-display text-lg font-semibold text-dark mb-2">Confirmar cambio de estado</h3>
-            <p className="text-sm text-dark/60 mb-6">
-              ¿Cambiar el estado de la orden a <strong>{pendingChange.newStatus}</strong>?
-            </p>
-            <div className="flex gap-3">
-              <button
-                onClick={() => setPendingChange(null)}
-                className="flex-1 rounded-xl border border-sand py-2.5 text-sm font-medium text-dark hover:bg-sand/30 transition-colors"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={confirmStatusChange}
-                className="flex-1 rounded-xl bg-primary py-2.5 text-sm font-semibold text-white hover:bg-secondary transition-colors"
-              >
-                Confirmar
-              </button>
-            </div>
-          </motion.div>
+      <Dialog open={pendingChange !== null} onClose={() => setPendingChange(null)} labelledBy="order-status-title">
+        <div className="card p-6 sm:p-8">
+          <h2 id="order-status-title" className="font-display text-xl font-semibold text-dark">
+            Confirmar cambio de estado
+          </h2>
+          <p className="mt-3 flex flex-wrap items-center gap-2 text-dark/75">
+            ¿Cambiar el estado del pedido a {pendingChange && <StatusChip status={pendingChange.newStatus} />}?
+          </p>
+          <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row">
+            <button type="button" onClick={() => setPendingChange(null)} className="btn btn-secondary flex-1">
+              Cancelar
+            </button>
+            <button type="button" onClick={confirmStatusChange} className="btn btn-primary flex-1">
+              Confirmar
+            </button>
+          </div>
         </div>
-      )}
+      </Dialog>
     </div>
   );
 }
