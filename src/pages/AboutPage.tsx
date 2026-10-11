@@ -106,21 +106,32 @@ export default function AboutPage() {
       {/* Meet Clari: no bottom padding, the stories section's own top padding spaces what follows */}
       <section aria-labelledby="clari-heading" className="pt-12 sm:pt-16">
         <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
-          <div className="card p-6 text-center sm:p-10">
-            <span
-              aria-hidden="true"
-              className="mx-auto grid size-16 place-items-center rounded-full bg-ribbon font-display text-3xl font-bold text-dark"
-            >
-              C
-            </span>
-            <p className="eyebrow mt-5">Quiénes somos</p>
-            <h2 id="clari-heading" className="mt-3 font-display text-3xl font-bold tracking-tight text-dark sm:text-4xl">
-              Hola, soy Clari
-            </h2>
-            <p className="mx-auto mt-4 max-w-xl text-base text-dark/75">
-              Mi nombre es Claribel, pero todos me llaman Clari. Soy Licenciada en Artes Audiovisuales por la UNLP, fan de Volver al Futuro y de los perros.
-            </p>
-            <p className="mt-3 font-script text-3xl text-iris">Clari</p>
+          <div className="card grid items-center gap-8 p-6 sm:grid-cols-[auto_minmax(0,1fr)] sm:gap-10 sm:p-10">
+            {/* The only source is a small crop of an Instagram story, so the photo stays small to look sharp */}
+            <figure className="mx-auto w-44 sm:mx-0 sm:w-48">
+              <img
+                src="/images/brand/clari.webp"
+                alt="Clari sonriendo, con su título de la Universidad Nacional de La Plata en las manos"
+                width={564}
+                height={564}
+                loading="lazy"
+                decoding="async"
+                className="aspect-square w-full -rotate-2 rounded-3xl object-cover shadow-lift ring-4 ring-white"
+              />
+              <figcaption className="mt-4 text-center text-xs text-dark/65">
+                El día que retiré mi título, uno de mis mayores logros.
+              </figcaption>
+            </figure>
+            <div className="text-center sm:text-left">
+              <p className="eyebrow">Quiénes somos</p>
+              <h2 id="clari-heading" className="mt-3 font-display text-3xl font-bold tracking-tight text-dark sm:text-4xl">
+                Hola, soy Clari
+              </h2>
+              <p className="mt-4 text-base text-dark/75">
+                Mi nombre es Claribel, pero todos me llaman Clari. Soy Licenciada en Artes Audiovisuales por la UNLP, fan de Volver al Futuro y de los perros.
+              </p>
+              <p className="mt-3 font-script text-3xl text-iris">Clari</p>
+            </div>
           </div>
         </div>
       </section>
