@@ -1,5 +1,6 @@
 import { Palette, Truck, Award, HeartHandshake } from 'lucide-react';
 import { cn } from '../lib/utils';
+import { CONTACT_EMAIL } from '../lib/constants';
 import { SEO } from '../components/shared/SEO';
 import { Breadcrumbs } from '../components/shared/PageHeader';
 import { VisitUsSection } from '../components/about/VisitUsSection';
@@ -102,6 +103,28 @@ export default function AboutPage() {
         </div>
       </section>
 
+      {/* Meet Clari: no bottom padding, the stories section's own top padding spaces what follows */}
+      <section aria-labelledby="clari-heading" className="pt-12 sm:pt-16">
+        <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
+          <div className="card p-6 text-center sm:p-10">
+            <span
+              aria-hidden="true"
+              className="mx-auto grid size-16 place-items-center rounded-full bg-ribbon font-display text-3xl font-bold text-dark"
+            >
+              C
+            </span>
+            <p className="eyebrow mt-5">Quiénes somos</p>
+            <h2 id="clari-heading" className="mt-3 font-display text-3xl font-bold tracking-tight text-dark sm:text-4xl">
+              Hola, soy Clari
+            </h2>
+            <p className="mx-auto mt-4 max-w-xl text-base text-dark/75">
+              Mi nombre es Claribel, pero todos me llaman Clari. Soy Licenciada en Artes Audiovisuales por la UNLP, fan de Volver al Futuro y de los perros.
+            </p>
+            <p className="mt-3 font-script text-3xl text-iris">Clari</p>
+          </div>
+        </div>
+      </section>
+
       {/* Story: text and photo, alternating sides */}
       <section className="py-16 sm:py-20">
         <div className="mx-auto max-w-7xl space-y-16 px-4 sm:space-y-24 sm:px-6 lg:px-8">
@@ -169,7 +192,7 @@ export default function AboutPage() {
               <p className="mx-auto mt-3 max-w-md text-dark/75">
                 Estamos siempre abiertos a nuevas ideas y proyectos creativos.
               </p>
-              <a href="mailto:hola@bspapeleria.com" className="btn btn-primary btn-lg mt-8">
+              <a href={`mailto:${CONTACT_EMAIL}`} className="btn btn-primary btn-lg mt-8">
                 Contactanos
               </a>
             </div>

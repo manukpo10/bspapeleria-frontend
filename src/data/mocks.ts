@@ -525,8 +525,9 @@ export const faqs: FAQItem[] = [
   { id: 'f11', category: 'devoluciones', question: '¿Puedo devolver un producto?', answer: 'Sí, tenés 10 días desde la recepción para solicitar una devolución si el producto está en condiciones originales.', order: 11 },
   { id: 'f12', category: 'devoluciones', question: '¿Los productos digitales tienen devolución?', answer: 'Los productos digitales no tienen devolución una vez realizada la compra, salvo defectos técnicos.', order: 12 },
   { id: 'f13', category: 'devoluciones', question: '¿Cómo solicito un cambio?', answer: 'Podés solicitar un cambio contactándonos por email o WhatsApp dentro de los 10 días de recibido el producto.', order: 13 },
-  { id: 'f14', category: 'personalizados', question: '¿Cómo personalizo un producto?', answer: 'Al agregar el producto al carrito, vas a ver opciones para cargar tu diseño o escribir el texto de personalización.', order: 14 },
+  { id: 'f14', category: 'personalizados', question: '¿Cómo personalizo un producto?', answer: 'Escribinos por WhatsApp, por mail o por mensaje directo en Instagram y coordinamos los detalles con vos: elegís el interior (anotador, cuaderno, agenda emprendedora, para tomar turnos y más) y personalizás la cantidad de hojas, los colores del interior y las tapas.', order: 14 },
   { id: 'f15', category: 'personalizados', question: '¿Puedo ver una muestra antes de imprimir?', answer: 'Sí, para productos personalizados enviamos un mockup digital para tu aprobación antes de la impresión.', order: 15 },
+  { id: 'f16', category: 'personalizados', question: '¿Cuánto demora un pedido personalizado?', answer: 'Una vez coordinados todos los detalles, demoramos aproximadamente una semana en realizarlo y entregarlo.', order: 16 },
 ];
 
 export const reviews: Review[] = [

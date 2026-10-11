@@ -5,6 +5,7 @@ import { TrustStrip } from '../components/home/TrustStrip';
 import { CategoryGrid } from '../components/home/CategoryGrid';
 import { CourseSlider } from '../components/home/CourseSlider';
 import { ProductSlider } from '../components/home/ProductSlider';
+import { HowToOrder } from '../components/home/HowToOrder';
 import { Features } from '../components/home/Features';
 import { Testimonials } from '../components/home/Testimonials';
 import { Newsletter } from '../components/home/Newsletter';
@@ -73,7 +74,7 @@ export default function HomePage() {
 
   // Position 0 is the category grid
   const firstProductPosition = showCourses ? 2 : 1;
-  const featuresPosition = firstProductPosition + productSections.length;
+  const howToOrderPosition = firstProductPosition + productSections.length;
 
   return (
     <>
@@ -109,13 +110,16 @@ export default function HomePage() {
         </div>
       ))}
 
-      <div className={band(featuresPosition)}>
+      <div className={band(howToOrderPosition)}>
+        <HowToOrder />
+      </div>
+      <div className={band(howToOrderPosition + 1)}>
         <Features />
       </div>
-      <div className={band(featuresPosition + 1)}>
+      <div className={band(howToOrderPosition + 2)}>
         <Testimonials />
       </div>
-      <div className={band(featuresPosition + 2)}>
+      <div className={band(howToOrderPosition + 3)}>
         <Newsletter />
       </div>
     </>
