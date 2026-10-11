@@ -10,6 +10,7 @@ export function formatPrice(price: number): string {
   return new Intl.NumberFormat('es-AR', {
     style: 'currency',
     currency: 'ARS',
+    trailingZeroDisplay: 'stripIfInteger',
   }).format(price);
 }
 
