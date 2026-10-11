@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Mail, MapPin, MessageCircle } from 'lucide-react';
-import { WHATSAPP_DISPLAY, WHATSAPP_URL } from '../../lib/constants';
+import { CONTACT_EMAIL, INSTAGRAM_URL, WHATSAPP_DISPLAY, WHATSAPP_URL } from '../../lib/constants';
 
 // lucide-react 1.x dropped brand icons, so these two glyphs are drawn here in the same stroke style
 function InstagramIcon({ className }: { className?: string }) {
@@ -75,7 +75,13 @@ export function Footer() {
               Papelería boutique moderna con productos personalizados, sublimables, archivos digitales y cursos creativos.
             </p>
             <div className="flex gap-3">
-              <a href="#" className={socialButton} aria-label="Instagram">
+              <a
+                href={INSTAGRAM_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={socialButton}
+                aria-label="Instagram (se abre en una pestaña nueva)"
+              >
                 <InstagramIcon className="size-5" />
               </a>
               <a href="#" className={socialButton} aria-label="Facebook">
@@ -121,7 +127,7 @@ export function Footer() {
                 <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-white text-iris ring-1 ring-sand">
                   <Mail className="size-4" aria-hidden="true" />
                 </span>
-                <a href="mailto:hola@bspapeleria.com" className="min-w-0 break-words transition-colors hover:text-iris">hola@bspapeleria.com</a>
+                <a href={`mailto:${CONTACT_EMAIL}`} className="min-w-0 break-words transition-colors hover:text-iris">{CONTACT_EMAIL}</a>
               </li>
               <li className="flex items-center gap-3">
                 <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-white text-iris ring-1 ring-sand">

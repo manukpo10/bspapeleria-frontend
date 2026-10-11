@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { MapPin, Clock, Mail, MessageCircle } from 'lucide-react';
-import { WHATSAPP_DISPLAY, WHATSAPP_URL } from '../../lib/constants';
+import { CONTACT_EMAIL, WHATSAPP_DISPLAY, WHATSAPP_URL } from '../../lib/constants';
 
 const COORDS: [number, number] = [-34.8500, -58.0833];
 
@@ -20,8 +20,8 @@ const contactItems = [
   {
     icon: Mail,
     label: 'Email',
-    lines: ['hola@bspapeleria.com'],
-    href: 'mailto:hola@bspapeleria.com',
+    lines: [CONTACT_EMAIL],
+    href: `mailto:${CONTACT_EMAIL}`,
   },
   {
     icon: MessageCircle,

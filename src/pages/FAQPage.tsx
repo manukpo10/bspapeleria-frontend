@@ -4,7 +4,7 @@ import { SEO } from '../components/shared/SEO';
 import { PageHeader } from '../components/shared/PageHeader';
 import { faqs } from '../data/mocks';
 import { cn } from '../lib/utils';
-import { WHATSAPP_URL } from '../lib/constants';
+import { CONTACT_EMAIL, WHATSAPP_URL } from '../lib/constants';
 
 const categories = [
   { id: 'all', name: 'Todas' },
@@ -147,7 +147,7 @@ export default function FAQPage() {
             Escribinos y te respondemos lo antes posible.
           </p>
           <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
-            <a href="mailto:hola@bspapeleria.com" className="btn btn-primary">
+            <a href={`mailto:${CONTACT_EMAIL}`} className="btn btn-primary">
               <Mail className="size-4" aria-hidden="true" /> Escribinos por email
             </a>
             <a
