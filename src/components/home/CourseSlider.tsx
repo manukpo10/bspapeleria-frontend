@@ -1,10 +1,11 @@
-import { Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { useState } from 'react';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation, Pagination, Autoplay } from 'swiper/modules';
-import { ChevronLeft, ChevronRight, Clock, Users, Star, ArrowRight } from 'lucide-react';
 import type { Course } from '../../types';
-import { formatPrice } from '../../lib/utils';
+import { cn } from '../../lib/utils';
+import { CourseCard } from '../shared/CourseCard';
+import { SectionHeader } from './SectionHeader';
+import { SliderArrows, swiperLayout, swiperBullets } from './SliderArrows';
 
 import 'swiper/css';
 import 'swiper/css/navigation';
@@ -15,125 +16,74 @@ interface CourseSliderProps {
   subtitle?: string;
   script?: string;
   courses: Course[];
+  loading?: boolean;
 }
 
-export function CourseSlider({ title, subtitle, script, courses }: CourseSliderProps) {
+function CourseSkeleton() {
   return (
-    <section className="py-20">
+    <div className="card overflow-hidden" aria-hidden="true">
+      <div className="aspect-[16/10] animate-pulse bg-sand/40" />
+      <div className="space-y-3 p-5">
+        <div className="h-5 w-11/12 animate-pulse rounded-full bg-sand/40" />
+        <div className="h-5 w-2/3 animate-pulse rounded-full bg-sand/40" />
+        <div className="h-6 w-1/2 animate-pulse rounded-full bg-sand/40" />
+        <div className="h-4 w-3/4 animate-pulse rounded-full bg-sand/40" />
+        <div className="h-7 w-full animate-pulse rounded-full bg-sand/40" />
+      </div>
+    </div>
+  );
+}
+
+export function CourseSlider({ title, subtitle, script, courses, loading = false }: CourseSliderProps) {
+  const [prevEl, setPrevEl] = useState<HTMLButtonElement | null>(null);
+  const [nextEl, setNextEl] = useState<HTMLButtonElement | null>(null);
+
+  if (!loading && courses.length === 0) return null;
+
+  return (
+    // The swiper keeps its own 3.5rem of bottom padding (shadows + bullets), so the section needs less
+    <section className="pb-6 pt-16 sm:pb-8 sm:pt-20">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="flex items-end justify-between mb-10"
-        >
-          <div>
-            {script && <span className="block font-script text-xl text-secondary mb-1">{script}</span>}
-            <h2 className="font-display text-3xl sm:text-4xl font-semibold text-dark">{title}</h2>
-            {subtitle && <p className="text-dark/60 mt-2">{subtitle}</p>}
-          </div>
-          <div className="flex gap-2">
-            <button className="course-prev-btn p-2 rounded-full border border-sand hover:bg-sand/50 transition-colors">
-              <ChevronLeft className="w-5 h-5" />
-            </button>
-            <button className="course-next-btn p-2 rounded-full border border-sand hover:bg-sand/50 transition-colors">
-              <ChevronRight className="w-5 h-5" />
-            </button>
-          </div>
-        </motion.div>
+        <SectionHeader
+          title={title}
+          subtitle={subtitle}
+          script={script}
+          centered={false}
+          action={loading ? undefined : <SliderArrows label={title} setPrevEl={setPrevEl} setNextEl={setNextEl} />}
+        />
 
-        <Swiper
-          modules={[Navigation, Pagination, Autoplay]}
-          spaceBetween={24}
-          slidesPerView={1}
-          navigation={{ prevEl: '.course-prev-btn', nextEl: '.course-next-btn' }}
-          pagination={{ clickable: true }}
-          autoplay={{ delay: 5000, disableOnInteraction: false }}
-          breakpoints={{
-            640: { slidesPerView: 2 },
-            1024: { slidesPerView: 3 },
-          }}
-        >
-          {courses.map((course, i) => (
-            <SwiperSlide key={course.id}>
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.4, delay: i * 0.1 }}
-                className="group h-full"
-              >
-                <div className="relative rounded-2xl overflow-hidden bg-white border border-sand/50 shadow-soft hover:shadow-xl transition-all duration-300 hover:-translate-y-2 h-full flex flex-col">
-                  <Link to={`/cursos/${course.slug}`} className="block relative aspect-video overflow-hidden">
-                    <img
-                      src={course.coverImage}
-                      alt={course.title}
-                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                      loading="lazy"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-dark/60 to-transparent" />
-                    <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between">
-                      <span className="rounded-full bg-white/90 text-dark text-xs font-bold px-3 py-1 shadow-sm">
-                        {course.level === 'principiante' ? 'Principiante' : course.level === 'intermedio' ? 'Intermedio' : 'Avanzado'}
-                      </span>
-                      <span className="flex items-center gap-1 text-white text-xs drop-shadow-md">
-                        <Clock className="w-3 h-3" /> {course.duration}
-                      </span>
-                    </div>
-                  </Link>
-
-                  <div className="p-5 flex-1 flex flex-col">
-                    <div className="flex items-center gap-2 mb-3">
-                      <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${
-                        course.level === 'principiante' ? 'bg-emerald-100 text-emerald-700' :
-                        course.level === 'intermedio' ? 'bg-amber-100 text-amber-700' :
-                        'bg-rose-100 text-rose-700'
-                      }`}>
-                        {course.level === 'principiante' ? 'Principiante' : course.level === 'intermedio' ? 'Intermedio' : 'Avanzado'}
-                      </span>
-                    </div>
-                    
-                    <Link to={`/cursos/${course.slug}`}>
-                      <h3 className="font-display font-medium text-dark group-hover:text-primary transition-colors line-clamp-2 text-lg leading-snug">
-                        {course.title}
-                      </h3>
-                    </Link>
-                    
-                    <div className="flex items-center gap-2 mt-3">
-                      <img 
-                        src={course.instructor.avatar} 
-                        alt={course.instructor.name}
-                        className="w-6 h-6 rounded-full object-cover ring-2 ring-sand/50"
-                      />
-                      <span className="text-sm text-dark/70">{course.instructor.name}</span>
-                    </div>
-                    
-                    <div className="flex items-center gap-3 mt-3 text-xs text-dark/60">
-                      <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> {course.duration}</span>
-                      <span className="flex items-center gap-1"><Users className="w-3 h-3" /> {course.enrolledCount}</span>
-                      <span className="flex items-center gap-1"><Star className="w-3 h-3 text-warning fill-warning" /> {course.rating}</span>
-                    </div>
-                    
-                    <div className="flex items-center justify-between mt-auto pt-4 border-t border-sand/50">
-                      <div className="flex items-center gap-2">
-                        <span className="text-primary font-semibold text-lg">{formatPrice(course.price)}</span>
-                        {course.comparePrice && (
-                          <span className="text-dark/40 text-sm line-through">{formatPrice(course.comparePrice)}</span>
-                        )}
-                      </div>
-                      <Link 
-                        to={`/cursos/${course.slug}`}
-                        className="flex items-center gap-1 text-sm font-medium text-primary hover:text-secondary transition-colors group/link"
-                      >
-                        Ver curso <ArrowRight className="w-4 h-4 group-hover/link:translate-x-1 transition-transform" />
-                      </Link>
-                    </div>
-                  </div>
+        {loading ? (
+          <div role="status" className="pb-14">
+            <span className="sr-only">Cargando cursos…</span>
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {Array.from({ length: 3 }, (_, i) => (
+                <div key={i} className={cn(i === 1 && 'max-sm:hidden', i === 2 && 'max-lg:hidden')}>
+                  <CourseSkeleton />
                 </div>
-              </motion.div>
-            </SwiperSlide>
-          ))}
-        </Swiper>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <Swiper
+            modules={[Navigation, Pagination, Autoplay]}
+            spaceBetween={24}
+            slidesPerView={1}
+            navigation={{ prevEl, nextEl }}
+            pagination={{ clickable: true }}
+            autoplay={{ delay: 5000, disableOnInteraction: false }}
+            breakpoints={{
+              640: { slidesPerView: 2 },
+              1024: { slidesPerView: 3 },
+            }}
+            className={`${swiperLayout} ${swiperBullets}`}
+          >
+            {courses.map((course) => (
+              <SwiperSlide key={course.id}>
+                <CourseCard course={course} />
+              </SwiperSlide>
+            ))}
+          </Swiper>
+        )}
       </div>
     </section>
   );

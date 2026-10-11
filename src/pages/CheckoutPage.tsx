@@ -1,18 +1,46 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { Check, CreditCard, Truck, User, Tag, ChevronRight } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { ArrowRight, Check, CreditCard, Loader2, ShoppingCart, Truck, User, Tag } from 'lucide-react';
 import { SEO } from '../components/shared/SEO';
+import { PageHeader } from '../components/shared/PageHeader';
 import { useCartStore } from '../store/cartStore';
 import { useAuthStore } from '../store/authStore';
 import { api } from '../services/api';
-import { formatPrice } from '../lib/utils';
+import { cn, formatPrice } from '../lib/utils';
 import { toast } from 'sonner';
+
+interface TextFieldProps {
+  id: string;
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  type?: 'text' | 'email' | 'tel';
+  autoComplete?: string;
+  className?: string;
+}
+
+function TextField({ id, label, value, onChange, type = 'text', autoComplete, className }: TextFieldProps) {
+  return (
+    <div className={className}>
+      <label htmlFor={id} className="mb-1.5 block text-sm font-medium text-dark">{label}</label>
+      <input
+        id={id}
+        name={id}
+        type={type}
+        inputMode={type === 'tel' ? 'tel' : undefined}
+        autoComplete={autoComplete}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="field"
+      />
+    </div>
+  );
+}
 
 export default function CheckoutPage() {
   const navigate = useNavigate();
   const { items, getSubtotal, couponCode, couponDiscount, clearCart } = useCartStore();
-  const { user, isAuthenticated, login } = useAuthStore();
+  const { user, isAuthenticated } = useAuthStore();
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [couponInput, setCouponInput] = useState('');
@@ -36,9 +64,15 @@ export default function CheckoutPage() {
 
   if (items.length === 0) {
     return (
-      <div className="min-h-[60vh] flex flex-col items-center justify-center px-4 text-center">
-        <h1 className="font-display text-2xl text-dark mb-2">Tu carrito está vacío</h1>
-        <p className="text-dark/60">No podés hacer checkout sin productos.</p>
+      <div className="mx-auto flex min-h-[60vh] max-w-7xl flex-col items-center justify-center px-4 py-16 text-center sm:px-6 lg:px-8">
+        <span className="grid size-24 place-items-center rounded-full bg-mist text-iris">
+          <ShoppingCart className="size-10" aria-hidden="true" />
+        </span>
+        <h1 className="mt-6 font-display text-3xl font-bold tracking-tight text-dark">Tu carrito está vacío</h1>
+        <p className="mt-3 max-w-md text-dark/75">No podés hacer checkout sin productos.</p>
+        <Link to="/productos" className="btn btn-primary btn-lg mt-8">
+          Ver productos <ArrowRight className="size-5" aria-hidden="true" />
+        </Link>
       </div>
     );
   }
@@ -80,8 +114,8 @@ export default function CheckoutPage() {
       clearCart();
       toast.success('¡Compra exitosa!');
       navigate('/checkout/exito');
-    } catch (e: any) {
-      toast.error(e.message || 'Error al procesar la compra');
+    } catch (e) {
+      toast.error((e as { message?: string }).message || 'Error al procesar la compra');
     } finally {
       setLoading(false);
     }
@@ -96,220 +130,259 @@ export default function CheckoutPage() {
   return (
     <>
       <SEO title="Checkout" />
-      <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 py-10">
-        <h1 className="font-display text-3xl font-semibold text-dark mb-8">Checkout</h1>
+      <PageHeader
+        title="Checkout"
+        crumbs={[{ label: 'Inicio', to: '/' }, { label: 'Carrito', to: '/carrito' }, { label: 'Checkout' }]}
+      />
 
-        {/* Progress */}
-        <div className="flex items-center gap-4 mb-10">
-          {steps.map((s, i) => (
-            <div key={s.id} className="flex items-center gap-2 flex-1">
-              <div className={`flex items-center justify-center w-8 h-8 rounded-full text-xs font-bold ${
-                step >= s.id ? 'bg-primary text-white' : 'bg-sand/50 text-dark/40'
-              }`}>
-                {step > s.id ? <Check className="w-4 h-4" /> : s.id}
-              </div>
-              <span className={`text-sm hidden sm:block ${step >= s.id ? 'text-dark font-medium' : 'text-dark/40'}`}>
-                {s.label}
-              </span>
-              {i < steps.length - 1 && <ChevronRight className="w-4 h-4 text-dark/20 ml-auto" />}
-            </div>
-          ))}
-        </div>
+      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_24rem] lg:gap-10">
+          <div>
+            {/* Progress */}
+            <ol aria-label="Pasos del checkout" className="mb-8 flex items-center">
+              {steps.map((s, i) => {
+                const done = step > s.id;
+                const current = step === s.id;
+                const isLast = i === steps.length - 1;
+                return (
+                  <li key={s.id} aria-current={current ? 'step' : undefined} className={cn('flex items-center', !isLast && 'flex-1')}>
+                    <div className="flex items-center gap-3">
+                      <span
+                        className={cn(
+                          'grid size-10 shrink-0 place-items-center rounded-full font-display text-sm font-bold transition-colors',
+                          current && 'bg-dark text-white shadow-soft',
+                          done && 'bg-secondary/30 text-dark',
+                          !current && !done && 'bg-white text-dark/65 ring-1 ring-sand',
+                        )}
+                      >
+                        {done ? <Check className="size-5" aria-hidden="true" /> : s.id}
+                      </span>
+                      <span className={cn('text-sm font-medium', current ? 'text-dark' : 'text-dark/65 max-sm:sr-only')}>
+                        {s.label}
+                        {done && <span className="sr-only"> (completado)</span>}
+                      </span>
+                    </div>
+                    {!isLast && (
+                      <span
+                        aria-hidden="true"
+                        className={cn('mx-3 h-0.5 flex-1 rounded-full sm:mx-4', done ? 'bg-secondary/60' : 'bg-sand')}
+                      />
+                    )}
+                  </li>
+                );
+              })}
+            </ol>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-          <div className="lg:col-span-2">
             {step === 1 && (
-              <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-5">
-                <div className="rounded-2xl bg-white border border-sand/50 p-6">
-                  <h3 className="font-display font-semibold text-dark mb-4">Tus datos</h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm text-dark/60 mb-1">Nombre completo</label>
-                      <input
-                        value={formData.name}
-                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                        className="w-full rounded-xl border border-sand bg-white px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm text-dark/60 mb-1">Email</label>
-                      <input
-                        type="email"
-                        value={formData.email}
-                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                        className="w-full rounded-xl border border-sand bg-white px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm text-dark/60 mb-1">Teléfono</label>
-                      <input
-                        value={formData.phone}
-                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                        className="w-full rounded-xl border border-sand bg-white px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
-                      />
-                    </div>
+              <div className="animate-fade-in">
+                <section className="card p-6 sm:p-8" aria-labelledby="step-data-title">
+                  <h2 id="step-data-title" className="font-display text-xl font-semibold text-dark">Tus datos</h2>
+                  <div className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2">
+                    <TextField
+                      id="checkout-name"
+                      label="Nombre completo"
+                      autoComplete="name"
+                      value={formData.name}
+                      onChange={(v) => setFormData({ ...formData, name: v })}
+                    />
+                    <TextField
+                      id="checkout-email"
+                      label="Email"
+                      type="email"
+                      autoComplete="email"
+                      value={formData.email}
+                      onChange={(v) => setFormData({ ...formData, email: v })}
+                    />
+                    <TextField
+                      id="checkout-phone"
+                      label="Teléfono"
+                      type="tel"
+                      autoComplete="tel"
+                      value={formData.phone}
+                      onChange={(v) => setFormData({ ...formData, phone: v })}
+                    />
                   </div>
                   {!isAuthenticated && (
-                    <p className="text-xs text-dark/50 mt-4">
-                      ¿Ya tenés cuenta? <a href="/login" className="text-primary hover:underline">Ingresá</a>
+                    <p className="mt-6 text-sm text-dark/75">
+                      ¿Ya tenés cuenta?{' '}
+                      <Link to="/login" className="font-medium text-iris underline-offset-4 hover:underline">Ingresá</Link>
                     </p>
                   )}
-                </div>
-                <button
-                  onClick={() => setStep(hasPhysical ? 2 : 3)}
-                  className="w-full rounded-2xl bg-primary py-3 text-sm font-semibold text-white shadow-glow hover:bg-secondary transition-colors"
-                >
-                  Continuar
-                </button>
-              </motion.div>
-            )}
-
-            {step === 2 && hasPhysical && (
-              <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-5">
-                <div className="rounded-2xl bg-white border border-sand/50 p-6">
-                  <h3 className="font-display font-semibold text-dark mb-4">Dirección de envío</h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="sm:col-span-2">
-                      <label className="block text-sm text-dark/60 mb-1">Calle y número</label>
-                      <input
-                        value={formData.street}
-                        onChange={(e) => setFormData({ ...formData, street: e.target.value })}
-                        className="w-full rounded-xl border border-sand bg-white px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm text-dark/60 mb-1">Ciudad</label>
-                      <input
-                        value={formData.city}
-                        onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                        className="w-full rounded-xl border border-sand bg-white px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm text-dark/60 mb-1">Provincia</label>
-                      <input
-                        value={formData.province}
-                        onChange={(e) => setFormData({ ...formData, province: e.target.value })}
-                        className="w-full rounded-xl border border-sand bg-white px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm text-dark/60 mb-1">Código postal</label>
-                      <input
-                        value={formData.zipCode}
-                        onChange={(e) => setFormData({ ...formData, zipCode: e.target.value })}
-                        className="w-full rounded-xl border border-sand bg-white px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
-                      />
-                    </div>
-                  </div>
-                </div>
-                <div className="flex gap-3">
-                  <button onClick={() => setStep(1)} className="flex-1 rounded-2xl border border-sand py-3 text-sm font-medium text-dark hover:bg-sand/30 transition-colors">
-                    Atrás
-                  </button>
-                  <button onClick={() => setStep(3)} className="flex-1 rounded-2xl bg-primary py-3 text-sm font-semibold text-white shadow-glow hover:bg-secondary transition-colors">
+                </section>
+                <div className="mt-6">
+                  <button
+                    type="button"
+                    onClick={() => setStep(hasPhysical ? 2 : 3)}
+                    className="btn btn-primary btn-lg w-full"
+                  >
                     Continuar
                   </button>
                 </div>
-              </motion.div>
+              </div>
+            )}
+
+            {step === 2 && hasPhysical && (
+              <div className="animate-fade-in">
+                <section className="card p-6 sm:p-8" aria-labelledby="step-shipping-title">
+                  <h2 id="step-shipping-title" className="font-display text-xl font-semibold text-dark">Dirección de envío</h2>
+                  <div className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2">
+                    <TextField
+                      id="checkout-street"
+                      label="Calle y número"
+                      autoComplete="street-address"
+                      className="sm:col-span-2"
+                      value={formData.street}
+                      onChange={(v) => setFormData({ ...formData, street: v })}
+                    />
+                    <TextField
+                      id="checkout-city"
+                      label="Ciudad"
+                      autoComplete="address-level2"
+                      value={formData.city}
+                      onChange={(v) => setFormData({ ...formData, city: v })}
+                    />
+                    <TextField
+                      id="checkout-province"
+                      label="Provincia"
+                      autoComplete="address-level1"
+                      value={formData.province}
+                      onChange={(v) => setFormData({ ...formData, province: v })}
+                    />
+                    <TextField
+                      id="checkout-zip"
+                      label="Código postal"
+                      autoComplete="postal-code"
+                      value={formData.zipCode}
+                      onChange={(v) => setFormData({ ...formData, zipCode: v })}
+                    />
+                  </div>
+                </section>
+                <div className="mt-6 flex gap-3">
+                  <button type="button" onClick={() => setStep(1)} className="btn btn-ghost btn-lg">
+                    Atrás
+                  </button>
+                  <button type="button" onClick={() => setStep(3)} className="btn btn-primary btn-lg flex-1">
+                    Continuar
+                  </button>
+                </div>
+              </div>
             )}
 
             {step === 3 && (
-              <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-5">
-                <div className="rounded-2xl bg-white border border-sand/50 p-6">
-                  <h3 className="font-display font-semibold text-dark mb-4">Método de pago</h3>
-                  <div className="rounded-xl border-2 border-primary bg-primary/5 p-4 flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-white flex items-center justify-center shadow-sm">
-                      <span className="text-primary font-bold text-xs">MP</span>
+              <div className="animate-fade-in">
+                <section className="card p-6 sm:p-8" aria-labelledby="step-payment-title">
+                  <h2 id="step-payment-title" className="font-display text-xl font-semibold text-dark">Método de pago</h2>
+                  <div className="mt-6 flex items-center gap-4 rounded-2xl border-2 border-iris bg-mist p-4">
+                    <div className="grid size-12 shrink-0 place-items-center rounded-xl bg-white shadow-soft">
+                      <span className="font-display text-sm font-bold text-iris">MP</span>
                     </div>
-                    <div>
-                      <p className="font-medium text-dark">Mercado Pago</p>
-                      <p className="text-xs text-dark/60">Tarjetas, efectivo, transferencia</p>
+                    <div className="min-w-0 flex-1">
+                      <p className="font-display font-semibold text-dark">Mercado Pago</p>
+                      <p className="text-xs text-dark/65">Tarjetas, efectivo, transferencia</p>
                     </div>
+                    <span className="grid size-6 shrink-0 place-items-center rounded-full bg-dark text-white">
+                      <Check className="size-4" strokeWidth={3} aria-hidden="true" />
+                      <span className="sr-only">Seleccionado</span>
+                    </span>
                   </div>
                   {/* TODO: integrar SDK Mercado Pago */}
-                  <p className="text-xs text-dark/40 mt-3">La integración con Mercado Pago se realizará en el backend.</p>
-                </div>
+                  <p className="mt-4 text-xs text-dark/65">La integración con Mercado Pago se realizará en el backend.</p>
+                </section>
 
-                <div className="flex gap-3">
-                  <button onClick={() => setStep(hasPhysical ? 2 : 1)} className="flex-1 rounded-2xl border border-sand py-3 text-sm font-medium text-dark hover:bg-sand/30 transition-colors">
+                <div className="mt-6 flex gap-3">
+                  <button type="button" onClick={() => setStep(hasPhysical ? 2 : 1)} className="btn btn-ghost btn-lg">
                     Atrás
                   </button>
                   <button
+                    type="button"
                     onClick={handlePayment}
                     disabled={loading}
-                    className="flex-1 rounded-2xl bg-primary py-3 text-sm font-semibold text-white shadow-glow hover:bg-secondary transition-colors disabled:opacity-50"
+                    aria-busy={loading}
+                    className="btn btn-primary btn-lg flex-1"
                   >
                     {loading ? (
-                      <div className="flex items-center justify-center gap-2">
-                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                        Procesando...
-                      </div>
+                      <>
+                        <Loader2 className="size-5 animate-spin" aria-hidden="true" /> Procesando...
+                      </>
                     ) : (
                       `Pagar ${formatPrice(total)}`
                     )}
                   </button>
                 </div>
-              </motion.div>
+              </div>
             )}
           </div>
 
-          <div className="lg:col-span-1">
-            <div className="sticky top-24 rounded-2xl bg-white border border-sand/50 shadow-soft p-6">
-              <h3 className="font-display font-semibold text-dark mb-4">Tu orden</h3>
-              <div className="space-y-3 mb-6">
+          <aside aria-labelledby="order-summary-title">
+            <div className="card p-6 lg:sticky lg:top-24">
+              <h2 id="order-summary-title" className="font-display text-xl font-semibold text-dark">Tu orden</h2>
+              <ul className="mt-5 space-y-4">
                 {items.map((item) => (
-                  <div key={item.id} className="flex items-center gap-3">
-                    <img src={item.image} alt={item.name} className="w-12 h-12 rounded-lg object-cover" />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm text-dark truncate">{item.name}</p>
-                      <p className="text-xs text-dark/50">x{item.quantity}</p>
+                  <li key={item.id} className="flex items-center gap-3">
+                    <img
+                      src={item.image}
+                      alt={item.name}
+                      width={56}
+                      height={56}
+                      loading="lazy"
+                      className="size-14 shrink-0 rounded-xl bg-sand/40 object-cover"
+                    />
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium text-dark">{item.name}</p>
+                      <p className="text-xs text-dark/65">x{item.quantity}</p>
                     </div>
-                    <span className="text-sm font-medium">{formatPrice(item.price * item.quantity)}</span>
-                  </div>
+                    <span className="text-sm font-semibold text-dark">{formatPrice(item.price * item.quantity)}</span>
+                  </li>
                 ))}
+              </ul>
+
+              <div className="mt-6 border-t border-sand/60 pt-6">
+                <label htmlFor="checkout-coupon" className="mb-1.5 block text-sm font-medium text-dark">
+                  Cupón de descuento
+                </label>
+                <div className="flex gap-2">
+                  <div className="relative min-w-0 flex-1">
+                    <Tag className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-dark/55" aria-hidden="true" />
+                    <input
+                      id="checkout-coupon"
+                      name="coupon"
+                      autoComplete="off"
+                      value={couponInput}
+                      onChange={(e) => setCouponInput(e.target.value)}
+                      placeholder="Código de cupón"
+                      className="field pl-10"
+                    />
+                  </div>
+                  <button type="button" onClick={handleApplyCoupon} className="btn btn-secondary shrink-0">
+                    Aplicar
+                  </button>
+                </div>
               </div>
 
-              <div className="flex items-center gap-2 mb-4">
-                <Tag className="w-4 h-4 text-dark/40" />
-                <input
-                  value={couponInput}
-                  onChange={(e) => setCouponInput(e.target.value)}
-                  placeholder="Código de cupón"
-                  className="flex-1 rounded-xl border border-sand bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
-                />
-                <button
-                  onClick={handleApplyCoupon}
-                  className="rounded-xl bg-sand/50 px-3 py-2 text-sm font-medium text-dark hover:bg-sand transition-colors"
-                >
-                  Aplicar
-                </button>
-              </div>
-
-              <div className="space-y-2 text-sm pt-4 border-t border-sand/50">
-                <div className="flex justify-between text-dark/70">
-                  <span>Subtotal</span>
-                  <span>{formatPrice(subtotal)}</span>
+              <dl className="mt-6 space-y-3 border-t border-sand/60 pt-6 text-sm">
+                <div className="flex justify-between gap-4 text-dark/75">
+                  <dt>Subtotal</dt>
+                  <dd className="font-medium text-dark">{formatPrice(subtotal)}</dd>
                 </div>
                 {hasPhysical && (
-                  <div className="flex justify-between text-dark/70">
-                    <span>Envío</span>
-                    <span>{formatPrice(shipping)}</span>
+                  <div className="flex justify-between gap-4 text-dark/75">
+                    <dt>Envío</dt>
+                    <dd className="font-medium text-dark">{formatPrice(shipping)}</dd>
                   </div>
                 )}
                 {couponDiscountLocal > 0 && (
-                  <div className="flex justify-between text-success">
-                    <span>Descuento</span>
-                    <span>-{formatPrice(couponDiscountLocal)}</span>
+                  <div className="flex justify-between gap-4 text-iris">
+                    <dt>Descuento</dt>
+                    <dd className="font-medium">-{formatPrice(couponDiscountLocal)}</dd>
                   </div>
                 )}
-                <div className="flex justify-between font-semibold text-dark pt-2">
-                  <span>Total</span>
-                  <span>{formatPrice(total)}</span>
+                <div className="flex items-baseline justify-between gap-4 border-t border-sand/60 pt-4 font-display text-lg font-bold text-dark">
+                  <dt>Total</dt>
+                  <dd>{formatPrice(total)}</dd>
                 </div>
-              </div>
+              </dl>
             </div>
-          </div>
+          </aside>
         </div>
       </div>
     </>

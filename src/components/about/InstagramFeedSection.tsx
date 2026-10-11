@@ -1,11 +1,10 @@
-import { motion } from 'framer-motion';
 import { Heart, MessageCircle } from 'lucide-react';
 
 /* TODO: reemplazar mocks por integración real con Instagram Graph API
    o widget de LightWidget/SnapWidget cuando se conecte la cuenta. */
 
-const InstagramIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-8 h-8">
+const InstagramIcon = ({ className }: { className: string }) => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className={className}>
     <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
     <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
     <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" />
@@ -59,71 +58,64 @@ const mockPosts = [
 
 export function InstagramFeedSection() {
   return (
-    <section className="py-20">
+    <section aria-labelledby="instagram-heading" className="bg-mist py-16 sm:py-20">
       <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
-          className="text-center mb-10"
-        >
-          <span className="block font-script text-2xl text-secondary mb-2">últimas publicaciones</span>
-          <h2 className="font-display text-3xl sm:text-4xl font-semibold text-dark mb-4">
+        <div className="text-center">
+          <p className="eyebrow">Últimas publicaciones</p>
+          <h2 id="instagram-heading" className="mt-3 font-display text-3xl font-bold tracking-tight text-dark sm:text-4xl">
             En nuestro Instagram
           </h2>
-        </motion.div>
-
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-          {mockPosts.map((post, i) => (
-            <motion.a
-              key={post.id}
-              href={post.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.3, delay: i * 0.05 }}
-              className="group relative aspect-square rounded-2xl overflow-hidden"
-            >
-              <img
-                src={post.image}
-                alt={`Publicación ${post.id}`}
-                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                loading="lazy"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-center gap-3">
-                <InstagramIcon />
-                <div className="flex items-center gap-4 text-white text-sm font-medium">
-                  <span className="flex items-center gap-1.5">
-                    <Heart className="w-4 h-4 fill-white" /> {post.likes}
-                  </span>
-                  <span className="flex items-center gap-1.5">
-                    <MessageCircle className="w-4 h-4 fill-white" /> {post.comments}
-                  </span>
-                </div>
-              </div>
-            </motion.a>
-          ))}
         </div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.4, delay: 0.3 }}
-          className="text-center mt-10"
-        >
+        <ul className="mt-10 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4">
+          {mockPosts.map((post) => (
+            <li key={post.id}>
+              <a
+                href={post.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={`Ver la publicación ${post.id} en Instagram (se abre en una pestaña nueva)`}
+                className="group relative block aspect-square overflow-hidden rounded-3xl bg-sand/40 shadow-soft"
+              >
+                <img
+                  src={post.image}
+                  alt={`Publicación ${post.id}`}
+                  width={400}
+                  height={400}
+                  loading="lazy"
+                  decoding="async"
+                  className="size-full object-cover transition-transform duration-500 group-hover:scale-105"
+                />
+                <span
+                  aria-hidden="true"
+                  className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-dark/65 text-white opacity-0 transition-opacity duration-300 group-hover:opacity-100 group-focus-visible:opacity-100"
+                >
+                  <InstagramIcon className="size-8" />
+                  <span className="flex items-center gap-4 text-sm font-medium">
+                    <span className="flex items-center gap-1.5">
+                      <Heart className="size-4 fill-white" /> {post.likes}
+                    </span>
+                    <span className="flex items-center gap-1.5">
+                      <MessageCircle className="size-4 fill-white" /> {post.comments}
+                    </span>
+                  </span>
+                </span>
+              </a>
+            </li>
+          ))}
+        </ul>
+
+        <div className="mt-10 text-center">
           <a
             href="https://instagram.com/bspapeleria"
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 rounded-2xl border border-sand px-6 py-3 text-sm font-medium text-dark hover:bg-sand/30 hover:border-primary/30 transition-colors"
+            className="btn btn-secondary"
           >
-            <InstagramIcon /> Ver más en Instagram
+            <InstagramIcon className="size-5" /> Ver más en Instagram
+            <span className="sr-only"> (se abre en una pestaña nueva)</span>
           </a>
-        </motion.div>
+        </div>
       </div>
     </section>
   );

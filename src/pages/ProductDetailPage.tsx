@@ -1,14 +1,35 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, type KeyboardEvent } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { ShoppingCart, Heart, Minus, Plus, Star, Check, Truck, Shield, RotateCcw } from 'lucide-react';
+import {
+  ShoppingCart, Heart, Minus, Plus, Star, Truck, ShieldCheck, RotateCcw, PackageCheck, PackageX,
+  Package, MessageSquareText
+} from 'lucide-react';
 import { SEO } from '../components/shared/SEO';
+import { Breadcrumbs } from '../components/shared/PageHeader';
 import { api } from '../services/api';
 import { useCartStore } from '../store/cartStore';
 import { useUIStore } from '../store/uiStore';
-import { formatPrice } from '../lib/utils';
+import { cn, formatPrice } from '../lib/utils';
+import { PRODUCT_CATEGORIES } from '../lib/constants';
 import type { Product } from '../types';
 import { toast } from 'sonner';
+
+const tabs = [
+  { id: 'description', label: 'Descripción' },
+  { id: 'specs', label: 'Especificaciones' },
+  { id: 'reviews', label: 'Reseñas' },
+] as const;
+
+type TabId = (typeof tabs)[number]['id'];
+
+const skeletonBlock = 'animate-pulse rounded-full bg-sand/40';
+
+// The description is stored as HTML, so its elements are styled from the wrapper
+const richText =
+  'text-base text-dark/75 [&>:first-child]:mt-0 [&_a]:text-iris [&_a]:underline [&_img]:h-auto [&_img]:max-w-full [&_img]:rounded-2xl [&_h2]:mt-8 [&_h2]:font-display [&_h2]:text-xl [&_h2]:font-semibold [&_h2]:text-dark [&_h3]:mt-6 [&_h3]:font-display [&_h3]:text-lg [&_h3]:font-semibold [&_h3]:text-dark [&_li]:mt-1.5 [&_ol]:mt-4 [&_ol]:list-decimal [&_ol]:pl-6 [&_p]:mt-4 [&_strong]:font-semibold [&_strong]:text-dark [&_ul]:mt-4 [&_ul]:list-disc [&_ul]:pl-6';
+
+const stepperButton =
+  'grid size-11 place-items-center rounded-full text-dark transition-colors hover:bg-mist disabled:opacity-40 disabled:hover:bg-transparent';
 
 export default function ProductDetailPage() {
   const { slug } = useParams<{ slug: string }>();
@@ -18,28 +39,44 @@ export default function ProductDetailPage() {
   const [loading, setLoading] = useState(true);
   const [quantity, setQuantity] = useState(1);
   const [activeImage, setActiveImage] = useState(0);
-  const [activeTab, setActiveTab] = useState<'description' | 'specs' | 'reviews'>('description');
+  const [activeTab, setActiveTab] = useState<TabId>('description');
+  const tabRefs = useRef<Partial<Record<TabId, HTMLButtonElement | null>>>({});
 
   useEffect(() => {
     if (!slug) return;
     setLoading(true);
-    api.getProductBySlug(slug).then((p) => {
-      setProduct(p ?? null);
-      setLoading(false);
-    });
+    api
+      .getProductBySlug(slug)
+      .then((p) => {
+        setProduct(p ?? null);
+        setLoading(false);
+      })
+      .catch(() => {
+        setProduct(null);
+        setLoading(false);
+      });
   }, [slug]);
 
   if (loading) {
     return (
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
-          <div className="aspect-square rounded-2xl bg-sand/50 animate-pulse" />
-          <div className="space-y-4">
-            <div className="h-8 bg-sand/50 rounded w-3/4 animate-pulse" />
-            <div className="h-6 bg-sand/50 rounded w-1/3 animate-pulse" />
-            <div className="h-4 bg-sand/50 rounded w-full animate-pulse" />
-            <div className="h-4 bg-sand/50 rounded w-5/6 animate-pulse" />
-            <div className="h-12 bg-sand/50 rounded w-full animate-pulse" />
+      <div role="status">
+        <span className="sr-only">Cargando producto…</span>
+        <div className="bg-ribbon-soft">
+          <div className="mx-auto flex min-h-14 max-w-7xl items-center px-4 sm:px-6 lg:px-8">
+            <div className={cn(skeletonBlock, 'h-4 w-56')} />
+          </div>
+        </div>
+        <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
+          <div className="grid grid-cols-1 gap-8 lg:grid-cols-2 lg:gap-14">
+            <div className="aspect-square animate-pulse rounded-3xl bg-sand/40" />
+            <div className="space-y-4">
+              <div className={cn(skeletonBlock, 'h-10 w-3/4')} />
+              <div className={cn(skeletonBlock, 'h-5 w-1/3')} />
+              <div className={cn(skeletonBlock, 'h-9 w-2/5')} />
+              <div className={cn(skeletonBlock, 'h-4 w-full')} />
+              <div className={cn(skeletonBlock, 'h-4 w-5/6')} />
+              <div className={cn(skeletonBlock, 'h-14 w-full')} />
+            </div>
           </div>
         </div>
       </div>
@@ -48,9 +85,13 @@ export default function ProductDetailPage() {
 
   if (!product) {
     return (
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-20 text-center">
-        <h1 className="font-display text-2xl text-dark mb-4">Producto no encontrado</h1>
-        <Link to="/productos" className="text-primary hover:underline">Ver todos los productos</Link>
+      <div className="mx-auto flex max-w-7xl flex-col items-center px-4 py-20 text-center sm:px-6 lg:px-8">
+        <span className="grid size-20 place-items-center rounded-full bg-mist text-iris">
+          <Package className="size-9" aria-hidden="true" />
+        </span>
+        <h1 className="mt-6 font-display text-3xl font-bold tracking-tight text-dark">Producto no encontrado</h1>
+        <p className="mt-3 max-w-md text-dark/75">Puede que ya no esté disponible o que el enlace sea incorrecto.</p>
+        <Link to="/productos" className="btn btn-primary mt-8">Ver todos los productos</Link>
       </div>
     );
   }
@@ -76,183 +117,261 @@ export default function ProductDetailPage() {
     navigate('/checkout');
   };
 
+  // Arrow keys, Home and End move between tabs, as in the ARIA tabs pattern
+  const handleTabKeyDown = (e: KeyboardEvent<HTMLButtonElement>, current: TabId) => {
+    const index = tabs.findIndex((t) => t.id === current);
+    let next: number;
+    switch (e.key) {
+      case 'ArrowRight':
+        next = (index + 1) % tabs.length;
+        break;
+      case 'ArrowLeft':
+        next = (index - 1 + tabs.length) % tabs.length;
+        break;
+      case 'Home':
+        next = 0;
+        break;
+      case 'End':
+        next = tabs.length - 1;
+        break;
+      default:
+        return;
+    }
+    e.preventDefault();
+    const nextId = tabs[next].id;
+    setActiveTab(nextId);
+    tabRefs.current[nextId]?.focus();
+  };
+
+  const discount = product.comparePrice
+    ? Math.round((1 - product.price / product.comparePrice) * 100)
+    : 0;
+  const categoryName = PRODUCT_CATEGORIES.find((c) => c.id === product.category)?.name ?? product.category;
+  const inStock = product.stock > 0;
+
+  const reassurances = [
+    { icon: Truck, text: 'Envío a todo el país' },
+    { icon: ShieldCheck, text: 'Pago seguro' },
+    { icon: RotateCcw, text: '10 días de devolución' },
+    { icon: inStock ? PackageCheck : PackageX, text: inStock ? 'En stock' : 'Sin stock' },
+  ];
+
   return (
     <>
       <SEO title={product.name} description={product.shortDescription} image={product.images[0]} />
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+
+      <div className="bg-ribbon-soft">
+        <div className="mx-auto max-w-7xl px-4 pb-2 pt-2 sm:px-6 lg:px-8">
+          <Breadcrumbs
+            crumbs={[
+              { label: 'Inicio', to: '/' },
+              { label: 'Productos', to: '/productos' },
+              { label: product.name },
+            ]}
+          />
+        </div>
+      </div>
+
+      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-2 lg:gap-14">
           {/* Gallery */}
-          <div>
-            <div className="relative aspect-square rounded-2xl overflow-hidden bg-sand/20 border border-sand/50">
+          <div className="min-w-0">
+            <div className="relative aspect-square overflow-hidden rounded-3xl bg-mist shadow-soft ring-1 ring-sand/70">
               <img
                 src={product.images[activeImage]}
                 alt={product.name}
-                className="w-full h-full object-cover"
+                width={800}
+                height={800}
+                fetchPriority="high"
+                className="size-full object-cover"
               />
             </div>
             {product.images.length > 1 && (
-              <div className="flex gap-3 mt-4">
+              <ul className="mt-4 flex flex-wrap gap-3">
                 {product.images.map((img, i) => (
-                  <button
-                    key={i}
-                    onClick={() => setActiveImage(i)}
-                    className={`relative w-20 h-20 rounded-xl overflow-hidden border-2 transition-colors ${
-                      activeImage === i ? 'border-primary' : 'border-transparent'
-                    }`}
-                  >
-                    <img src={img} alt="" className="w-full h-full object-cover" />
-                  </button>
+                  <li key={i}>
+                    <button
+                      type="button"
+                      onClick={() => setActiveImage(i)}
+                      aria-label={`Ver imagen ${i + 1} de ${product.images.length}`}
+                      aria-pressed={activeImage === i}
+                      className={cn(
+                        'block size-20 overflow-hidden rounded-2xl bg-mist transition-shadow',
+                        activeImage === i
+                          ? 'ring-2 ring-iris ring-offset-2'
+                          : 'ring-1 ring-sand hover:ring-2 hover:ring-secondary',
+                      )}
+                    >
+                      <img src={img} alt="" width={80} height={80} className="size-full object-cover" />
+                    </button>
+                  </li>
                 ))}
-              </div>
+              </ul>
             )}
           </div>
 
           {/* Info */}
-          <div>
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-              <div className="flex items-center gap-2 mb-3">
-                <div className="flex items-center gap-0.5">
-                  {Array.from({ length: 5 }).map((_, i) => (
-                    <Star key={i} className={`w-4 h-4 ${i < Math.round(product.rating) ? 'text-warning fill-warning' : 'text-dark/20'}`} />
-                  ))}
-                </div>
-                <span className="text-sm text-dark/60">({product.reviewsCount} reseñas)</span>
+          <div className="min-w-0">
+            <h1 className="font-display text-3xl font-bold tracking-tight text-dark sm:text-4xl">
+              {product.name}
+            </h1>
+
+            <div className="mt-3 flex items-center gap-2">
+              <div className="flex items-center gap-0.5" aria-hidden="true">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <Star
+                    key={i}
+                    className={cn('size-5', i < Math.round(product.rating) ? 'fill-amber-400 text-amber-400' : 'text-sand')}
+                  />
+                ))}
               </div>
+              <span className="text-sm text-dark/65">
+                <span className="sr-only">Calificación {product.rating.toFixed(1)} de 5. </span>
+                ({product.reviewsCount} reseñas)
+              </span>
+            </div>
 
-              <h1 className="font-display text-3xl sm:text-4xl font-semibold text-dark mb-4">
-                {product.name}
-              </h1>
+            <div className="mt-6 flex flex-wrap items-center gap-x-4 gap-y-2">
+              <p className="font-display text-3xl font-bold text-dark">{formatPrice(product.price)}</p>
+              {product.comparePrice != null && product.comparePrice > product.price ? (
+                <del className="font-display text-xl text-dark/65">
+                  <span className="sr-only">Precio anterior: </span>
+                  {formatPrice(product.comparePrice)}
+                </del>
+              ) : null}
+              {discount > 0 && <span className="chip bg-dark text-white">-{discount}%</span>}
+            </div>
 
-              <div className="flex items-center gap-3 mb-6">
-                <span className="text-3xl font-semibold text-primary">{formatPrice(product.price)}</span>
-                {product.comparePrice && (
-                  <span className="text-xl text-dark/40 line-through">{formatPrice(product.comparePrice)}</span>
-                )}
-              </div>
+            <p className="mt-5 text-base text-dark/75">{product.shortDescription}</p>
 
-              <p className="text-dark/70 mb-8 leading-relaxed">{product.shortDescription}</p>
-
-              {/* Quantity */}
-              <div className="flex items-center gap-4 mb-6">
-                <span className="text-sm text-dark/60">Cantidad</span>
-                <div className="flex items-center gap-2 rounded-xl border border-sand bg-white">
-                  <button
-                    onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                    className="p-2 hover:bg-sand/50 rounded-l-xl transition-colors"
-                  >
-                    <Minus className="w-4 h-4" />
-                  </button>
-                  <span className="w-8 text-center text-sm font-medium">{quantity}</span>
-                  <button
-                    onClick={() => setQuantity(quantity + 1)}
-                    className="p-2 hover:bg-sand/50 rounded-r-xl transition-colors"
-                  >
-                    <Plus className="w-4 h-4" />
-                  </button>
-                </div>
-                {product.stock < 10 && product.stock > 0 && (
-                  <span className="text-xs text-warning">¡Solo quedan {product.stock}!</span>
-                )}
-              </div>
-
-              {/* Actions */}
-              <div className="flex flex-col sm:flex-row gap-3 mb-8">
+            {/* Quantity */}
+            <div className="mt-8 flex flex-wrap items-center gap-x-5 gap-y-3">
+              <span id="quantity-label" className="text-sm font-medium text-dark">Cantidad</span>
+              <div role="group" aria-labelledby="quantity-label" className="inline-flex items-center rounded-full bg-white p-1 ring-1 ring-sand">
                 <button
-                  onClick={handleAddToCart}
-                  className="flex-1 flex items-center justify-center gap-2 rounded-2xl bg-primary py-3.5 text-sm font-semibold text-white shadow-glow hover:bg-secondary hover:shadow-lg transition-all active:scale-[0.98]"
+                  type="button"
+                  onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                  disabled={quantity <= 1}
+                  aria-label="Quitar una unidad"
+                  className={stepperButton}
                 >
-                  <ShoppingCart className="w-4 h-4" /> Agregar al carrito
+                  <Minus className="size-4" aria-hidden="true" />
                 </button>
+                <span aria-live="polite" className="w-12 text-center font-display font-semibold tabular-nums text-dark">
+                  {quantity}
+                </span>
                 <button
-                  onClick={handleBuyNow}
-                  className="flex-1 flex items-center justify-center gap-2 rounded-2xl bg-dark py-3.5 text-sm font-semibold text-white hover:bg-dark/90 transition-all active:scale-[0.98]"
+                  type="button"
+                  onClick={() => setQuantity(quantity + 1)}
+                  aria-label="Agregar una unidad"
+                  className={stepperButton}
                 >
-                  Comprar ahora
-                </button>
-                <button
-                  onClick={() => toast.info('Agregado a wishlist')}
-                  className="p-3.5 rounded-2xl border border-sand hover:bg-sand/50 transition-colors"
-                  aria-label="Wishlist"
-                >
-                  <Heart className="w-5 h-5 text-dark/70" />
+                  <Plus className="size-4" aria-hidden="true" />
                 </button>
               </div>
+              {product.stock < 10 && product.stock > 0 && (
+                <span className="text-sm font-medium text-rose-700">¡Solo quedan {product.stock}!</span>
+              )}
+            </div>
 
-              {/* Badges */}
-              <div className="grid grid-cols-2 gap-3">
-                <div className="flex items-center gap-2 text-xs text-dark/60">
-                  <Truck className="w-4 h-4 text-primary" /> Envío a todo el país
-                </div>
-                <div className="flex items-center gap-2 text-xs text-dark/60">
-                  <Shield className="w-4 h-4 text-primary" /> Pago seguro
-                </div>
-                <div className="flex items-center gap-2 text-xs text-dark/60">
-                  <RotateCcw className="w-4 h-4 text-primary" /> 10 días de devolución
-                </div>
-                <div className="flex items-center gap-2 text-xs text-dark/60">
-                  <Check className="w-4 h-4 text-success" /> {product.stock > 0 ? 'En stock' : 'Sin stock'}
-                </div>
-              </div>
-            </motion.div>
+            {/* Actions */}
+            <div className="mt-6 grid max-w-xl grid-cols-[1fr_auto] gap-3">
+              <button type="button" onClick={handleAddToCart} className="btn btn-primary btn-lg col-span-2">
+                <ShoppingCart className="size-5" aria-hidden="true" /> Agregar al carrito
+              </button>
+              <button type="button" onClick={handleBuyNow} className="btn btn-secondary btn-lg">
+                Comprar ahora
+              </button>
+              <button
+                type="button"
+                onClick={() => toast.info('Agregado a wishlist')}
+                className="btn btn-secondary btn-lg size-14 p-0"
+                aria-label="Agregar a la wishlist"
+              >
+                <Heart className="size-5" aria-hidden="true" />
+              </button>
+            </div>
+
+            {/* Reassurance */}
+            <ul className="mt-8 grid gap-4 border-t border-sand/60 pt-8 sm:grid-cols-2">
+              {reassurances.map(({ icon: Icon, text }) => (
+                <li key={text} className="flex items-center gap-3">
+                  <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-mist text-iris">
+                    <Icon className="size-5" aria-hidden="true" />
+                  </span>
+                  <span className="text-sm font-medium text-dark/75">{text}</span>
+                </li>
+              ))}
+            </ul>
           </div>
         </div>
 
         {/* Tabs */}
-        <div className="mt-16">
-          <div className="flex gap-6 border-b border-sand/50 mb-6">
-            {(['description', 'specs', 'reviews'] as const).map((tab) => (
+        <div className="mt-14 lg:mt-20">
+          <div
+            role="tablist"
+            aria-label="Información del producto"
+            className="flex gap-1 overflow-x-auto border-b border-sand/70 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          >
+            {tabs.map((tab) => (
               <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                className={`pb-3 text-sm font-medium transition-colors relative ${
-                  activeTab === tab ? 'text-primary' : 'text-dark/60 hover:text-dark'
-                }`}
-              >
-                {tab === 'description' ? 'Descripción' : tab === 'specs' ? 'Especificaciones' : 'Reseñas'}
-                {activeTab === tab && (
-                  <motion.div layoutId="product-tab" className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
+                key={tab.id}
+                ref={(el) => { tabRefs.current[tab.id] = el; }}
+                id={`tab-${tab.id}`}
+                type="button"
+                role="tab"
+                aria-selected={activeTab === tab.id}
+                aria-controls={`panel-${tab.id}`}
+                tabIndex={activeTab === tab.id ? 0 : -1}
+                onClick={() => setActiveTab(tab.id)}
+                onKeyDown={(e) => handleTabKeyDown(e, tab.id)}
+                className={cn(
+                  'min-h-12 shrink-0 border-b-[3px] px-4 font-display text-sm font-semibold transition-colors sm:px-6',
+                  activeTab === tab.id
+                    ? 'border-iris text-dark'
+                    : 'border-transparent text-dark/65 hover:text-dark',
                 )}
+              >
+                {tab.label}
               </button>
             ))}
           </div>
 
-          <motion.div
+          <div
             key={activeTab}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3 }}
+            role="tabpanel"
+            id={`panel-${activeTab}`}
+            aria-labelledby={`tab-${activeTab}`}
+            tabIndex={0}
+            className="animate-fade-in pt-8"
           >
             {activeTab === 'description' && (
-              <div className="max-w-3xl text-dark/70 leading-relaxed" dangerouslySetInnerHTML={{ __html: product.description }} />
+              <div className={cn('max-w-3xl', richText)} dangerouslySetInnerHTML={{ __html: product.description }} />
             )}
             {activeTab === 'specs' && (
-              <div className="max-w-3xl">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="rounded-xl bg-sand/20 p-4">
-                    <span className="text-xs text-dark/50 uppercase tracking-wider">Categoría</span>
-                    <p className="font-medium text-dark mt-1">{product.category}</p>
+              <dl className="grid max-w-3xl grid-cols-1 gap-4 sm:grid-cols-2">
+                {[
+                  { label: 'Categoría', value: categoryName },
+                  { label: 'Stock', value: `${product.stock} unidades` },
+                  { label: 'Tipo', value: product.isDigital ? 'Digital' : 'Físico' },
+                  { label: 'Tags', value: product.tags.join(', ') || '—' },
+                ].map(({ label, value }) => (
+                  <div key={label} className="rounded-2xl bg-mist p-5">
+                    <dt className="text-xs uppercase tracking-wider text-dark/65">{label}</dt>
+                    <dd className="mt-1 font-display font-semibold text-dark">{value}</dd>
                   </div>
-                  <div className="rounded-xl bg-sand/20 p-4">
-                    <span className="text-xs text-dark/50 uppercase tracking-wider">Stock</span>
-                    <p className="font-medium text-dark mt-1">{product.stock} unidades</p>
-                  </div>
-                  <div className="rounded-xl bg-sand/20 p-4">
-                    <span className="text-xs text-dark/50 uppercase tracking-wider">Tipo</span>
-                    <p className="font-medium text-dark mt-1">{product.isDigital ? 'Digital' : 'Físico'}</p>
-                  </div>
-                  <div className="rounded-xl bg-sand/20 p-4">
-                    <span className="text-xs text-dark/50 uppercase tracking-wider">Tags</span>
-                    <p className="font-medium text-dark mt-1">{product.tags.join(', ')}</p>
-                  </div>
-                </div>
-              </div>
+                ))}
+              </dl>
             )}
             {activeTab === 'reviews' && (
-              <div className="max-w-3xl">
-                <p className="text-dark/60">Las reseñas se cargarán desde el backend próximamente.</p>
+              <div className="flex max-w-3xl items-center gap-4 rounded-2xl bg-mist p-5">
+                <span className="grid size-12 shrink-0 place-items-center rounded-xl bg-white text-iris">
+                  <MessageSquareText className="size-6" aria-hidden="true" />
+                </span>
+                <p className="text-dark/75">Las reseñas se cargarán desde el backend próximamente.</p>
               </div>
             )}
-          </motion.div>
+          </div>
         </div>
       </div>
     </>

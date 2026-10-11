@@ -1,7 +1,9 @@
-import { motion } from 'framer-motion';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Pagination, Autoplay } from 'swiper/modules';
 import { Star, Quote } from 'lucide-react';
+import { cn } from '../../lib/utils';
+import { SectionHeader } from './SectionHeader';
+import { swiperLayout, swiperBullets } from './SliderArrows';
 
 import 'swiper/css';
 import 'swiper/css/pagination';
@@ -39,27 +41,14 @@ const testimonials = [
 
 export function Testimonials() {
   return (
-    <section className="py-24 bg-dark relative overflow-hidden">
-      {/* Background blobs */}
-      <div className="absolute top-[-20%] left-[-10%] w-[500px] h-[500px] rounded-full bg-primary/10 blur-[120px] pointer-events-none" />
-      <div className="absolute bottom-[-20%] right-[-10%] w-[400px] h-[400px] rounded-full bg-accent/10 blur-[100px] pointer-events-none" />
-      <div className="absolute inset-0 grain opacity-50" />
-
-      <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="text-center mb-16"
-        >
-          <span className="block font-script text-2xl text-secondary mb-2">Testimonios</span>
-          <h2 className="font-display text-3xl sm:text-4xl lg:text-5xl font-semibold text-white mb-4">
-            Lo que dicen nuestros clientes
-          </h2>
-          <p className="text-white/60 max-w-xl mx-auto">
-            Miles de personas ya confiaron en BS Papelería para sus proyectos creativos.
-          </p>
-        </motion.div>
+    // The swiper keeps its own 3.5rem of bottom padding (shadows + bullets), so the section needs less
+    <section className="pb-6 pt-16 sm:pb-8 sm:pt-20">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <SectionHeader
+          script="Testimonios"
+          title="Lo que dicen nuestros clientes"
+          subtitle="Miles de personas ya confiaron en BS Papelería para sus proyectos creativos."
+        />
 
         <Swiper
           modules={[Pagination, Autoplay]}
@@ -71,42 +60,42 @@ export function Testimonials() {
             640: { slidesPerView: 2 },
             1024: { slidesPerView: 3 },
           }}
+          className={`${swiperLayout} ${swiperBullets}`}
         >
-          {testimonials.map((t, i) => (
-            <SwiperSlide key={i}>
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.4, delay: i * 0.1 }}
-                className="h-full"
-              >
-                <div className="h-full rounded-3xl bg-white/5 backdrop-blur-sm border border-white/10 p-8 hover:bg-white/10 transition-colors duration-300">
-                  <Quote className="w-10 h-10 text-primary/40 mb-6" />
-                  <p className="text-white/80 text-sm leading-relaxed mb-8 min-h-[80px]">"{t.text}"</p>
-                  
-                  <div className="flex items-center gap-4">
-                    <img 
-                      src={t.avatar} 
-                      alt={t.name} 
-                      className="w-12 h-12 rounded-full object-cover ring-2 ring-primary/30" 
-                    />
-                    <div>
-                      <p className="font-medium text-white">{t.name}</p>
-                      <p className="text-white/50 text-xs">{t.role}</p>
-                    </div>
-                  </div>
-                  
-                  <div className="flex gap-0.5 mt-4">
-                    {Array.from({ length: 5 }).map((_, j) => (
+          {testimonials.map((t) => (
+            <SwiperSlide key={t.name}>
+              <figure className="card flex h-full flex-col p-6">
+                <div className="flex items-center justify-between">
+                  <Quote className="size-9 text-iris" aria-hidden="true" />
+                  <div className="flex gap-0.5" role="img" aria-label={`${t.rating} de 5 estrellas`}>
+                    {Array.from({ length: 5 }, (_, j) => (
                       <Star
                         key={j}
-                        className={`w-4 h-4 ${j < t.rating ? 'text-warning fill-warning' : 'text-white/20'}`}
+                        aria-hidden="true"
+                        className={cn('size-4', j < t.rating ? 'fill-amber-400 text-amber-400' : 'text-dark/20')}
                       />
                     ))}
                   </div>
                 </div>
-              </motion.div>
+
+                <blockquote className="mt-5 flex-1 leading-relaxed text-dark/70">“{t.text}”</blockquote>
+
+                <figcaption className="mt-6 flex items-center gap-3 border-t border-sand/60 pt-5">
+                  <img
+                    src={t.avatar}
+                    alt=""
+                    width={48}
+                    height={48}
+                    loading="lazy"
+                    decoding="async"
+                    className="size-12 shrink-0 rounded-full object-cover ring-2 ring-sand"
+                  />
+                  <span className="min-w-0">
+                    <span className="block font-display text-sm font-semibold text-dark">{t.name}</span>
+                    <span className="block text-xs text-dark/65">{t.role}</span>
+                  </span>
+                </figcaption>
+              </figure>
             </SwiperSlide>
           ))}
         </Swiper>

@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { Eye, EyeOff, Mail, Lock, User, ArrowRight } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, User, ArrowRight, Loader2 } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { SEO } from '../components/shared/SEO';
+import { AuthLayout } from '../components/shared/AuthLayout';
 import { authApi } from '../services/authApi';
 import { useAuthStore } from '../store/authStore';
 import { toast } from 'sonner';
@@ -21,6 +21,10 @@ const schema = z.object({
 });
 
 type FormData = z.infer<typeof schema>;
+
+const labelClass = 'block text-sm font-medium text-dark';
+const iconClass = 'pointer-events-none absolute left-4 top-1/2 size-5 -translate-y-1/2 text-dark/55';
+const errorClass = 'mt-1.5 text-xs text-rose-700';
 
 export default function RegisterPage() {
   const navigate = useNavigate();
@@ -39,8 +43,8 @@ export default function RegisterPage() {
       login(user);
       toast.success('¡Registro exitoso! Bienvenida a BS Papelería');
       navigate('/');
-    } catch (err: any) {
-      toast.error(err.message || 'Error al registrarse');
+    } catch (err) {
+      toast.error((err as Error).message || 'Error al registrarse');
     } finally {
       setLoading(false);
     }
@@ -49,104 +53,129 @@ export default function RegisterPage() {
   return (
     <>
       <SEO title="Registro" />
-      <div className="min-h-[70vh] flex items-center justify-center px-4 py-12">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="w-full max-w-md"
-        >
-          <div className="rounded-3xl bg-white border border-sand/50 shadow-soft p-8 sm:p-10">
-            <div className="text-center mb-8">
-              <h1 className="font-display text-2xl font-semibold text-dark mb-2">Crear cuenta</h1>
-              <p className="text-sm text-dark/60">Unite a nuestra comunidad creativa</p>
+      <AuthLayout
+        title="Crear cuenta"
+        description="Unite a nuestra comunidad creativa"
+        phrase="Tu próxima idea empieza acá"
+        image={{
+          src: '/images/brand/home1.webp',
+          width: 1500,
+          height: 1000,
+          alt: 'Agenda lila de tapa dura con lapiceras, una taza y tarjetas con frases sobre una mesa de tonos suaves',
+          className: 'object-[38%_50%]',
+        }}
+      >
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+          <div>
+            <label htmlFor="register-name" className={labelClass}>Nombre completo</label>
+            <div className="relative mt-1.5">
+              <User className={iconClass} aria-hidden="true" />
+              <input
+                {...register('name')}
+                id="register-name"
+                type="text"
+                autoComplete="name"
+                placeholder="Tu nombre"
+                aria-invalid={errors.name ? true : undefined}
+                aria-describedby={errors.name ? 'register-name-error' : undefined}
+                className="field pl-12"
+              />
             </div>
-
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-              <div>
-                <label className="block text-sm font-medium text-dark mb-1.5">Nombre completo</label>
-                <div className="relative">
-                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-dark/40" />
-                  <input
-                    {...register('name')}
-                    type="text"
-                    placeholder="Tu nombre"
-                    className="w-full rounded-xl border border-sand bg-white pl-10 pr-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
-                  />
-                </div>
-                {errors.name && <p className="text-xs text-error mt-1">{errors.name.message}</p>}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-dark mb-1.5">Email</label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-dark/40" />
-                  <input
-                    {...register('email')}
-                    type="email"
-                    placeholder="tu@email.com"
-                    className="w-full rounded-xl border border-sand bg-white pl-10 pr-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
-                  />
-                </div>
-                {errors.email && <p className="text-xs text-error mt-1">{errors.email.message}</p>}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-dark mb-1.5">Contraseña</label>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-dark/40" />
-                  <input
-                    {...register('password')}
-                    type={showPassword ? 'text' : 'password'}
-                    placeholder="••••••••"
-                    className="w-full rounded-xl border border-sand bg-white pl-10 pr-10 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-dark/40"
-                  >
-                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
-                </div>
-                {errors.password && <p className="text-xs text-error mt-1">{errors.password.message}</p>}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-dark mb-1.5">Confirmar contraseña</label>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-dark/40" />
-                  <input
-                    {...register('confirmPassword')}
-                    type={showPassword ? 'text' : 'password'}
-                    placeholder="••••••••"
-                    className="w-full rounded-xl border border-sand bg-white pl-10 pr-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
-                  />
-                </div>
-                {errors.confirmPassword && <p className="text-xs text-error mt-1">{errors.confirmPassword.message}</p>}
-              </div>
-
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full flex items-center justify-center gap-2 rounded-2xl bg-primary py-3 text-sm font-semibold text-white shadow-glow hover:bg-secondary transition-colors disabled:opacity-50 active:scale-[0.98]"
-              >
-                {loading ? (
-                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                ) : (
-                  <>
-                    Crear cuenta <ArrowRight className="w-4 h-4" />
-                  </>
-                )}
-              </button>
-            </form>
-
-            <div className="mt-6 text-center text-sm text-dark/60">
-              ¿Ya tenés cuenta?{' '}
-              <Link to="/login" className="text-primary font-medium hover:underline">Ingresá</Link>
-            </div>
+            {errors.name && (
+              <p id="register-name-error" role="alert" className={errorClass}>{errors.name.message}</p>
+            )}
           </div>
-        </motion.div>
-      </div>
+
+          <div>
+            <label htmlFor="register-email" className={labelClass}>Email</label>
+            <div className="relative mt-1.5">
+              <Mail className={iconClass} aria-hidden="true" />
+              <input
+                {...register('email')}
+                id="register-email"
+                type="email"
+                autoComplete="email"
+                placeholder="tu@email.com"
+                aria-invalid={errors.email ? true : undefined}
+                aria-describedby={errors.email ? 'register-email-error' : undefined}
+                className="field pl-12"
+              />
+            </div>
+            {errors.email && (
+              <p id="register-email-error" role="alert" className={errorClass}>{errors.email.message}</p>
+            )}
+          </div>
+
+          <div>
+            <label htmlFor="register-password" className={labelClass}>Contraseña</label>
+            <div className="relative mt-1.5">
+              <Lock className={iconClass} aria-hidden="true" />
+              <input
+                {...register('password')}
+                id="register-password"
+                type={showPassword ? 'text' : 'password'}
+                autoComplete="new-password"
+                placeholder="••••••••"
+                aria-invalid={errors.password ? true : undefined}
+                aria-describedby={errors.password ? 'register-password-error' : undefined}
+                className="field pl-12 pr-14"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                aria-label={showPassword ? 'Ocultar contraseñas' : 'Mostrar contraseñas'}
+                className="absolute right-1 top-1/2 grid size-11 -translate-y-1/2 place-items-center rounded-full text-dark/65 transition-colors hover:bg-sand/40 hover:text-dark"
+              >
+                {showPassword ? <EyeOff className="size-5" aria-hidden="true" /> : <Eye className="size-5" aria-hidden="true" />}
+              </button>
+            </div>
+            {errors.password && (
+              <p id="register-password-error" role="alert" className={errorClass}>{errors.password.message}</p>
+            )}
+          </div>
+
+          <div>
+            <label htmlFor="register-confirm-password" className={labelClass}>Confirmar contraseña</label>
+            <div className="relative mt-1.5">
+              <Lock className={iconClass} aria-hidden="true" />
+              <input
+                {...register('confirmPassword')}
+                id="register-confirm-password"
+                type={showPassword ? 'text' : 'password'}
+                autoComplete="new-password"
+                placeholder="••••••••"
+                aria-invalid={errors.confirmPassword ? true : undefined}
+                aria-describedby={errors.confirmPassword ? 'register-confirm-password-error' : undefined}
+                className="field pl-12"
+              />
+            </div>
+            {errors.confirmPassword && (
+              <p id="register-confirm-password-error" role="alert" className={errorClass}>
+                {errors.confirmPassword.message}
+              </p>
+            )}
+          </div>
+
+          <button type="submit" disabled={loading} aria-busy={loading} className="btn btn-primary btn-lg w-full">
+            {loading ? (
+              <>
+                <Loader2 className="size-5 animate-spin" aria-hidden="true" /> Creando cuenta…
+              </>
+            ) : (
+              <>
+                Crear cuenta <ArrowRight className="size-5" aria-hidden="true" />
+              </>
+            )}
+          </button>
+        </form>
+
+        <p className="mt-6 text-center text-sm text-dark/75">
+          ¿Ya tenés cuenta?{' '}
+          <Link to="/login" className="inline-flex min-h-11 items-center font-semibold text-iris hover:underline">
+            Ingresá
+          </Link>
+        </p>
+      </AuthLayout>
     </>
   );
 }

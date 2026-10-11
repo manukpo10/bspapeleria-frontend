@@ -1,5 +1,4 @@
 import { useMemo } from 'react';
-import { motion } from 'framer-motion';
 import { MapPin, Clock, Phone, Mail, MessageCircle } from 'lucide-react';
 
 const COORDS: [number, number] = [-34.8500, -58.0833];
@@ -42,117 +41,80 @@ export function VisitUsSection() {
     return `https://www.google.com/maps/dir/?api=1&destination=${COORDS[0]},${COORDS[1]}`;
   }, []);
 
-  const embedUrl = `https://www.google.com/maps/embed/v1/place?key=AIzaSyD-placeholder&q=${COORDS[0]},${COORDS[1]}&zoom=14`;
   const staticMapUrl = `https://maps.google.com/maps?q=${COORDS[0]},${COORDS[1]}&z=14&output=embed`;
 
   return (
-    <section className="py-20 relative overflow-hidden">
-      <div className="absolute top-1/2 right-0 w-[400px] h-[400px] rounded-full bg-accent/15 blur-[100px] pointer-events-none -translate-y-1/2 translate-x-1/2" />
-
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative">
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
-          className="mb-12"
-        >
-          <span className="block font-script text-2xl text-secondary mb-2">encontranos</span>
-          <h2 className="font-display text-3xl sm:text-4xl lg:text-5xl font-semibold text-dark mb-4">
+    <section aria-labelledby="visit-heading" className="bg-mist py-16 sm:py-20">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="max-w-2xl">
+          <p className="eyebrow">Encontranos</p>
+          <h2 id="visit-heading" className="mt-3 font-display text-3xl font-bold tracking-tight text-dark sm:text-4xl">
             Visitanos en nuestro local
           </h2>
-          <p className="text-dark/60 max-w-xl">
+          <p className="mt-4 text-dark/75">
             Te esperamos en nuestro local de Bosques para que conozcas nuestros productos de cerca,
             retires tus pedidos o nos consultes lo que necesites.
           </p>
-        </motion.div>
+        </div>
 
-        <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-start">
-          {/* Left column — Contact info */}
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5 }}
-            className="space-y-6"
-          >
-            {contactItems.map((item, i) => (
-              <motion.div
-                key={item.label}
-                initial={{ opacity: 0, y: 15 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.3, delay: i * 0.08 }}
-                className="flex items-start gap-4"
-              >
-                <div className="flex-shrink-0 w-11 h-11 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
-                  <item.icon className="w-5 h-5" />
-                </div>
-                <div>
-                  <p className="text-sm font-semibold text-dark mb-0.5">{item.label}</p>
-                  {item.lines.map((line, j) => (
-                    <p key={j} className="text-sm text-dark/60">
-                      {item.href ? (
-                        <a
-                          href={item.href}
-                          target={item.href.startsWith('http') ? '_blank' : undefined}
-                          rel={item.href.startsWith('http') ? 'noopener noreferrer' : undefined}
-                          className="hover:text-primary transition-colors"
-                        >
-                          {line}
-                        </a>
-                      ) : (
-                        line
-                      )}
-                    </p>
-                  ))}
-                </div>
-              </motion.div>
-            ))}
+        <div className="mt-10 grid items-stretch gap-8 lg:grid-cols-2 lg:gap-10">
+          {/* Contact info */}
+          <div className="card p-6 sm:p-8">
+            <ul className="space-y-6">
+              {contactItems.map((item) => (
+                <li key={item.label} className="flex items-start gap-4">
+                  <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-mist text-iris">
+                    <item.icon className="size-6" aria-hidden="true" />
+                  </span>
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-dark">{item.label}</p>
+                    {item.lines.map((line, j) => {
+                      const external = item.href?.startsWith('http');
+                      return (
+                        <p key={j} className="text-sm text-dark/75">
+                          {item.href ? (
+                            <a
+                              href={item.href}
+                              target={external ? '_blank' : undefined}
+                              rel={external ? 'noopener noreferrer' : undefined}
+                              className="inline-flex min-h-11 items-center font-medium text-iris hover:underline"
+                            >
+                              {line}
+                              {external && <span className="sr-only"> (se abre en una pestaña nueva)</span>}
+                            </a>
+                          ) : (
+                            line
+                          )}
+                        </p>
+                      );
+                    })}
+                  </div>
+                </li>
+              ))}
+            </ul>
 
-            <motion.div
-              initial={{ opacity: 0, y: 15 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.3, delay: 0.4 }}
-              className="flex flex-wrap gap-3 pt-4"
-            >
-              <a
-                href={directionsUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 rounded-2xl bg-primary px-6 py-3 text-sm font-semibold text-white hover:bg-secondary hover:shadow-glow transition-all active:scale-[0.98]"
-              >
-                <MapPin className="w-4 h-4" /> Cómo llegar
+            <div className="mt-8 flex flex-wrap gap-3 border-t border-sand/60 pt-6">
+              <a href={directionsUrl} target="_blank" rel="noopener noreferrer" className="btn btn-primary">
+                <MapPin className="size-4" aria-hidden="true" /> Cómo llegar
+                <span className="sr-only"> (se abre en una pestaña nueva)</span>
               </a>
-              <a
-                href="tel:+541112345678"
-                className="inline-flex items-center gap-2 rounded-2xl border border-sand px-6 py-3 text-sm font-medium text-dark hover:bg-sand/30 transition-colors"
-              >
-                <Phone className="w-4 h-4" /> Llamanos
+              <a href="tel:+541112345678" className="btn btn-secondary">
+                <Phone className="size-4" aria-hidden="true" /> Llamanos
               </a>
-            </motion.div>
-          </motion.div>
+            </div>
+          </div>
 
-          {/* Right column — Google Maps embed (no dependency) */}
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-            className="rounded-3xl overflow-hidden border border-sand shadow-[0_20px_60px_rgba(152,172,248,0.15)] h-[350px] sm:h-[500px]"
-          >
+          {/* Google Maps embed (no dependency) */}
+          <div className="relative h-[22rem] overflow-hidden rounded-3xl bg-white shadow-soft ring-1 ring-sand/70 sm:h-[32rem] lg:h-auto lg:min-h-[32rem]">
             <iframe
               src={staticMapUrl}
-              width="100%"
-              height="100%"
-              style={{ border: 0 }}
+              className="absolute inset-0 size-full border-0"
               allowFullScreen
               loading="lazy"
               referrerPolicy="no-referrer-when-downgrade"
               title="Ubicación BS Papelería"
             />
-          </motion.div>
+          </div>
         </div>
       </div>
     </section>

@@ -1,5 +1,5 @@
-import { motion } from 'framer-motion';
-import { Palette, Truck, Award, HeartHandshake } from 'lucide-react';
+import { Palette, Truck, Award, HeartHandshake, Heart } from 'lucide-react';
+import { SectionHeader } from './SectionHeader';
 
 const features = [
   {
@@ -26,44 +26,53 @@ const features = [
 
 export function Features() {
   return (
-    <section className="py-24 relative overflow-hidden">
-      {/* Decorative blobs */}
-      <div className="absolute top-[10%] right-[-5%] w-[300px] h-[300px] rounded-full bg-primary/10 blur-[100px] pointer-events-none" />
-      <div className="absolute bottom-[10%] left-[-5%] w-[250px] h-[250px] rounded-full bg-accent/10 blur-[80px] pointer-events-none" />
+    <section className="py-16 sm:py-20">
+      <div className="mx-auto grid max-w-7xl gap-12 px-4 sm:px-6 lg:grid-cols-12 lg:items-center lg:px-8">
+        {/* Photo: a fixed 20rem tall crop on small screens, the full 4:5 portrait beside the copy from lg */}
+        <div className="relative mx-auto w-full max-w-sm lg:col-span-5 lg:max-w-none">
+          <div className="relative h-80 overflow-hidden rounded-[2rem] bg-sand/40 shadow-lift lg:aspect-[4/5] lg:h-auto">
+            <img
+              src="/images/home/hecho-a-mano.webp"
+              alt="Manos atando un moño de cinta lila sobre una libreta lavanda, junto a lapiceras color cobre y estrellitas de papel"
+              width={1024}
+              height={1280}
+              loading="lazy"
+              decoding="async"
+              className="absolute inset-0 size-full object-cover"
+            />
+          </div>
 
-      <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="text-center mb-16"
-        >
-          <span className="block font-script text-2xl text-secondary mb-2">¿Por qué elegirnos?</span>
-          <h2 className="font-display text-3xl sm:text-4xl lg:text-5xl font-semibold text-dark mb-4">
-            Hecho a mano, pensado para vos
-          </h2>
-          <p className="text-dark/60 max-w-xl mx-auto">
-            Cada detalle cuenta. Por eso nos enfocamos en ofrecerte la mejor experiencia de compra y aprendizaje.
-          </p>
-        </motion.div>
+          {/* Sits outside the clipped frame so it can overlap the corner */}
+          <div className="card absolute -bottom-5 right-4 flex items-center gap-3 py-3 pl-3 pr-5 lg:-right-6">
+            <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-mist text-iris">
+              <Heart className="size-5" aria-hidden="true" />
+            </span>
+            <p>
+              <span className="block text-sm font-semibold text-dark">Hecho con amor</span>
+              <span className="block text-xs text-dark/65">Cada pedido, uno por uno</span>
+            </p>
+          </div>
+        </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-          {features.map((feature, i) => (
-            <motion.div
-              key={feature.title}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.4, delay: i * 0.1 }}
-              className="group text-center"
-            >
-              <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-3xl bg-gradient-to-br from-primary/20 to-secondary/20 text-primary shadow-soft group-hover:shadow-glow group-hover:scale-110 transition-all duration-300">
-                <feature.icon className="w-10 h-10" />
-              </div>
-              <h3 className="font-display font-medium text-dark text-xl mb-3">{feature.title}</h3>
-              <p className="text-sm text-dark/60 leading-relaxed max-w-[260px] mx-auto">{feature.description}</p>
-            </motion.div>
-          ))}
+        <div className="lg:col-span-7">
+          <SectionHeader
+            script="¿Por qué elegirnos?"
+            title="Hecho a mano, pensado para vos"
+            subtitle="Cada detalle cuenta. Por eso nos enfocamos en ofrecerte la mejor experiencia de compra y aprendizaje."
+            startFromLg
+          />
+
+          <ul className="grid grid-cols-1 gap-5 sm:grid-cols-2 sm:gap-6">
+            {features.map((feature) => (
+              <li key={feature.title} className="card p-6">
+                <span className="grid size-12 place-items-center rounded-2xl bg-ribbon text-dark">
+                  <feature.icon className="size-6" aria-hidden="true" />
+                </span>
+                <h3 className="mt-5 font-display text-lg font-semibold text-dark">{feature.title}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-dark/65">{feature.description}</p>
+              </li>
+            ))}
+          </ul>
         </div>
       </div>
     </section>

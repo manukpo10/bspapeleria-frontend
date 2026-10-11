@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { Eye, EyeOff, Mail, Lock, ArrowRight } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, ArrowRight, Loader2 } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { SEO } from '../components/shared/SEO';
+import { AuthLayout } from '../components/shared/AuthLayout';
 import { authApi } from '../services/authApi';
 import { useAuthStore } from '../store/authStore';
 import { toast } from 'sonner';
@@ -16,6 +16,10 @@ const schema = z.object({
 });
 
 type FormData = z.infer<typeof schema>;
+
+const labelClass = 'block text-sm font-medium text-dark';
+const iconClass = 'pointer-events-none absolute left-4 top-1/2 size-5 -translate-y-1/2 text-dark/55';
+const errorClass = 'mt-1.5 text-xs text-rose-700';
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -34,8 +38,8 @@ export default function LoginPage() {
       login(user);
       toast.success(`¡Bienvenida de vuelta, ${user.name}!`);
       navigate(user.role === 'admin' ? '/admin/overview' : '/');
-    } catch (err: any) {
-      toast.error(err.message || 'Credenciales incorrectas');
+    } catch (err) {
+      toast.error((err as Error).message || 'Credenciales incorrectas');
     } finally {
       setLoading(false);
     }
@@ -44,84 +48,99 @@ export default function LoginPage() {
   return (
     <>
       <SEO title="Ingresar" />
-      <div className="min-h-[70vh] flex items-center justify-center px-4 py-12">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="w-full max-w-md"
-        >
-          <div className="rounded-3xl bg-white border border-sand/50 shadow-soft p-8 sm:p-10">
-            <div className="text-center mb-8">
-              <h1 className="font-display text-2xl font-semibold text-dark mb-2">Bienvenida de vuelta</h1>
-              <p className="text-sm text-dark/60">Ingresá a tu cuenta para continuar</p>
+      <AuthLayout
+        title="Bienvenida de vuelta"
+        description="Ingresá a tu cuenta para continuar"
+        phrase="Qué bueno verte de nuevo"
+        image={{
+          src: '/images/home/hecho-a-mano.webp',
+          width: 1024,
+          height: 1280,
+          alt: 'Manos atando un moño de cinta lila sobre una libreta lavanda, junto a lapiceras color cobre y estrellitas de papel',
+        }}
+      >
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+          <div>
+            <label htmlFor="login-email" className={labelClass}>Email</label>
+            <div className="relative mt-1.5">
+              <Mail className={iconClass} aria-hidden="true" />
+              <input
+                {...register('email')}
+                id="login-email"
+                type="email"
+                autoComplete="email"
+                placeholder="tu@email.com"
+                aria-invalid={errors.email ? true : undefined}
+                aria-describedby={errors.email ? 'login-email-error' : undefined}
+                className="field pl-12"
+              />
             </div>
-
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-              <div>
-                <label className="block text-sm font-medium text-dark mb-1.5">Email</label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-dark/40" />
-                  <input
-                    {...register('email')}
-                    type="email"
-                    placeholder="tu@email.com"
-                    className="w-full rounded-xl border border-sand bg-white pl-10 pr-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
-                  />
-                </div>
-                {errors.email && <p className="text-xs text-error mt-1">{errors.email.message}</p>}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-dark mb-1.5">Contraseña</label>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-dark/40" />
-                  <input
-                    {...register('password')}
-                    type={showPassword ? 'text' : 'password'}
-                    placeholder="••••••••"
-                    className="w-full rounded-xl border border-sand bg-white pl-10 pr-10 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-dark/40"
-                  >
-                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
-                </div>
-                {errors.password && <p className="text-xs text-error mt-1">{errors.password.message}</p>}
-              </div>
-
-              <div className="flex items-center justify-between text-sm">
-                <label className="flex items-center gap-2 text-dark/60 cursor-pointer">
-                  <input type="checkbox" className="rounded border-sand text-primary focus:ring-primary" />
-                  Recordarme
-                </label>
-                <Link to="/recuperar-password" className="text-primary hover:underline">¿Olvidaste tu contraseña?</Link>
-              </div>
-
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full flex items-center justify-center gap-2 rounded-2xl bg-primary py-3 text-sm font-semibold text-white shadow-glow hover:bg-secondary transition-colors disabled:opacity-50 active:scale-[0.98]"
-              >
-                {loading ? (
-                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                ) : (
-                  <>
-                    Ingresar <ArrowRight className="w-4 h-4" />
-                  </>
-                )}
-              </button>
-            </form>
-
-            <div className="mt-6 text-center text-sm text-dark/60">
-              ¿No tenés cuenta?{' '}
-              <Link to="/registro" className="text-primary font-medium hover:underline">Registrate</Link>
-            </div>
+            {errors.email && (
+              <p id="login-email-error" role="alert" className={errorClass}>{errors.email.message}</p>
+            )}
           </div>
-        </motion.div>
-      </div>
+
+          <div>
+            <label htmlFor="login-password" className={labelClass}>Contraseña</label>
+            <div className="relative mt-1.5">
+              <Lock className={iconClass} aria-hidden="true" />
+              <input
+                {...register('password')}
+                id="login-password"
+                type={showPassword ? 'text' : 'password'}
+                autoComplete="current-password"
+                placeholder="••••••••"
+                aria-invalid={errors.password ? true : undefined}
+                aria-describedby={errors.password ? 'login-password-error' : undefined}
+                className="field pl-12 pr-14"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                className="absolute right-1 top-1/2 grid size-11 -translate-y-1/2 place-items-center rounded-full text-dark/65 transition-colors hover:bg-sand/40 hover:text-dark"
+              >
+                {showPassword ? <EyeOff className="size-5" aria-hidden="true" /> : <Eye className="size-5" aria-hidden="true" />}
+              </button>
+            </div>
+            {errors.password && (
+              <p id="login-password-error" role="alert" className={errorClass}>{errors.password.message}</p>
+            )}
+          </div>
+
+          <div className="flex flex-wrap items-center justify-between gap-x-4">
+            <label className="flex min-h-11 cursor-pointer items-center gap-3 text-sm text-dark/75">
+              <input type="checkbox" className="size-5 rounded accent-iris" />
+              Recordarme
+            </label>
+            <Link
+              to="/recuperar-password"
+              className="inline-flex min-h-11 items-center text-sm font-semibold text-iris hover:underline"
+            >
+              ¿Olvidaste tu contraseña?
+            </Link>
+          </div>
+
+          <button type="submit" disabled={loading} aria-busy={loading} className="btn btn-primary btn-lg w-full">
+            {loading ? (
+              <>
+                <Loader2 className="size-5 animate-spin" aria-hidden="true" /> Ingresando…
+              </>
+            ) : (
+              <>
+                Ingresar <ArrowRight className="size-5" aria-hidden="true" />
+              </>
+            )}
+          </button>
+        </form>
+
+        <p className="mt-6 text-center text-sm text-dark/75">
+          ¿No tenés cuenta?{' '}
+          <Link to="/registro" className="inline-flex min-h-11 items-center font-semibold text-iris hover:underline">
+            Registrate
+          </Link>
+        </p>
+      </AuthLayout>
     </>
   );
 }

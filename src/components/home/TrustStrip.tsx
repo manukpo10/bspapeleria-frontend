@@ -1,4 +1,3 @@
-import { motion } from 'framer-motion';
 import { Truck, ShieldCheck, RotateCcw, HeadphonesIcon, Star, Award } from 'lucide-react';
 
 const trusts = [
@@ -12,28 +11,21 @@ const trusts = [
 
 export function TrustStrip() {
   return (
-    <section className="py-8 bg-white border-y border-sand/50">
+    <section aria-label="Por qué comprar en BS Papelería" className="border-y border-sand/60 bg-white py-6 sm:py-8">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-6">
-          {trusts.map((t, i) => (
-            <motion.div
-              key={t.label}
-              initial={{ opacity: 0, y: 10 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.3, delay: i * 0.05 }}
-              className="flex items-center gap-3"
-            >
-              <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
-                <t.icon className="w-5 h-5" />
-              </div>
-              <div>
-                <p className="text-sm font-semibold text-dark leading-tight">{t.label}</p>
-                <p className="text-xs text-dark/50 leading-tight">{t.sublabel}</p>
-              </div>
-            </motion.div>
+        <ul className="grid grid-cols-2 gap-x-4 gap-y-5 sm:grid-cols-3 lg:grid-cols-6 lg:gap-x-6">
+          {trusts.map((t) => (
+            <li key={t.label} className="flex items-center gap-3">
+              <span className="grid size-11 shrink-0 place-items-center rounded-2xl bg-mist text-iris">
+                <t.icon className="size-5" aria-hidden="true" />
+              </span>
+              <span className="min-w-0">
+                <span className="block text-sm font-semibold leading-tight text-dark">{t.label}</span>
+                <span className="mt-0.5 block text-xs leading-snug text-dark/65">{t.sublabel}</span>
+              </span>
+            </li>
           ))}
-        </div>
+        </ul>
       </div>
     </section>
   );

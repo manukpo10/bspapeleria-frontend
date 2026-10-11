@@ -1,30 +1,52 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, type KeyboardEvent } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Play, Clock, Users, Star, BookOpen, Check, ChevronDown, ChevronUp,
-  Monitor, FileText, HelpCircle, FileDown, ShoppingCart, Award
+  Play, Clock, Users, Star, BookOpen, Check, ChevronDown, FileText, HelpCircle,
+  FileDown, ClipboardList, ShoppingCart, Award, GraduationCap, Sparkles, MessageSquareText,
+  type LucideIcon
 } from 'lucide-react';
 import { SEO } from '../components/shared/SEO';
+import { Breadcrumbs } from '../components/shared/PageHeader';
+import { CourseCard } from '../components/shared/CourseCard';
+import { StarRating } from '../components/shared/StarRating';
 import { api } from '../services/api';
 import { useCartStore } from '../store/cartStore';
 import { useUIStore } from '../store/uiStore';
 import { useAuthStore } from '../store/authStore';
-import { formatPrice } from '../lib/utils';
+import { cn, formatPrice } from '../lib/utils';
 import type { Course, Lesson } from '../types';
 import { courses, reviews as mockReviews } from '../data/mocks';
 import { toast } from 'sonner';
 
-function LessonIcon({ type }: { type: Lesson['type'] }) {
-  switch (type) {
-    case 'video': return <Play className="w-4 h-4" />;
-    case 'text': return <FileText className="w-4 h-4" />;
-    case 'quiz': return <HelpCircle className="w-4 h-4" />;
-    case 'assignment': return <FileDown className="w-4 h-4" />;
-    case 'file': return <FileDown className="w-4 h-4" />;
-    default: return <Play className="w-4 h-4" />;
-  }
-}
+const lessonMeta: Record<Lesson['type'], { icon: LucideIcon; label: string }> = {
+  video: { icon: Play, label: 'Video' },
+  text: { icon: FileText, label: 'Lectura' },
+  quiz: { icon: HelpCircle, label: 'Cuestionario' },
+  assignment: { icon: ClipboardList, label: 'Tarea' },
+  file: { icon: FileDown, label: 'Material descargable' },
+};
+
+const levelLabel: Record<Course['level'], string> = {
+  principiante: 'Principiante',
+  intermedio: 'Intermedio',
+  avanzado: 'Avanzado',
+};
+
+const modalityLabel: Record<Course['modality'], string> = {
+  online: 'Online',
+  presencial: 'Presencial',
+  hibrido: 'Híbrido',
+};
+
+const tabs = [
+  { id: 'reviews', label: 'Reseñas' },
+  { id: 'qa', label: 'Q&A' },
+] as const;
+
+type TabId = (typeof tabs)[number]['id'];
+
+const sectionHeading = 'font-display text-2xl font-bold tracking-tight text-dark';
+const skeletonBlock = 'animate-pulse rounded-full bg-sand/40';
 
 export default function CourseDetailPage() {
   const { slug } = useParams<{ slug: string }>();
@@ -34,8 +56,9 @@ export default function CourseDetailPage() {
   const [course, setCourse] = useState<Course | null>(null);
   const [loading, setLoading] = useState(true);
   const [expandedTopic, setExpandedTopic] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'reviews' | 'qa'>('reviews');
+  const [activeTab, setActiveTab] = useState<TabId>('reviews');
   const [playingPreview, setPlayingPreview] = useState(false);
+  const tabRefs = useRef<Partial<Record<TabId, HTMLButtonElement | null>>>({});
 
   useEffect(() => {
     if (isAuthenticated) fetchUser();
@@ -44,11 +67,17 @@ export default function CourseDetailPage() {
   useEffect(() => {
     if (!slug) return;
     setLoading(true);
-    api.getCourseBySlug(slug).then((c) => {
-      setCourse(c ?? null);
-      if (c?.topics[0]) setExpandedTopic(c.topics[0].id);
-      setLoading(false);
-    });
+    api
+      .getCourseBySlug(slug)
+      .then((c) => {
+        setCourse(c ?? null);
+        if (c?.topics[0]) setExpandedTopic(c.topics[0].id);
+        setLoading(false);
+      })
+      .catch(() => {
+        setCourse(null);
+        setLoading(false);
+      });
   }, [slug]);
 
   const isEnrolled = isAuthenticated && user?.enrollments.some((e) => e.courseId === course?.id);
@@ -72,14 +101,27 @@ export default function CourseDetailPage() {
 
   if (loading) {
     return (
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-          <div className="lg:col-span-2 space-y-4">
-            <div className="h-8 bg-sand/50 rounded w-3/4 animate-pulse" />
-            <div className="h-4 bg-sand/50 rounded w-1/2 animate-pulse" />
-            <div className="h-4 bg-sand/50 rounded w-full animate-pulse" />
+      <div role="status">
+        <span className="sr-only">Cargando curso…</span>
+        <div className="bg-ribbon-soft">
+          <div className="mx-auto max-w-7xl px-4 pb-14 pt-4 sm:px-6 lg:px-8">
+            <div className={cn(skeletonBlock, 'h-4 w-56')} />
+            <div className="mt-6 max-w-2xl space-y-4">
+              <div className={cn(skeletonBlock, 'h-10 w-3/4')} />
+              <div className={cn(skeletonBlock, 'h-4 w-full')} />
+              <div className={cn(skeletonBlock, 'h-4 w-5/6')} />
+              <div className={cn(skeletonBlock, 'h-5 w-1/2')} />
+            </div>
           </div>
-          <div className="h-80 bg-sand/50 rounded-2xl animate-pulse" />
+        </div>
+        <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 gap-10 lg:grid-cols-3">
+            <div className="space-y-4 lg:col-span-2">
+              <div className="h-48 animate-pulse rounded-3xl bg-sand/40" />
+              <div className="h-24 animate-pulse rounded-3xl bg-sand/40" />
+            </div>
+            <div className="h-80 animate-pulse rounded-3xl bg-sand/40" />
+          </div>
         </div>
       </div>
     );
@@ -87,280 +129,483 @@ export default function CourseDetailPage() {
 
   if (!course) {
     return (
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-20 text-center">
-        <h1 className="font-display text-2xl text-dark mb-4">Curso no encontrado</h1>
-        <Link to="/cursos" className="text-primary hover:underline">Ver todos los cursos</Link>
+      <div className="mx-auto flex max-w-7xl flex-col items-center px-4 py-20 text-center sm:px-6 lg:px-8">
+        <span className="grid size-20 place-items-center rounded-full bg-mist text-iris">
+          <GraduationCap className="size-9" aria-hidden="true" />
+        </span>
+        <h1 className="mt-6 font-display text-3xl font-bold tracking-tight text-dark">Curso no encontrado</h1>
+        <p className="mt-3 max-w-md text-dark/75">Puede que ya no esté disponible o que el enlace sea incorrecto.</p>
+        <Link to="/cursos" className="btn btn-primary mt-8">Ver todos los cursos</Link>
       </div>
     );
   }
 
   const totalLessons = course.topics.reduce((sum, t) => sum + t.lessons.length, 0);
+  const discount = course.comparePrice ? Math.round((1 - course.price / course.comparePrice) * 100) : 0;
+  // Backend courses have one description only: it goes in the hero and the "about" block is left out
+  const heroText = course.shortDescription || course.description;
+  const showAbout = Boolean(course.description) && course.description !== heroText;
+  const relatedCourses = courses.filter((c) => c.id !== course.id).slice(0, 2);
+  const instructor = course.instructor;
+
+  // Arrow keys, Home and End move between tabs, as in the ARIA tabs pattern
+  const handleTabKeyDown = (e: KeyboardEvent<HTMLButtonElement>, current: TabId) => {
+    const index = tabs.findIndex((t) => t.id === current);
+    let next: number;
+    switch (e.key) {
+      case 'ArrowRight':
+        next = (index + 1) % tabs.length;
+        break;
+      case 'ArrowLeft':
+        next = (index - 1 + tabs.length) % tabs.length;
+        break;
+      case 'Home':
+        next = 0;
+        break;
+      case 'End':
+        next = tabs.length - 1;
+        break;
+      default:
+        return;
+    }
+    e.preventDefault();
+    const nextId = tabs[next].id;
+    setActiveTab(nextId);
+    tabRefs.current[nextId]?.focus();
+  };
 
   return (
     <>
       <SEO title={course.title} description={course.shortDescription} image={course.coverImage} />
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-          {/* Main Content */}
-          <div className="lg:col-span-2">
-            {/* Hero */}
-            <div className="rounded-2xl overflow-hidden aspect-video bg-dark relative mb-8">
-              {playingPreview && course.videoPreviewUrl ? (
-                <iframe
-                  src={course.videoPreviewUrl.replace('watch?v=', 'embed/')}
-                  className="w-full h-full"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                  title="Preview"
-                />
-              ) : (
-                <>
-                  <img src={course.coverImage} alt={course.title} className="w-full h-full object-cover opacity-60" />
-                  {course.videoPreviewUrl && (
-                    <button
-                      onClick={() => setPlayingPreview(true)}
-                      className="absolute inset-0 flex items-center justify-center"
-                    >
-                      <div className="w-16 h-16 rounded-full bg-white/90 flex items-center justify-center shadow-lg hover:scale-105 transition-transform">
-                        <Play className="w-6 h-6 text-dark ml-1" />
-                      </div>
-                    </button>
-                  )}
-                </>
-              )}
+
+      {/* One grid for the whole page: the hero copy and the body share the left columns, and the
+          purchase card spans both rows on the right so it can stay sticky from the top of the hero.
+          The clip only trims the full-bleed hero gradient, it does not create a scroll container */}
+      <div className="overflow-x-clip">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 lg:grid-cols-3 lg:gap-x-12">
+            {/* Hero band background, full width of the viewport */}
+            <div aria-hidden="true" className="relative col-start-1 row-start-1 lg:col-end-4">
+              <div className="absolute inset-y-0 left-1/2 w-screen -translate-x-1/2 bg-ribbon-soft" />
             </div>
 
-            <h1 className="font-display text-3xl sm:text-4xl font-semibold text-dark mb-4">
-              {course.title}
-            </h1>
-            <p className="text-dark/70 mb-6 leading-relaxed">{course.description}</p>
+            {/* Hero copy */}
+            <header className="relative col-start-1 row-start-1 min-w-0 pb-10 pt-2 lg:col-end-3 lg:pb-14">
+              <Breadcrumbs
+                crumbs={[
+                  { label: 'Inicio', to: '/' },
+                  { label: 'Cursos', to: '/cursos' },
+                  { label: course.title },
+                ]}
+              />
 
-            <div className="flex flex-wrap items-center gap-4 text-sm text-dark/60 mb-8">
-              <span className="flex items-center gap-1"><Users className="w-4 h-4" /> {course.enrolledCount} estudiantes</span>
-              <span className="flex items-center gap-1"><Star className="w-4 h-4 text-warning fill-warning" /> {course.rating} ({course.reviewsCount} reseñas)</span>
-              <span className="flex items-center gap-1"><Clock className="w-4 h-4" /> {course.duration}</span>
-              <span className="flex items-center gap-1"><Monitor className="w-4 h-4" /> {course.modality}</span>
-              <span className="flex items-center gap-1"><BookOpen className="w-4 h-4" /> {totalLessons} lecciones</span>
-            </div>
-
-            {/* What you'll learn */}
-            <div className="rounded-2xl bg-sand/20 border border-sand/50 p-6 mb-8">
-              <h3 className="font-display text-xl font-semibold text-dark mb-4">Lo que vas a aprender</h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {course.whatYouWillLearn.map((item, i) => (
-                  <div key={i} className="flex items-start gap-2">
-                    <Check className="w-4 h-4 text-success mt-0.5 shrink-0" />
-                    <span className="text-sm text-dark/70">{item}</span>
-                  </div>
-                ))}
+              <div className="mt-4 flex flex-wrap items-center gap-2">
+                <span className="chip bg-white text-dark shadow-soft">{levelLabel[course.level] ?? course.level}</span>
+                <span className="chip bg-white text-dark shadow-soft">{modalityLabel[course.modality] ?? course.modality}</span>
+                {course.featured && (
+                  <span className="chip bg-white text-iris shadow-soft">
+                    <Sparkles className="size-3.5" aria-hidden="true" /> Destacado
+                  </span>
+                )}
               </div>
-            </div>
 
-            {/* Requirements */}
-            <div className="mb-8">
-              <h3 className="font-display text-xl font-semibold text-dark mb-4">Requisitos previos</h3>
-              <ul className="space-y-2">
-                {course.requirements.map((req, i) => (
-                  <li key={i} className="flex items-start gap-2 text-sm text-dark/70">
-                    <span className="w-1.5 h-1.5 rounded-full bg-primary mt-2 shrink-0" />
-                    {req}
+              <h1 className="mt-4 font-display text-3xl font-bold tracking-tight text-dark sm:text-4xl">
+                {course.title}
+              </h1>
+              <p className="mt-4 max-w-2xl text-base text-dark/75">{heroText}</p>
+
+              <ul className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-3 text-sm text-dark/75">
+                <li>
+                  <StarRating rating={course.rating} count={course.reviewsCount} size={18} />
+                </li>
+                <li className="flex items-center gap-2">
+                  <Users className="size-5 text-iris" aria-hidden="true" /> {course.enrolledCount} estudiantes
+                </li>
+                {course.duration && (
+                  <li className="flex items-center gap-2">
+                    <Clock className="size-5 text-iris" aria-hidden="true" /> {course.duration}
                   </li>
-                ))}
+                )}
+                <li className="flex items-center gap-2">
+                  <BookOpen className="size-5 text-iris" aria-hidden="true" /> {totalLessons} lecciones
+                </li>
               </ul>
-            </div>
 
-            {/* Syllabus */}
-            <div className="mb-8">
-              <h3 className="font-display text-xl font-semibold text-dark mb-4">Temario del curso</h3>
-              <div className="space-y-3">
-                {course.topics.map((topic) => (
-                  <div key={topic.id} className="rounded-2xl border border-sand/50 overflow-hidden">
-                    <button
-                      onClick={() => setExpandedTopic(expandedTopic === topic.id ? null : topic.id)}
-                      className="w-full flex items-center justify-between p-4 bg-white hover:bg-sand/20 transition-colors text-left"
-                    >
-                      <div>
-                        <span className="font-display font-medium text-dark">{topic.title}</span>
-                        <p className="text-xs text-dark/50 mt-0.5">{topic.lessons.length} lecciones</p>
-                      </div>
-                      {expandedTopic === topic.id ? <ChevronUp className="w-5 h-5 text-dark/40" /> : <ChevronDown className="w-5 h-5 text-dark/40" />}
-                    </button>
-                    <AnimatePresence>
-                      {expandedTopic === topic.id && (
-                        <motion.div
-                          initial={{ height: 0 }}
-                          animate={{ height: 'auto' }}
-                          exit={{ height: 0 }}
-                          className="overflow-hidden"
-                        >
-                          <div className="divide-y divide-sand/30">
-                            {topic.lessons.map((lesson) => (
-                              <div key={lesson.id} className="flex items-center gap-3 p-4 bg-sand/10">
-                                <span className={`p-1.5 rounded-lg ${lesson.isPreview ? 'bg-primary/10 text-primary' : 'bg-sand/50 text-dark/40'}`}>
-                                  <LessonIcon type={lesson.type} />
-                                </span>
-                                <div className="flex-1 min-w-0">
-                                  <p className="text-sm text-dark truncate">{lesson.title}</p>
-                                  <p className="text-xs text-dark/50">{lesson.duration}</p>
-                                </div>
-                                {lesson.isPreview && (
-                                  <span className="text-xs font-medium text-primary">Vista previa</span>
-                                )}
-                              </div>
-                            ))}
-                          </div>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </div>
-                ))}
+              <div className="mt-6 flex items-center gap-3">
+                <img
+                  src={instructor.avatar}
+                  alt=""
+                  width={40}
+                  height={40}
+                  className="size-10 rounded-full object-cover ring-2 ring-white"
+                />
+                <p className="text-sm text-dark/75">
+                  Dictado por <span className="font-semibold text-dark">{instructor.name}</span>
+                </p>
               </div>
-            </div>
+            </header>
 
-            {/* Instructor */}
-            <div className="rounded-2xl bg-white border border-sand/50 p-6 mb-8">
-              <h3 className="font-display text-xl font-semibold text-dark mb-4">Sobre el instructor</h3>
-              <div className="flex items-start gap-4">
-                <img src={course.instructor.avatar} alt={course.instructor.name} className="w-16 h-16 rounded-full object-cover" />
-                <div>
-                  <p className="font-display font-medium text-dark">{course.instructor.name}</p>
-                  <p className="text-sm text-dark/60 mb-2">{course.instructor.bio}</p>
-                  <div className="flex flex-wrap gap-3 text-xs text-dark/50">
-                    <span className="flex items-center gap-1"><BookOpen className="w-3 h-3" /> {course.instructor.coursesCount} cursos</span>
-                    <span className="flex items-center gap-1"><Users className="w-3 h-3" /> {course.instructor.studentsCount} estudiantes</span>
-                    <span className="flex items-center gap-1"><Star className="w-3 h-3 text-warning fill-warning" /> {course.instructor.rating}</span>
+            {/* Purchase card */}
+            <aside
+              aria-label="Inscripción al curso"
+              className="relative z-10 col-start-1 row-start-2 min-w-0 max-lg:-mt-6 lg:col-start-3 lg:row-start-1 lg:row-end-3 lg:pt-4"
+            >
+              <div className="card p-5 sm:p-6 lg:sticky lg:top-24 lg:max-h-[calc(100dvh-7rem)] lg:overflow-y-auto lg:overscroll-contain">
+                <div className="relative aspect-video overflow-hidden rounded-2xl bg-mist ring-1 ring-sand/70">
+                  {playingPreview && course.videoPreviewUrl ? (
+                    <iframe
+                      src={course.videoPreviewUrl.replace('watch?v=', 'embed/')}
+                      className="size-full"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                      title="Vista previa del curso"
+                    />
+                  ) : (
+                    <>
+                      {course.coverImage ? (
+                        <img
+                          src={course.coverImage}
+                          alt={course.title}
+                          width={640}
+                          height={360}
+                          decoding="async"
+                          className="size-full object-cover"
+                        />
+                      ) : (
+                        <span className="grid size-full place-items-center bg-ribbon text-dark/60">
+                          <GraduationCap className="size-12" aria-hidden="true" />
+                        </span>
+                      )}
+                      {course.videoPreviewUrl && (
+                        <button
+                          type="button"
+                          onClick={() => setPlayingPreview(true)}
+                          aria-label="Reproducir vista previa del curso"
+                          className="group/play absolute inset-0 grid place-items-center bg-dark/10 transition-colors hover:bg-dark/25 focus-visible:-outline-offset-4"
+                        >
+                          <span className="grid size-16 place-items-center rounded-full bg-white/95 text-dark shadow-lift transition-transform group-hover/play:scale-105">
+                            <Play className="ml-1 size-6 fill-current" aria-hidden="true" />
+                          </span>
+                        </button>
+                      )}
+                    </>
+                  )}
+                </div>
+
+                <div className="mt-5 flex flex-wrap items-center gap-x-3 gap-y-1">
+                  <p className="font-display text-3xl font-bold text-dark">{formatPrice(course.price)}</p>
+                  {course.comparePrice && (
+                    <del className="font-display text-xl text-dark/65">
+                      <span className="sr-only">Precio anterior: </span>
+                      {formatPrice(course.comparePrice)}
+                    </del>
+                  )}
+                  {discount > 0 && <span className="chip bg-dark text-white">-{discount}%</span>}
+                </div>
+
+                {isEnrolled ? (
+                  <Link to={`/cursos/${course.slug}/aprender`} className="btn btn-primary btn-lg mt-5 w-full whitespace-normal text-center">
+                    <Play className="size-5" aria-hidden="true" /> Continuar aprendiendo
+                  </Link>
+                ) : (
+                  <div className="mt-5 grid gap-3">
+                    <button type="button" onClick={handleAddToCart} className="btn btn-primary btn-lg w-full whitespace-normal text-center">
+                      <ShoppingCart className="size-5" aria-hidden="true" /> Agregar al carrito
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { handleAddToCart(); navigate('/checkout'); }}
+                      className="btn btn-secondary btn-lg w-full whitespace-normal text-center"
+                    >
+                      Inscribirme ahora
+                    </button>
+                  </div>
+                )}
+
+                {(course.includes.length > 0 || course.certificate) && (
+                  <div className="mt-6 border-t border-sand/60 pt-5">
+                    <h2 className="font-display text-sm font-semibold text-dark">Este curso incluye</h2>
+                    <ul className="mt-3 space-y-2.5">
+                      {course.includes.map((item, i) => (
+                        <li key={i} className="flex items-start gap-3 text-sm text-dark/75">
+                          <Check className="mt-0.5 size-5 shrink-0 text-iris" aria-hidden="true" />
+                          {item}
+                        </li>
+                      ))}
+                      {course.certificate && (
+                        <li className="flex items-start gap-3 text-sm text-dark/75">
+                          <Award className="mt-0.5 size-5 shrink-0 text-iris" aria-hidden="true" />
+                          Certificado de finalización
+                        </li>
+                      )}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            </aside>
+
+            {/* Body */}
+            <div className="col-start-1 row-start-3 min-w-0 space-y-12 py-10 lg:col-end-3 lg:row-start-2 lg:py-12">
+              {/* About */}
+              {showAbout && (
+                <section aria-labelledby="about-heading">
+                  <h2 id="about-heading" className={sectionHeading}>Sobre este curso</h2>
+                  <p className="mt-4 max-w-3xl whitespace-pre-line text-base text-dark/75">{course.description}</p>
+                </section>
+              )}
+
+              {/* What you'll learn */}
+              {course.whatYouWillLearn.length > 0 && (
+                <section aria-labelledby="learn-heading" className="card p-6 sm:p-8">
+                  <h2 id="learn-heading" className={sectionHeading}>Lo que vas a aprender</h2>
+                  <ul className="mt-6 grid gap-x-8 gap-y-4 sm:grid-cols-2">
+                    {course.whatYouWillLearn.map((item, i) => (
+                      <li key={i} className="flex items-start gap-3 text-sm text-dark/75">
+                        <span className="grid size-6 shrink-0 place-items-center rounded-full bg-mist text-iris">
+                          <Check className="size-4" strokeWidth={3} aria-hidden="true" />
+                        </span>
+                        {item}
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              )}
+
+              {/* Requirements */}
+              {course.requirements.length > 0 && (
+                <section aria-labelledby="requirements-heading">
+                  <h2 id="requirements-heading" className={sectionHeading}>Requisitos previos</h2>
+                  <ul className="mt-5 space-y-3">
+                    {course.requirements.map((req, i) => (
+                      <li key={i} className="flex items-start gap-3 text-sm text-dark/75">
+                        <span aria-hidden="true" className="mt-2 size-1.5 shrink-0 rounded-full bg-secondary" />
+                        {req}
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              )}
+
+              {/* Syllabus */}
+              {course.topics.length > 0 && (
+                <section aria-labelledby="syllabus-heading">
+                  <h2 id="syllabus-heading" className={sectionHeading}>Temario del curso</h2>
+                  <p className="mt-2 text-sm text-dark/65">
+                    {course.topics.length} {course.topics.length === 1 ? 'módulo' : 'módulos'} · {totalLessons} lecciones
+                    {course.duration && ` · ${course.duration}`}
+                  </p>
+                  <ul className="mt-6 space-y-3">
+                    {course.topics.map((topic, index) => {
+                      const open = expandedTopic === topic.id;
+                      return (
+                        <li key={topic.id} className="card overflow-hidden">
+                          <h3>
+                            <button
+                              type="button"
+                              id={`topic-btn-${topic.id}`}
+                              aria-expanded={open}
+                              aria-controls={`topic-panel-${topic.id}`}
+                              onClick={() => setExpandedTopic(open ? null : topic.id)}
+                              className={cn(
+                                'flex min-h-16 w-full items-center gap-4 px-5 py-4 text-left transition-colors hover:bg-mist',
+                                open && 'bg-mist',
+                              )}
+                            >
+                              <span
+                                aria-hidden="true"
+                                className="grid size-10 shrink-0 place-items-center rounded-xl bg-ribbon font-display text-sm font-bold text-dark"
+                              >
+                                {index + 1}
+                              </span>
+                              <span className="min-w-0 flex-1">
+                                <span className="block font-display font-semibold leading-snug text-dark">{topic.title}</span>
+                                <span className="mt-0.5 block text-xs text-dark/65">
+                                  {topic.lessons.length} {topic.lessons.length === 1 ? 'lección' : 'lecciones'}
+                                </span>
+                              </span>
+                              <span
+                                aria-hidden="true"
+                                className={cn(
+                                  'grid size-8 shrink-0 place-items-center rounded-full transition-all',
+                                  open ? 'rotate-180 bg-dark text-white' : 'bg-mist text-iris',
+                                )}
+                              >
+                                <ChevronDown className="size-5" />
+                              </span>
+                            </button>
+                          </h3>
+                          <div
+                            id={`topic-panel-${topic.id}`}
+                            hidden={!open}
+                            className="animate-fade-in border-t border-sand/60"
+                          >
+                            <ul className="divide-y divide-sand/50">
+                              {topic.lessons.map((lesson) => {
+                                const meta = lessonMeta[lesson.type] ?? lessonMeta.video;
+                                const LessonIcon = meta.icon;
+                                return (
+                                  <li key={lesson.id} className="flex items-center gap-3 px-5 py-3.5">
+                                    <span
+                                      className={cn(
+                                        'grid size-10 shrink-0 place-items-center rounded-xl',
+                                        lesson.isPreview ? 'bg-mist text-iris' : 'bg-sand/40 text-dark/65',
+                                      )}
+                                    >
+                                      <LessonIcon className="size-5" aria-hidden="true" />
+                                    </span>
+                                    <span className="min-w-0 flex-1">
+                                      <span className="block text-sm font-medium text-dark">{lesson.title}</span>
+                                      <span className="block text-xs text-dark/65">
+                                        {meta.label}
+                                        {lesson.duration && ` · ${lesson.duration}`}
+                                      </span>
+                                    </span>
+                                    {lesson.isPreview && <span className="chip shrink-0 bg-mist text-iris">Vista previa</span>}
+                                  </li>
+                                );
+                              })}
+                            </ul>
+                          </div>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </section>
+              )}
+
+              {/* Instructor */}
+              <section aria-labelledby="instructor-heading">
+                <h2 id="instructor-heading" className={sectionHeading}>Sobre el instructor</h2>
+                <div className="card mt-6 flex flex-col gap-5 p-6 sm:flex-row sm:p-8">
+                  <img
+                    src={instructor.avatar}
+                    alt={instructor.name}
+                    width={80}
+                    height={80}
+                    loading="lazy"
+                    decoding="async"
+                    className="size-20 shrink-0 rounded-full object-cover ring-4 ring-mist"
+                  />
+                  <div className="min-w-0">
+                    <h3 className="font-display text-lg font-semibold text-dark">{instructor.name}</h3>
+                    {instructor.bio && <p className="mt-2 text-dark/75">{instructor.bio}</p>}
+                    <ul className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-xs text-dark/65">
+                      {instructor.coursesCount > 0 && (
+                        <li className="flex items-center gap-1.5">
+                          <BookOpen className="size-4 text-iris" aria-hidden="true" /> {instructor.coursesCount} cursos
+                        </li>
+                      )}
+                      {instructor.studentsCount > 0 && (
+                        <li className="flex items-center gap-1.5">
+                          <Users className="size-4 text-iris" aria-hidden="true" /> {instructor.studentsCount} estudiantes
+                        </li>
+                      )}
+                      {instructor.rating > 0 && (
+                        <li className="flex items-center gap-1.5">
+                          <Star className="size-4 fill-amber-400 text-amber-400" aria-hidden="true" /> {instructor.rating.toFixed(1)}
+                        </li>
+                      )}
+                    </ul>
                   </div>
                 </div>
-              </div>
-            </div>
+              </section>
 
-            {/* Reviews & Q&A Tabs */}
-            <div className="mb-8">
-              <div className="flex gap-6 border-b border-sand/50 mb-6">
-                {(['reviews', 'qa'] as const).map((tab) => (
-                  <button
-                    key={tab}
-                    onClick={() => setActiveTab(tab)}
-                    className={`pb-3 text-sm font-medium transition-colors relative ${activeTab === tab ? 'text-primary' : 'text-dark/60 hover:text-dark'}`}
+              {/* Reviews & Q&A */}
+              <section aria-labelledby="reviews-heading">
+                <h2 id="reviews-heading" className={sectionHeading}>Reseñas y preguntas</h2>
+                <div className="mt-6">
+                  <div
+                    role="tablist"
+                    aria-label="Reseñas y preguntas del curso"
+                    className="flex gap-1 overflow-x-auto border-b border-sand/70 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
                   >
-                    {tab === 'reviews' ? 'Reseñas' : 'Q&A'}
-                    {activeTab === tab && <motion.div layoutId="course-tab" className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />}
-                  </button>
-                ))}
-              </div>
-              <motion.div key={activeTab} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-                {activeTab === 'reviews' && (
-                  <div className="space-y-4">
-                    {mockReviews.slice(0, 4).map((review) => (
-                      <div key={review.id} className="rounded-2xl bg-white border border-sand/50 p-4">
-                        <div className="flex items-center gap-3 mb-2">
-                          <img src={review.userAvatar} alt={review.userName} className="w-8 h-8 rounded-full object-cover" />
-                          <div>
-                            <p className="text-sm font-medium text-dark">{review.userName}</p>
-                            <div className="flex gap-0.5">
-                              {Array.from({ length: 5 }).map((_, i) => (
-                                <Star key={i} className={`w-3 h-3 ${i < review.rating ? 'text-warning fill-warning' : 'text-dark/20'}`} />
-                              ))}
-                            </div>
-                          </div>
-                        </div>
-                        <p className="text-sm text-dark/70">{review.comment}</p>
-                      </div>
+                    {tabs.map((tab) => (
+                      <button
+                        key={tab.id}
+                        ref={(el) => { tabRefs.current[tab.id] = el; }}
+                        id={`tab-${tab.id}`}
+                        type="button"
+                        role="tab"
+                        aria-selected={activeTab === tab.id}
+                        aria-controls={`panel-${tab.id}`}
+                        tabIndex={activeTab === tab.id ? 0 : -1}
+                        onClick={() => setActiveTab(tab.id)}
+                        onKeyDown={(e) => handleTabKeyDown(e, tab.id)}
+                        className={cn(
+                          'min-h-12 shrink-0 border-b-[3px] px-4 font-display text-sm font-semibold transition-colors sm:px-6',
+                          activeTab === tab.id
+                            ? 'border-iris text-dark'
+                            : 'border-transparent text-dark/65 hover:text-dark',
+                        )}
+                      >
+                        {tab.label}
+                      </button>
                     ))}
                   </div>
-                )}
-                {activeTab === 'qa' && (
-                  <div className="text-sm text-dark/60">
-                    <p>Sección de Q&A próximamente.</p>
+
+                  <div
+                    key={activeTab}
+                    role="tabpanel"
+                    id={`panel-${activeTab}`}
+                    aria-labelledby={`tab-${activeTab}`}
+                    tabIndex={0}
+                    className="animate-fade-in pt-6"
+                  >
+                    {activeTab === 'reviews' && (
+                      <div className="space-y-4">
+                        <div className="card flex flex-col items-center gap-3 p-6 text-center sm:flex-row sm:gap-6 sm:text-left">
+                          <p className="font-display text-5xl font-bold text-dark">{course.rating.toFixed(1)}</p>
+                          <div>
+                            <StarRating rating={course.rating} size={20} className="justify-center sm:justify-start" />
+                            <p className="mt-1 text-sm text-dark/65">Basado en {course.reviewsCount} reseñas</p>
+                          </div>
+                        </div>
+                        <ul className="space-y-4">
+                          {mockReviews.slice(0, 4).map((review) => (
+                            <li key={review.id} className="card p-5">
+                              <div className="flex items-center gap-3">
+                                <img
+                                  src={review.userAvatar}
+                                  alt=""
+                                  width={40}
+                                  height={40}
+                                  loading="lazy"
+                                  decoding="async"
+                                  className="size-10 rounded-full object-cover ring-2 ring-sand"
+                                />
+                                <div>
+                                  <p className="font-display text-sm font-semibold text-dark">{review.userName}</p>
+                                  <StarRating rating={review.rating} size={14} className="mt-0.5" />
+                                </div>
+                              </div>
+                              <p className="mt-3 text-dark/75">{review.comment}</p>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                    {activeTab === 'qa' && (
+                      <div className="flex items-center gap-4 rounded-2xl bg-mist p-5">
+                        <span className="grid size-12 shrink-0 place-items-center rounded-xl bg-white text-iris">
+                          <MessageSquareText className="size-6" aria-hidden="true" />
+                        </span>
+                        <p className="text-dark/75">Sección de Q&A próximamente.</p>
+                      </div>
+                    )}
                   </div>
-                )}
-              </motion.div>
-            </div>
-
-            {/* Related courses */}
-            <div>
-              <h3 className="font-display text-xl font-semibold text-dark mb-4">Cursos relacionados</h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {courses.filter((c) => c.id !== course.id).slice(0, 2).map((related) => (
-                  <Link key={related.id} to={`/cursos/${related.slug}`} className="group rounded-2xl bg-white border border-sand/50 overflow-hidden hover:shadow-lg transition-all">
-                    <div className="aspect-video overflow-hidden">
-                      <img src={related.coverImage} alt={related.title} className="w-full h-full object-cover transition-transform group-hover:scale-105" />
-                    </div>
-                    <div className="p-4">
-                      <h4 className="font-display font-medium text-sm text-dark group-hover:text-primary transition-colors">{related.title}</h4>
-                      <p className="text-primary font-semibold text-sm mt-1">{formatPrice(related.price)}</p>
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Sticky Aside */}
-          <div className="lg:col-span-1">
-            <div className="sticky top-24 rounded-2xl bg-white border border-sand/50 shadow-soft p-6">
-              <div className="aspect-video rounded-xl overflow-hidden bg-sand/20 mb-4 relative">
-                <img src={course.coverImage} alt={course.title} className="w-full h-full object-cover" />
-                {course.videoPreviewUrl && (
-                  <button
-                    onClick={() => setPlayingPreview(true)}
-                    className="absolute inset-0 flex items-center justify-center"
-                  >
-                    <div className="w-12 h-12 rounded-full bg-white/90 flex items-center justify-center shadow-lg">
-                      <Play className="w-5 h-5 text-dark ml-0.5" />
-                    </div>
-                  </button>
-                )}
-              </div>
-
-              <div className="flex items-baseline gap-3 mb-4">
-                <span className="text-3xl font-semibold text-primary">{formatPrice(course.price)}</span>
-                {course.comparePrice && (
-                  <span className="text-lg text-dark/40 line-through">{formatPrice(course.comparePrice)}</span>
-                )}
-              </div>
-
-              {isEnrolled ? (
-                <Link
-                  to={`/cursos/${course.slug}/aprender`}
-                  className="block w-full text-center rounded-2xl bg-success py-3.5 text-sm font-semibold text-white hover:bg-success/90 transition-colors"
-                >
-                  Continuar aprendiendo
-                </Link>
-              ) : (
-                <div className="space-y-3">
-                  <button
-                    onClick={handleAddToCart}
-                    className="w-full flex items-center justify-center gap-2 rounded-2xl bg-primary py-3.5 text-sm font-semibold text-white shadow-glow hover:bg-secondary transition-colors active:scale-[0.98]"
-                  >
-                    <ShoppingCart className="w-4 h-4" /> Agregar al carrito
-                  </button>
-                  <button
-                    onClick={() => { handleAddToCart(); navigate('/checkout'); }}
-                    className="w-full rounded-2xl bg-dark py-3.5 text-sm font-semibold text-white hover:bg-dark/90 transition-colors"
-                  >
-                    Inscribirme ahora
-                  </button>
                 </div>
-              )}
+              </section>
 
-              <div className="mt-6 pt-6 border-t border-sand/50">
-                <h4 className="font-display font-medium text-dark mb-3 text-sm">Este curso incluye:</h4>
-                <ul className="space-y-2">
-                  {course.includes.map((item, i) => (
-                    <li key={i} className="flex items-center gap-2 text-sm text-dark/60">
-                      <Check className="w-4 h-4 text-success shrink-0" />
-                      {item}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              {course.certificate && (
-                <div className="mt-4 flex items-center gap-2 text-sm text-dark/60">
-                  <Award className="w-4 h-4 text-primary" />
-                  Certificado de finalización
-                </div>
+              {/* Related courses */}
+              {relatedCourses.length > 0 && (
+                <section aria-labelledby="related-heading">
+                  <h2 id="related-heading" className={sectionHeading}>Cursos relacionados</h2>
+                  <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2">
+                    {relatedCourses.map((related) => (
+                      <CourseCard key={related.id} course={related} />
+                    ))}
+                  </div>
+                </section>
               )}
             </div>
           </div>

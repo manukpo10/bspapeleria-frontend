@@ -1,24 +1,32 @@
 import { Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { Trash2, Minus, Plus, ArrowRight, Package } from 'lucide-react';
+import { Trash2, Minus, Plus, ArrowRight, ShoppingCart } from 'lucide-react';
 import { SEO } from '../components/shared/SEO';
+import { PageHeader } from '../components/shared/PageHeader';
 import { useCartStore } from '../store/cartStore';
-import { formatPrice } from '../lib/utils';
+import { cn, formatPrice } from '../lib/utils';
 import { toast } from 'sonner';
 
+const stepperButton =
+  'grid size-11 place-items-center rounded-full text-dark transition-colors hover:bg-mist';
+
 export default function CartPage() {
-  const { items, removeItem, updateQuantity, getSubtotal, couponCode, couponDiscount, removeCoupon } = useCartStore();
+  const { items, removeItem, updateQuantity, getSubtotal, getItemCount, couponCode, couponDiscount, removeCoupon } = useCartStore();
+
+  const crumbs = [{ label: 'Inicio', to: '/' }, { label: 'Carrito' }];
 
   if (items.length === 0) {
     return (
       <>
         <SEO title="Carrito" />
-        <div className="min-h-[60vh] flex flex-col items-center justify-center px-4 text-center">
-          <Package className="w-16 h-16 text-dark/20 mb-4" />
-          <h1 className="font-display text-2xl text-dark mb-2">Tu carrito está vacío</h1>
-          <p className="text-dark/60 mb-6">Agregá productos o cursos para comenzar.</p>
-          <Link to="/productos" className="inline-flex items-center gap-2 rounded-2xl bg-primary px-6 py-3 text-sm font-medium text-white hover:bg-secondary transition-colors">
-            <ArrowRight className="w-4 h-4" /> Ver productos
+        <PageHeader title="Carrito" crumbs={crumbs} />
+        <div className="mx-auto flex min-h-[50vh] max-w-7xl flex-col items-center justify-center px-4 py-16 text-center sm:px-6 lg:px-8">
+          <span className="grid size-24 place-items-center rounded-full bg-mist text-iris">
+            <ShoppingCart className="size-10" aria-hidden="true" />
+          </span>
+          <h2 className="mt-6 font-display text-2xl font-bold tracking-tight text-dark">Tu carrito está vacío</h2>
+          <p className="mt-3 max-w-md text-dark/75">Agregá productos o cursos para comenzar.</p>
+          <Link to="/productos" className="btn btn-primary btn-lg mt-8">
+            Ver productos <ArrowRight className="size-5" aria-hidden="true" />
           </Link>
         </div>
       </>
@@ -29,97 +37,123 @@ export default function CartPage() {
   const shipping = hasPhysical ? 1500 : 0;
   const subtotal = getSubtotal();
   const total = subtotal + shipping - couponDiscount;
+  const itemCount = getItemCount();
 
   return (
     <>
       <SEO title="Carrito" />
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10">
-        <h1 className="font-display text-3xl font-semibold text-dark mb-8">Carrito</h1>
+      <PageHeader
+        title="Carrito"
+        crumbs={crumbs}
+        description={`${itemCount} ${itemCount === 1 ? 'producto' : 'productos'}`}
+      />
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-          <div className="lg:col-span-2 space-y-4">
-            {items.map((item) => (
-              <motion.div
-                key={item.id}
-                layout
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="flex gap-4 rounded-2xl bg-white border border-sand/50 p-4"
-              >
-                <img src={item.image} alt={item.name} className="w-24 h-24 rounded-xl object-cover" />
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <p className="font-display font-medium text-dark">{item.name}</p>
-                      <span className={`inline-block mt-1 text-[10px] font-bold px-2 py-0.5 rounded-full ${item.isDigital ? 'bg-primary/10 text-primary' : 'bg-sand/50 text-dark/60'}`}>
-                        {item.isDigital ? 'Digital' : 'Físico'}
-                      </span>
-                    </div>
-                    <button
-                      onClick={() => { removeItem(item.id); toast.info('Producto eliminado'); }}
-                      className="p-2 rounded-full hover:bg-error/10 text-dark/40 hover:text-error transition-colors"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                  <div className="flex items-center justify-between mt-4">
-                    <div className="flex items-center gap-2 rounded-xl border border-sand">
-                      <button onClick={() => updateQuantity(item.id, item.quantity - 1)} className="p-2 hover:bg-sand/50 rounded-l-xl">
-                        <Minus className="w-3 h-3" />
-                      </button>
-                      <span className="w-6 text-center text-sm">{item.quantity}</span>
-                      <button onClick={() => updateQuantity(item.id, item.quantity + 1)} className="p-2 hover:bg-sand/50 rounded-r-xl">
-                        <Plus className="w-3 h-3" />
+      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_22rem] lg:gap-10">
+          <section aria-labelledby="cart-items-title">
+            <h2 id="cart-items-title" className="sr-only">Productos en tu carrito</h2>
+            <ul className="card divide-y divide-sand/60 overflow-hidden">
+              {items.map((item) => (
+                <li key={item.id} className="flex gap-4 p-4 sm:gap-6 sm:p-6">
+                  <img
+                    src={item.image}
+                    alt={item.name}
+                    width={112}
+                    height={112}
+                    loading="lazy"
+                    className="size-24 shrink-0 rounded-2xl bg-sand/40 object-cover sm:size-28"
+                  />
+                  <div className="flex min-w-0 flex-1 flex-col">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <h3 className="font-display font-semibold leading-snug text-dark">{item.name}</h3>
+                        <span className={cn('chip mt-2', item.isDigital ? 'bg-mist text-iris' : 'bg-sand/40 text-dark/75')}>
+                          {item.isDigital ? 'Digital' : 'Físico'}
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => { removeItem(item.id); toast.info('Producto eliminado'); }}
+                        aria-label={`Eliminar ${item.name} del carrito`}
+                        className="-mr-2 -mt-2 grid size-11 shrink-0 place-items-center rounded-full text-dark/65 transition-colors hover:bg-rose-50 hover:text-rose-700"
+                      >
+                        <Trash2 className="size-5" aria-hidden="true" />
                       </button>
                     </div>
-                    <span className="font-semibold text-primary">{formatPrice(item.price * item.quantity)}</span>
+                    <div className="mt-auto flex flex-wrap items-center justify-between gap-x-4 gap-y-2 pt-4">
+                      <div role="group" aria-label={`Cantidad de ${item.name}`} className="inline-flex items-center rounded-full bg-white p-1 ring-1 ring-sand">
+                        <button
+                          type="button"
+                          onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                          aria-label={`Quitar una unidad de ${item.name}`}
+                          className={stepperButton}
+                        >
+                          <Minus className="size-4" aria-hidden="true" />
+                        </button>
+                        <span aria-live="polite" className="w-10 text-center font-display font-semibold tabular-nums text-dark">
+                          {item.quantity}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                          aria-label={`Agregar una unidad de ${item.name}`}
+                          className={stepperButton}
+                        >
+                          <Plus className="size-4" aria-hidden="true" />
+                        </button>
+                      </div>
+                      <span className="ml-auto font-display text-lg font-bold text-dark">{formatPrice(item.price * item.quantity)}</span>
+                    </div>
                   </div>
-                </div>
-              </motion.div>
-            ))}
-          </div>
+                </li>
+              ))}
+            </ul>
+          </section>
 
-          <div className="lg:col-span-1">
-            <div className="sticky top-24 rounded-2xl bg-white border border-sand/50 shadow-soft p-6">
-              <h3 className="font-display font-semibold text-dark mb-4">Resumen</h3>
-              <div className="space-y-3 text-sm">
-                <div className="flex justify-between text-dark/70">
-                  <span>Subtotal</span>
-                  <span>{formatPrice(subtotal)}</span>
+          <aside aria-labelledby="cart-summary-title">
+            <div className="card p-6 lg:sticky lg:top-24">
+              <h2 id="cart-summary-title" className="font-display text-xl font-semibold text-dark">Resumen</h2>
+              <dl className="mt-6 space-y-3 text-sm">
+                <div className="flex justify-between gap-4 text-dark/75">
+                  <dt>Subtotal</dt>
+                  <dd className="font-medium text-dark">{formatPrice(subtotal)}</dd>
                 </div>
                 {hasPhysical && (
-                  <div className="flex justify-between text-dark/70">
-                    <span>Envío</span>
-                    <span>{formatPrice(shipping)}</span>
+                  <div className="flex justify-between gap-4 text-dark/75">
+                    <dt>Envío</dt>
+                    <dd className="font-medium text-dark">{formatPrice(shipping)}</dd>
                   </div>
                 )}
                 {couponDiscount > 0 && (
-                  <div className="flex justify-between text-success">
-                    <span>Descuento ({couponCode})</span>
-                    <span>-{formatPrice(couponDiscount)}</span>
+                  <div className="flex justify-between gap-4 text-iris">
+                    <dt>Descuento ({couponCode})</dt>
+                    <dd className="font-medium">-{formatPrice(couponDiscount)}</dd>
                   </div>
                 )}
-                <div className="pt-3 border-t border-sand/50 flex justify-between font-semibold text-dark">
-                  <span>Total</span>
-                  <span>{formatPrice(total)}</span>
+                <div className="flex items-baseline justify-between gap-4 border-t border-sand/60 pt-4 font-display text-lg font-bold text-dark">
+                  <dt>Total</dt>
+                  <dd>{formatPrice(total)}</dd>
                 </div>
-              </div>
+              </dl>
 
-              <Link
-                to="/checkout"
-                className="mt-6 block w-full text-center rounded-2xl bg-primary py-3.5 text-sm font-semibold text-white shadow-glow hover:bg-secondary transition-colors active:scale-[0.98]"
-              >
+              <Link to="/checkout" className="btn btn-primary btn-lg mt-6 w-full">
                 Ir al checkout
+              </Link>
+              <Link to="/productos" className="btn btn-ghost mt-2 w-full">
+                Seguir comprando
               </Link>
 
               {couponCode && (
-                <button onClick={removeCoupon} className="mt-3 text-xs text-error hover:underline w-full text-center">
+                <button
+                  type="button"
+                  onClick={removeCoupon}
+                  className="btn btn-sm mt-2 min-h-11 w-full text-rose-700 hover:bg-rose-50"
+                >
                   Eliminar cupón
                 </button>
               )}
             </div>
-          </div>
+          </aside>
         </div>
       </div>
     </>

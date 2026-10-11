@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Search, ChevronDown } from 'lucide-react';
+import { Search, ChevronDown, MessageCircle, Mail, SearchX, X } from 'lucide-react';
 import { SEO } from '../components/shared/SEO';
+import { PageHeader } from '../components/shared/PageHeader';
 import { faqs } from '../data/mocks';
+import { cn } from '../lib/utils';
 
 const categories = [
   { id: 'all', name: 'Todas' },
@@ -23,75 +24,142 @@ export default function FAQPage() {
     .filter((f) => f.question.toLowerCase().includes(search.toLowerCase()) || f.answer.toLowerCase().includes(search.toLowerCase()))
     .sort((a, b) => a.order - b.order);
 
+  const clearFilters = () => {
+    setActiveCategory('all');
+    setSearch('');
+  };
+
   return (
     <>
       <SEO title="Preguntas Frecuentes" />
-      <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 py-10">
-        <div className="text-center mb-12">
-          <span className="block font-script text-2xl text-secondary mb-2">Ayuda</span>
-          <h1 className="font-display text-3xl sm:text-4xl font-semibold text-dark">Preguntas Frecuentes</h1>
+      <PageHeader
+        title="Preguntas Frecuentes"
+        crumbs={[{ label: 'Inicio', to: '/' }, { label: 'Preguntas frecuentes' }]}
+        description={
+          <>
+            Respuestas a lo que más nos preguntan — {filtered.length} {filtered.length === 1 ? 'pregunta' : 'preguntas'}
+          </>
+        }
+      />
+
+      <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
+        <div>
+          <label htmlFor="faq-search" className="sr-only">Buscar preguntas</label>
+          <div className="relative">
+            <Search className="pointer-events-none absolute left-4 top-1/2 size-5 -translate-y-1/2 text-dark/55" aria-hidden="true" />
+            <input
+              id="faq-search"
+              type="text"
+              enterKeyHint="search"
+              autoComplete="off"
+              placeholder="Buscar preguntas..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="field h-14 pl-12"
+            />
+          </div>
         </div>
 
-        <div className="relative mb-8">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-dark/40" />
-          <input
-            type="text"
-            placeholder="Buscar preguntas..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full rounded-2xl border border-sand bg-white pl-12 pr-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
-          />
-        </div>
-
-        <div className="flex flex-wrap gap-2 mb-8">
-          {categories.map((cat) => (
-            <button
-              key={cat.id}
-              onClick={() => setActiveCategory(cat.id)}
-              className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${
-                activeCategory === cat.id
-                  ? 'bg-primary text-white'
-                  : 'bg-sand/30 text-dark/70 hover:bg-sand/50'
-              }`}
-            >
-              {cat.name}
-            </button>
-          ))}
-        </div>
-
-        <div className="space-y-3">
-          {filtered.map((faq) => (
-            <div key={faq.id} className="rounded-2xl bg-white border border-sand/50 overflow-hidden">
+        <div role="group" aria-label="Categorías" className="mt-5 flex flex-wrap gap-2">
+          {categories.map((cat) => {
+            const active = activeCategory === cat.id;
+            return (
               <button
-                onClick={() => setOpenId(openId === faq.id ? null : faq.id)}
-                className="w-full flex items-center justify-between p-5 text-left hover:bg-sand/20 transition-colors"
-              >
-                <span className="font-medium text-dark text-sm">{faq.question}</span>
-                <ChevronDown className={`w-5 h-5 text-dark/40 transition-transform ${openId === faq.id ? 'rotate-180' : ''}`} />
-              </button>
-              <AnimatePresence>
-                {openId === faq.id && (
-                  <motion.div
-                    initial={{ height: 0 }}
-                    animate={{ height: 'auto' }}
-                    exit={{ height: 0 }}
-                    className="overflow-hidden"
-                  >
-                    <div className="px-5 pb-5 text-sm text-dark/70 leading-relaxed">
-                      {faq.answer}
-                    </div>
-                  </motion.div>
+                key={cat.id}
+                type="button"
+                onClick={() => setActiveCategory(cat.id)}
+                aria-pressed={active}
+                className={cn(
+                  'min-h-11 rounded-full px-5 text-sm font-semibold transition-colors',
+                  active
+                    ? 'bg-dark text-white shadow-soft'
+                    : 'bg-white text-dark/75 ring-1 ring-sand hover:text-dark hover:ring-secondary',
                 )}
-              </AnimatePresence>
-            </div>
-          ))}
+              >
+                {cat.name}
+              </button>
+            );
+          })}
         </div>
 
-        {filtered.length === 0 && (
-          <div className="text-center py-12">
-            <p className="text-dark/60">No encontramos preguntas con esos filtros.</p>
+        <h2 className="sr-only">Listado de preguntas</h2>
+        {filtered.length > 0 ? (
+          <ul className="mt-8 space-y-3">
+            {filtered.map((faq) => {
+              const open = openId === faq.id;
+              return (
+                <li key={faq.id} className="card overflow-hidden">
+                  <h3>
+                    <button
+                      type="button"
+                      id={`faq-btn-${faq.id}`}
+                      aria-expanded={open}
+                      aria-controls={`faq-panel-${faq.id}`}
+                      onClick={() => setOpenId(open ? null : faq.id)}
+                      className={cn(
+                        'flex min-h-16 w-full items-center justify-between gap-4 px-5 py-4 text-left transition-colors hover:bg-mist sm:px-6',
+                        open && 'bg-mist',
+                      )}
+                    >
+                      <span className="font-display font-semibold leading-snug text-dark">{faq.question}</span>
+                      <span
+                        aria-hidden="true"
+                        className={cn(
+                          'grid size-8 shrink-0 place-items-center rounded-full transition-all',
+                          open ? 'rotate-180 bg-dark text-white' : 'bg-mist text-iris',
+                        )}
+                      >
+                        <ChevronDown className="size-5" />
+                      </span>
+                    </button>
+                  </h3>
+                  <div
+                    id={`faq-panel-${faq.id}`}
+                    hidden={!open}
+                    className="animate-fade-in border-t border-sand/60 px-5 py-5 text-dark/75 sm:px-6"
+                  >
+                    {faq.answer}
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        ) : (
+          <div className="flex flex-col items-center px-4 py-14 text-center">
+            <span className="grid size-20 place-items-center rounded-full bg-mist text-iris">
+              <SearchX className="size-9" aria-hidden="true" />
+            </span>
+            <h3 className="mt-6 font-display text-xl font-semibold text-dark">No encontramos preguntas con esos filtros.</h3>
+            <p className="mt-2 max-w-sm text-dark/75">Probá con otras palabras o elegí otra categoría.</p>
+            <button type="button" onClick={clearFilters} className="btn btn-secondary mt-6">
+              <X className="size-4" aria-hidden="true" /> Limpiar filtros
+            </button>
           </div>
         )}
+
+        {/* Contact */}
+        <section aria-labelledby="faq-contact-heading" className="card mt-12 p-6 text-center sm:p-10">
+          <h2 id="faq-contact-heading" className="font-display text-2xl font-bold tracking-tight text-dark">
+            ¿No encontraste lo que buscabas?
+          </h2>
+          <p className="mx-auto mt-3 max-w-md text-dark/75">
+            Escribinos y te respondemos lo antes posible.
+          </p>
+          <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
+            <a href="mailto:hola@bspapeleria.com" className="btn btn-primary">
+              <Mail className="size-4" aria-hidden="true" /> Escribinos por email
+            </a>
+            <a
+              href="https://wa.me/5491112345678"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn btn-secondary"
+            >
+              <MessageCircle className="size-4" aria-hidden="true" /> WhatsApp
+              <span className="sr-only"> (se abre en una pestaña nueva)</span>
+            </a>
+          </div>
+        </section>
       </div>
     </>
   );
