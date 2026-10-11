@@ -30,11 +30,13 @@ export interface DeliveredItem {
 }
 
 export function useDeliveredNotifications() {
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, user } = useAuthStore();
   const [items, setItems] = useState<DeliveredItem[]>([]);
+  // The orders endpoint is for customers only: the backend answers 403 to an admin account
+  const isCustomer = isAuthenticated && user?.role !== 'admin';
 
   useEffect(() => {
-    if (!isAuthenticated) return;
+    if (!isCustomer) return;
 
     api.getMyOrders().then((orders) => {
       const seen = getSeenOrders();
@@ -58,7 +60,7 @@ export function useDeliveredNotifications() {
 
       setItems(newItems);
     }).catch(() => {});
-  }, [isAuthenticated]);
+  }, [isCustomer]);
 
   const dismiss = (orderId: string) => {
     markOrderAsSeen(orderId);
