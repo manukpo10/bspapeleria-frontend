@@ -57,7 +57,7 @@ export function Hero() {
           <div className="absolute left-[4%] top-[7%] z-10 aspect-[4/3] w-[72%] -rotate-3 overflow-hidden rounded-[2rem] shadow-lift ring-8 ring-white">
             <img
               src="/images/home/hero-principal.webp"
-              alt="Agenda lila con el logo de BS Papelería, una taza de té, lapiceras color cobre y un ramito de lavanda sobre un escritorio claro"
+              alt="Agenda lila con el logo de BS Papelería sobre un podio, rodeada de una taza, cuadernos, una bolsa de tela, una caja de regalo y avioncitos de papel, sobre un fondo violeta"
               width={1536}
               height={1024}
               fetchPriority="high"
