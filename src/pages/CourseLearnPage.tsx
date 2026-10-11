@@ -9,6 +9,7 @@ import {
 import { SEO } from '../components/shared/SEO';
 import { Dialog } from '../components/shared/Dialog';
 import { ProgressBar } from '../components/shared/ProgressBar';
+import { ScaledEmbed } from '../components/shared/ScaledEmbed';
 import { api } from '../services/api';
 import { useAuthStore } from '../store/authStore';
 import { useEnrollmentStore } from '../store/enrollmentStore';
@@ -460,6 +461,12 @@ export default function CourseLearnPage() {
   const embedUrl = currentLesson.videoUrl?.includes('/embed/')
     ? currentLesson.videoUrl
     : currentLesson.videoUrl?.replace('watch?v=', 'embed/');
+  const videoFrameProps = {
+    src: embedUrl,
+    allow: 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture',
+    allowFullScreen: true,
+    title: currentLesson.title,
+  };
 
   const displayQAs =
     qaList.length >= 3
@@ -621,13 +628,8 @@ export default function CourseLearnPage() {
                 {currentLesson.type === 'video' && (
                   <div className="aspect-video bg-dark">
                     {embedUrl ? (
-                      <iframe
-                        src={embedUrl}
-                        className="size-full"
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                        allowFullScreen
-                        title={currentLesson.title}
-                      />
+                      // Drive's player crops its poster below 480px of width, so ScaledEmbed scales that one down
+                      <ScaledEmbed {...videoFrameProps} />
                     ) : (
                       <div className="grid size-full place-items-center p-6 text-center text-white">
                         <div>
