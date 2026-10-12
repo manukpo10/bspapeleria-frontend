@@ -13,9 +13,9 @@ import { useDeliveredNotifications } from '../../hooks/useDeliveredNotifications
 
 const navLinks = [
   { label: 'Inicio', href: '/' },
-  { label: 'Productos', href: '/productos' },
   { label: 'Cursos', href: '/cursos' },
   { label: 'Nosotros', href: '/nosotros' },
+  { label: 'Productos', href: '/productos' },
   { label: 'FAQ', href: '/preguntas-frecuentes' },
 ];
 
@@ -310,7 +310,7 @@ export function Header() {
               </div>
             ) : (
               <Link to="/login" className="btn btn-primary btn-sm min-h-11 max-sm:hidden">
-                Ingresar
+                Mi Cuenta
               </Link>
             )}
 
@@ -361,7 +361,7 @@ export function Header() {
                     onClick={() => setMobileMenuOpen(false)}
                     className="btn btn-primary btn-lg mt-3 w-full"
                   >
-                    Ingresar
+                    Mi Cuenta
                   </Link>
                 )}
               </nav>
