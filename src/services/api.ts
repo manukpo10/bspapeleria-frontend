@@ -1,5 +1,5 @@
 import type {
-  Product, Course, User, Order, CartItem, Address,
+  Product, Course, User, Order, CartItem, Address, Coupon, CouponInput,
   ProductFilters, CourseFilters
 } from '../types';
 import { API_URL } from '../lib/constants';
@@ -28,10 +28,69 @@ async function authRequest<T>(endpoint: string, options: RequestInit = {}): Prom
 
   if (!response.ok) {
     const body = await response.json().catch(() => ({}));
-    throw new Error(body.message || `Error ${response.status}`);
+    // The status lets a caller tell a rejection (400) from a connection or server failure
+    throw Object.assign(new Error(body.message || `Error ${response.status}`), { status: response.status });
   }
 
-  return response.json();
+  // A 204 (DELETE) or any empty body has nothing to parse
+  const text = await response.text();
+  return (text ? JSON.parse(text) : undefined) as T;
+}
+
+interface CuponResponse {
+  id: number;
+  codigo: string;
+  tipoDescuento: 'PORCENTAJE' | 'MONTO_FIJO';
+  valorDescuento: number;
+  activo: boolean;
+  fechaVencimiento: string | null;
+  maxUsos: number;
+  usosCount: number;
+  descuentoMinimo: number | null;
+  descuentoMaximo: number | null;
+  // Only the validation endpoint fills it, and an older backend does not send it at all
+  descuentoAplicable?: number | null;
+}
+
+const numberOrNull = (value: number | null | undefined) => (value == null ? null : Number(value));
+
+function mapBackendCoupon(data: CuponResponse): Coupon {
+  return {
+    id: String(data.id),
+    code: data.codigo,
+    discountType: data.tipoDescuento === 'PORCENTAJE' ? 'percentage' : 'fixed',
+    discountValue: Number(data.valorDescuento),
+    validUntil: data.fechaVencimiento ?? null,
+    maxUses: Number(data.maxUsos),
+    usedCount: data.usosCount ?? 0,
+    minPurchase: numberOrNull(data.descuentoMinimo),
+    maxDiscount: numberOrNull(data.descuentoMaximo),
+    active: data.activo,
+    appliedDiscount: numberOrNull(data.descuentoAplicable),
+  };
+}
+
+// PUT replaces the whole coupon, so every field goes out and null clears an optional one
+function toCuponRequest(coupon: CouponInput) {
+  return {
+    codigo: coupon.code.trim().toUpperCase(),
+    tipoDescuento: coupon.discountType === 'percentage' ? 'PORCENTAJE' : 'MONTO_FIJO',
+    valorDescuento: coupon.discountValue,
+    activo: coupon.active,
+    fechaVencimiento: coupon.validUntil,
+    maxUsos: coupon.maxUses,
+    descuentoMinimo: coupon.minPurchase,
+    descuentoMaximo: coupon.discountType === 'percentage' ? coupon.maxDiscount : null,
+  };
+}
+
+// Same rule as the server, for a backend that does not send the amount yet: a percentage of the
+// items subtotal under the cap, or the fixed value, and never more than the subtotal
+function couponDiscount(coupon: Coupon, subtotal: number): number {
+  const raw = coupon.discountType === 'percentage'
+    ? Math.min((subtotal * coupon.discountValue) / 100, coupon.maxDiscount ?? Infinity)
+    : coupon.discountValue;
+  return Math.round(Math.max(0, Math.min(raw, subtotal)) * 100) / 100;
 }
 
 function mapBackendProduct(data: any): Product {
@@ -556,47 +615,46 @@ export const api = {
     await authRequest('/api/carrito', { method: 'DELETE' });
   },
 
-  validateCoupon: async (code: string, montoTotal: number = 0): Promise<{ valid: boolean; discount: number; message?: string }> => {
+  // `subtotal` is the items subtotal (shipping excluded). `discount` comes back in pesos, never above it.
+  // When it fails, `status` is the HTTP status of the answer: it is missing if the server never answered
+  validateCoupon: async (code: string, subtotal: number): Promise<{ valid: boolean; discount: number; message?: string; status?: number; coupon?: Coupon }> => {
     try {
-      const data = await authRequest<any>(`/api/cupones/validar?codigo=${code}&montoTotal=${montoTotal}`);
-      const discount = data.tipoDescuento === 'PORCENTAJE'
-        ? montoTotal * (data.valorDescuento / 100)
-        : data.valorDescuento;
-      return { valid: true, discount, message: 'Cupón válido' };
-    } catch (e: any) {
-      return { valid: false, discount: 0, message: e.message };
+      const data = await authRequest<CuponResponse>(
+        `/api/cupones/validar?codigo=${encodeURIComponent(code.trim().toUpperCase())}&montoTotal=${subtotal}`,
+      );
+      const coupon = mapBackendCoupon(data);
+      const discount = Math.min(coupon.appliedDiscount ?? couponDiscount(coupon, subtotal), subtotal);
+      return { valid: true, discount: Math.max(0, discount), coupon };
+    } catch (e) {
+      // fetch rejects with a TypeError when the server cannot be reached
+      const message = e instanceof TypeError ? 'No pudimos validar el cupón. Probá de nuevo en un momento.' : (e as Error).message;
+      return { valid: false, discount: 0, message, status: (e as { status?: number }).status };
     }
   },
 
-  getAllCoupons: async (): Promise<any[]> => {
-    const data = await authRequest<{ content: any[] }>('/api/cupones?page=0&size=100');
-    return data.content.map((c: any) => ({
-      id: String(c.id),
-      code: c.codigo,
-      discountType: c.tipoDescuento === 'PORCENTAJE' ? 'percentage' : 'fixed',
-      discountValue: c.valorDescuento,
-      validUntil: c.fechaVencimiento,
-      maxUses: c.maxUsos,
-      usedCount: c.usosCount,
-      active: c.activo,
-    }));
+  getAllCoupons: async (): Promise<Coupon[]> => {
+    const data = await authRequest<{ content: CuponResponse[] }>('/api/cupones?page=0&size=100');
+    return data.content.map(mapBackendCoupon);
   },
 
-  createCoupon: async (coupon: any): Promise<any> => {
-    const payload = {
-      codigo: coupon.code,
-      tipoDescuento: coupon.discountType === 'percentage' ? 'PORCENTAJE' : 'MONTO_FIJO',
-      valorDescuento: coupon.discountValue,
-      maxUsos: coupon.maxUses,
-    };
-    return authRequest('/api/cupones', {
+  createCoupon: async (coupon: CouponInput): Promise<Coupon> => {
+    const data = await authRequest<CuponResponse>('/api/cupones', {
       method: 'POST',
-      body: JSON.stringify(payload),
+      body: JSON.stringify(toCuponRequest(coupon)),
     });
+    return mapBackendCoupon(data);
+  },
+
+  updateCoupon: async (id: string, coupon: CouponInput): Promise<Coupon> => {
+    const data = await authRequest<CuponResponse>(`/api/cupones/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(toCuponRequest(coupon)),
+    });
+    return mapBackendCoupon(data);
   },
 
   deleteCoupon: async (id: string): Promise<void> => {
-    await authRequest(`/api/cupones/${id}`, { method: 'DELETE' });
+    await authRequest<void>(`/api/cupones/${id}`, { method: 'DELETE' });
   },
 
   getReviews: async (productId: string): Promise<any[]> => {

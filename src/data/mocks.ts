@@ -1,5 +1,5 @@
 import type {
-  Product, Course, Instructor, User, FAQItem, Review, Coupon, Notification, QAItem, Order, LessonType
+  Product, Course, Instructor, User, FAQItem, Review, Notification, QAItem, Order, LessonType
 } from '../types';
 
 const LOCAL_IMAGES: Record<string, string[]> = {
@@ -543,14 +543,6 @@ export const reviews: Review[] = [
   { id: 'r10', userId: 'u-11', userName: 'Martín González', userAvatar: imgUrl('Martin G.', 200, 200, 'default'), rating: 5, comment: 'La botella térmica grabada quedó perfecta. Regalo ideal.', createdAt: '2025-12-08T00:00:00Z' },
   { id: 'r11', userId: 'u-12', userName: 'Camila Díaz', userAvatar: imgUrl('Camila D.', 200, 200, 'default'), rating: 4, comment: 'Buenos recursos digitales. Las plantillas de Canva son geniales.', createdAt: '2025-12-05T00:00:00Z' },
   { id: 'r12', userId: 'u-13', userName: 'Julián Romero', userAvatar: imgUrl('Julian R.', 200, 200, 'default'), rating: 5, comment: 'El curso de impresión 3D me abrió un mundo nuevo. Gracias.', createdAt: '2025-12-01T00:00:00Z' },
-];
-
-export const coupons: Coupon[] = [
-  { id: 'cp1', code: 'BIENVENIDO20', discountType: 'percentage', discountValue: 20, validUntil: '2026-12-31T23:59:59Z', maxUses: 100, usedCount: 12, minPurchase: 5000, active: true },
-  { id: 'cp2', code: 'CURSO10', discountType: 'percentage', discountValue: 10, validUntil: '2026-12-31T23:59:59Z', maxUses: 50, usedCount: 8, active: true },
-  { id: 'cp3', code: 'VENCIDO50', discountType: 'percentage', discountValue: 50, validUntil: '2025-01-01T00:00:00Z', maxUses: 10, usedCount: 0, active: false },
-  { id: 'cp4', code: 'AGOTADO', discountType: 'fixed', discountValue: 5000, validUntil: '2026-12-31T23:59:59Z', maxUses: 1, usedCount: 1, active: false },
-  { id: 'cp5', code: 'FREESHIP', discountType: 'fixed', discountValue: 0, validUntil: '2026-06-30T23:59:59Z', maxUses: 200, usedCount: 45, active: true },
 ];
 
 export const notifications: Notification[] = [

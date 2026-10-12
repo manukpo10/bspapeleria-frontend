@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowRight, Check, CreditCard, Loader2, ShoppingCart, Truck, User, Tag } from 'lucide-react';
 import { SEO } from '../components/shared/SEO';
@@ -37,15 +37,30 @@ function TextField({ id, label, value, onChange, type = 'text', autoComplete, cl
   );
 }
 
+interface AppliedCoupon {
+  code: string;
+  /** In pesos, worked out for the items subtotal in `checkedFor` */
+  discount: number;
+  /** Items subtotal the discount was checked for; null asks for a new check */
+  checkedFor: number | null;
+  /** The last re-check got no answer: `discount` is the previous one and the order validates it again */
+  unverified: boolean;
+}
+
+// Only these answers mean the coupon itself was refused; anything else (no connection, a 5xx) says nothing about it
+const isRejection = (status?: number) => status === 400 || status === 404;
+
 export default function CheckoutPage() {
   const navigate = useNavigate();
-  const { items, getSubtotal, couponCode, couponDiscount, clearCart } = useCartStore();
-  const { user, isAuthenticated } = useAuthStore();
+  const { items, getSubtotal, clearCart } = useCartStore();
+  const { user } = useAuthStore();
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [couponInput, setCouponInput] = useState('');
-  const [appliedCoupon, setAppliedCoupon] = useState(couponCode);
-  const [couponDiscountLocal, setCouponDiscountLocal] = useState(couponDiscount);
+  const [coupon, setCoupon] = useState<AppliedCoupon | null>(null);
+  const [applying, setApplying] = useState(false);
+  // Only the latest coupon request may update the page
+  const couponRequest = useRef(0);
 
   const [formData, setFormData] = useState({
     name: user?.name ?? '',
@@ -60,7 +75,31 @@ export default function CheckoutPage() {
   const hasPhysical = items.some((i) => !i.isDigital);
   const shipping = hasPhysical ? 1500 : 0;
   const subtotal = getSubtotal();
-  const total = subtotal + shipping - couponDiscountLocal;
+  // The discount applies to the items only, never to the shipping, and cannot exceed them
+  // Stale only while a check for the current subtotal is on its way, so it cannot hold the pay button for long
+  const couponStale = coupon !== null && coupon.checkedFor !== subtotal;
+  const discount = coupon ? Math.min(coupon.discount, subtotal) : 0;
+  const total = Math.max(0, subtotal - discount) + shipping;
+
+  // The cart can change from the header drawer while a coupon is applied: check it again for the new subtotal
+  useEffect(() => {
+    if (!coupon || coupon.checkedFor === subtotal || subtotal === 0) return;
+    const { code, discount: previous } = coupon;
+    const requestId = ++couponRequest.current;
+    api.validateCoupon(code, subtotal).then((result) => {
+      if (requestId !== couponRequest.current) return;
+      if (result.valid) {
+        setCoupon({ code, discount: result.discount, checkedFor: subtotal, unverified: false });
+      } else if (isRejection(result.status)) {
+        setCoupon(null);
+        toast.error(`Quitamos el cupón ${code}: ${result.message || 'ya no aplica a tu compra.'}`);
+      } else {
+        // No verdict: keep the coupon and the old amount, the backend validates it again when the order is created
+        setCoupon({ code, discount: previous, checkedFor: subtotal, unverified: true });
+        toast.error(`No pudimos volver a revisar el cupón ${code}. Lo validamos de nuevo cuando hagas el pedido.`);
+      }
+    });
+  }, [coupon, subtotal]);
 
   if (items.length === 0) {
     return (
@@ -78,21 +117,31 @@ export default function CheckoutPage() {
   }
 
   const handleApplyCoupon = async () => {
-    if (!couponInput.trim()) return;
-    try {
-      const result = await api.validateCoupon(couponInput.trim().toUpperCase());
-      if (result.valid) {
-        setAppliedCoupon(couponInput.trim().toUpperCase());
-        const discount = Math.round(subtotal * (result.discount / 100));
-        setCouponDiscountLocal(discount);
-        toast.success('Cupón aplicado');
-      } else {
-        toast.error(result.message || 'Cupón inválido');
-      }
-    } catch {
-      toast.error('Error al validar cupón');
+    const code = couponInput.trim().toUpperCase();
+    if (!code || applying) return;
+    const requestId = ++couponRequest.current;
+    setApplying(true);
+    const result = await api.validateCoupon(code, subtotal);
+    if (requestId !== couponRequest.current) return;
+    setApplying(false);
+    if (result.valid) {
+      setCoupon({ code: result.coupon?.code ?? code, discount: result.discount, checkedFor: subtotal, unverified: false });
+      setCouponInput('');
+      toast.success('Cupón aplicado');
+    } else {
+      toast.error(result.message || 'Cupón inválido');
     }
   };
+
+  const handleRemoveCoupon = () => {
+    // Drops any request still on its way
+    couponRequest.current += 1;
+    setApplying(false);
+    setCoupon(null);
+  };
+
+  // Asking for a new check is just marking the coupon as not checked for any subtotal: the effect does the rest
+  const handleRecheckCoupon = () => setCoupon((current) => (current ? { ...current, checkedFor: null } : current));
 
   const handlePayment = async () => {
     setLoading(true);
@@ -109,13 +158,19 @@ export default function CheckoutPage() {
           phone: formData.phone,
           isDefault: true,
         } : undefined,
-        appliedCoupon ?? undefined
+        coupon?.code
       );
       clearCart();
       toast.success('¡Compra exitosa!');
       navigate('/checkout/exito');
     } catch (e) {
       toast.error((e as { message?: string }).message || 'Error al procesar la compra');
+      // A 400 can be about the coupon or about anything else in the order: drop the coupon only if the backend
+      // refuses it too. No answer from it (connection, 5xx) is not a verdict, so the coupon stays
+      if (coupon && (e as { status?: number }).status === 400) {
+        const check = await api.validateCoupon(coupon.code, subtotal);
+        if (!check.valid && isRejection(check.status)) handleRemoveCoupon();
+      }
     } finally {
       setLoading(false);
     }
@@ -202,12 +257,6 @@ export default function CheckoutPage() {
                       onChange={(v) => setFormData({ ...formData, phone: v })}
                     />
                   </div>
-                  {!isAuthenticated && (
-                    <p className="mt-6 text-sm text-dark/75">
-                      ¿Ya tenés cuenta?{' '}
-                      <Link to="/login" className="font-medium text-iris underline-offset-4 hover:underline">Ingresá</Link>
-                    </p>
-                  )}
                 </section>
                 <div className="mt-6">
                   <button
@@ -296,7 +345,7 @@ export default function CheckoutPage() {
                   <button
                     type="button"
                     onClick={handlePayment}
-                    disabled={loading}
+                    disabled={loading || applying || couponStale}
                     aria-busy={loading}
                     className="btn btn-primary btn-lg flex-1"
                   >
@@ -337,26 +386,67 @@ export default function CheckoutPage() {
               </ul>
 
               <div className="mt-6 border-t border-sand/60 pt-6">
-                <label htmlFor="checkout-coupon" className="mb-1.5 block text-sm font-medium text-dark">
-                  Cupón de descuento
-                </label>
-                <div className="flex gap-2">
-                  <div className="relative min-w-0 flex-1">
-                    <Tag className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-dark/55" aria-hidden="true" />
-                    <input
-                      id="checkout-coupon"
-                      name="coupon"
-                      autoComplete="off"
-                      value={couponInput}
-                      onChange={(e) => setCouponInput(e.target.value)}
-                      placeholder="Código de cupón"
-                      className="field pl-10"
-                    />
-                  </div>
-                  <button type="button" onClick={handleApplyCoupon} className="btn btn-secondary shrink-0">
-                    Aplicar
-                  </button>
-                </div>
+                {coupon ? (
+                  <>
+                    <p className="mb-1.5 text-sm font-medium text-dark">Cupón de descuento</p>
+                    <div className="flex items-center justify-between gap-3 rounded-2xl bg-mist py-1 pl-4 pr-1">
+                      <p className="flex min-w-0 items-center gap-2 text-sm font-semibold text-dark">
+                        <Tag className="size-4 shrink-0 text-iris" aria-hidden="true" />
+                        <span className="truncate">{coupon.code}</span>
+                        {couponStale && <Loader2 className="size-4 shrink-0 animate-spin text-iris" aria-hidden="true" />}
+                        <span className="sr-only">{couponStale ? 'actualizando' : 'aplicado'}</span>
+                      </p>
+                      <button type="button" onClick={handleRemoveCoupon} className="btn btn-ghost btn-sm min-h-11 shrink-0">
+                        Quitar<span className="sr-only"> cupón {coupon.code}</span>
+                      </button>
+                    </div>
+                    {coupon.unverified && !couponStale && (
+                      <div className="mt-2 flex items-center justify-between gap-3">
+                        <p className="min-w-0 text-xs text-dark/75">
+                          No pudimos volver a revisar el cupón. Lo validamos de nuevo cuando hagas el pedido.
+                        </p>
+                        <button type="button" onClick={handleRecheckCoupon} className="btn btn-ghost btn-sm min-h-11 shrink-0">
+                          Reintentar
+                        </button>
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <form
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      handleApplyCoupon();
+                    }}
+                  >
+                    <label htmlFor="checkout-coupon" className="mb-1.5 block text-sm font-medium text-dark">
+                      Cupón de descuento
+                    </label>
+                    <div className="flex gap-2">
+                      <div className="relative min-w-0 flex-1">
+                        <Tag className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-dark/55" aria-hidden="true" />
+                        <input
+                          id="checkout-coupon"
+                          name="coupon"
+                          autoComplete="off"
+                          value={couponInput}
+                          onChange={(e) => setCouponInput(e.target.value)}
+                          placeholder="Código de cupón"
+                          className="field pl-10"
+                        />
+                      </div>
+                      <button type="submit" disabled={applying} aria-busy={applying} className="btn btn-secondary shrink-0">
+                        {applying ? (
+                          <>
+                            <Loader2 className="size-5 animate-spin" aria-hidden="true" />
+                            <span className="sr-only">Validando cupón</span>
+                          </>
+                        ) : (
+                          'Aplicar'
+                        )}
+                      </button>
+                    </div>
+                  </form>
+                )}
               </div>
 
               <dl className="mt-6 space-y-3 border-t border-sand/60 pt-6 text-sm">
@@ -370,10 +460,10 @@ export default function CheckoutPage() {
                     <dd className="font-medium text-dark">{formatPrice(shipping)}</dd>
                   </div>
                 )}
-                {couponDiscountLocal > 0 && (
+                {coupon && discount > 0 && (
                   <div className="flex justify-between gap-4 text-iris">
-                    <dt>Descuento</dt>
-                    <dd className="font-medium">-{formatPrice(couponDiscountLocal)}</dd>
+                    <dt>Descuento ({coupon.code}){coupon.unverified ? ', a confirmar' : ''}</dt>
+                    <dd className="font-medium">-{formatPrice(discount)}</dd>
                   </div>
                 )}
                 <div className="flex items-baseline justify-between gap-4 border-t border-sand/60 pt-4 font-display text-lg font-bold text-dark">

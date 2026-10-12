@@ -244,12 +244,22 @@ export interface Coupon {
   code: string;
   discountType: 'percentage' | 'fixed';
   discountValue: number;
-  validUntil: string;
+  /** Local date-time (no zone) of the last moment the coupon works; null never expires */
+  validUntil: string | null;
+  /** Whole number of 1 or more: the server has no unlimited coupon */
   maxUses: number;
   usedCount: number;
-  minPurchase?: number;
+  /** Minimum items subtotal for the coupon to apply */
+  minPurchase: number | null;
+  /** Cap on the discount in pesos. Percentage coupons only */
+  maxDiscount: number | null;
   active: boolean;
+  /** Discount in pesos for the subtotal sent to the validation endpoint; null everywhere else */
+  appliedDiscount: number | null;
 }
+
+/** What the admin form sends: the coupon without the fields the server owns */
+export type CouponInput = Omit<Coupon, 'id' | 'usedCount' | 'appliedDiscount'>;
 
 export interface Notification {
   id: string;
