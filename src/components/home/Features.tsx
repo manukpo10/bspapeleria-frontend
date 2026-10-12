@@ -19,7 +19,7 @@ const features = [
   },
   {
     icon: Award,
-    title: 'Experiencia real',
+    title: 'Aprendé desde cero',
     description: 'Compartimos nuestra experiencia real para que no solo aprendas a crear productos, sino que también tengas herramientas para empezar a venderlos.',
   },
 ];
@@ -64,8 +64,9 @@ export function Features() {
 
           <ul className="grid grid-cols-1 gap-5 sm:grid-cols-2 sm:gap-6">
             {features.map((feature) => (
-              // A row on phones (icon beside the text), the stacked card from sm
-              <li key={feature.title} className="card flex items-start gap-4 p-5 sm:block sm:p-6">
+              // A row on phones (icon beside the text), the stacked card from sm.
+              // Keyed by the description: two cards share the title "Aprendé desde cero"
+              <li key={feature.description} className="card flex items-start gap-4 p-5 sm:block sm:p-6">
                 <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-ribbon text-dark">
                   <feature.icon className="size-6" aria-hidden="true" />
                 </span>
