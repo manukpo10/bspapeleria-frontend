@@ -1,41 +1,29 @@
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Pagination, Autoplay } from 'swiper/modules';
-import { Star, Quote } from 'lucide-react';
-import { cn } from '../../lib/utils';
+import { Quote } from 'lucide-react';
 import { SectionHeader } from './SectionHeader';
 import { swiperLayout, swiperBullets } from './SliderArrows';
 
 import 'swiper/css';
 import 'swiper/css/pagination';
 
+// First names only: no photos, roles or ratings were provided, so the cards do not show any
 const testimonials = [
   {
-    name: 'María González',
-    avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=100&h=100&q=80',
-    role: 'Emprendedora',
-    text: 'Los cursos de BS Papelería cambiaron mi vida. Pasé de no saber nada de diseño a tener mi propio negocio de productos personalizados. La calidad del contenido y la atención de las instructoras es excepcional.',
-    rating: 5,
+    name: 'Viviana',
+    text: 'Pensé que iba a ser mucho más difícil porque nunca había diseñado nada. Me sorprendió poder seguir las clases y hacer mi primera agenda. Todavía me falta aprender un montón, pero estoy re contenta con lo que logré.',
   },
   {
-    name: 'Juan Pérez',
-    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=100&h=100&q=80',
-    role: 'Diseñador Gráfico',
-    text: 'La calidad de los productos es inmejorable. La sublimación es perfecta y los materiales son de primera. Recomiendo al 100% cada artículo que compré.',
-    rating: 5,
+    name: 'Daiana',
+    text: 'Hacía tiempo que quería empezar con la papelería, pero siempre encontraba una excusa. El curso me ayudó a organizarme y animarme a probar. Ya hice mis primeros diseños y estoy practicando para empezar a vender.',
   },
   {
-    name: 'Ana Ruiz',
-    avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&w=100&h=100&q=80',
-    role: 'Planificadora de Eventos',
-    text: 'La papelería de boda que diseñaron para mi hermana fue espectacular. Cada invitado quedó fascinado con el nivel de detalle y la elegancia de cada pieza.',
-    rating: 5,
+    name: 'Julieta',
+    text: 'Lo que más me gustó es que cuando tuve una duda me ayudaron a resolverla. A veces una se traba con algo que parece una pavada y termina dejando todo. Poder consultar hace que sea mucho más fácil seguir.',
   },
   {
-    name: 'Carlos López',
-    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=100&h=100&q=80',
-    role: 'Estudiante',
-    text: 'El curso de impresión 3D me abrió un mundo nuevo. La instructora explica todo de forma clara y los proyectos son muy prácticos. Ya estoy vendiendo mis primeros diseños.',
-    rating: 5,
+    name: 'Carina',
+    text: 'Todavía no tengo un emprendimiento armado, pero ya empecé a hacer cositas para mi familia y me encanta cómo van quedando. Mi idea es seguir practicando y más adelante empezar a tomar pedidos.',
   },
 ];
 
@@ -45,9 +33,9 @@ export function Testimonials() {
     <section className="pb-6 pt-12 sm:pb-8 sm:pt-20">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <SectionHeader
-          script="Testimonios"
-          title="Lo que dicen nuestros clientes"
-          subtitle="Miles de personas ya confiaron en BS Papelería para sus proyectos creativos."
+          script="Experiencias que inspiran"
+          title="Cada emprendimiento tiene su historia"
+          subtitle="Detrás de cada proyecto hay alguien que se animó a aprender algo nuevo. Queremos acompañarte a escribir tu propia historia."
         />
 
         <Swiper
@@ -63,37 +51,21 @@ export function Testimonials() {
           className={`${swiperLayout} ${swiperBullets}`}
         >
           {testimonials.map((t) => (
-            <SwiperSlide key={t.name}>
+            // Swiper sets height: 100% on slides; auto lets the flex row stretch them to the tallest card
+            <SwiperSlide key={t.name} className="h-auto!">
               <figure className="card flex h-full flex-col p-6">
-                <div className="flex items-center justify-between">
-                  <Quote className="size-9 text-iris" aria-hidden="true" />
-                  <div className="flex gap-0.5" role="img" aria-label={`${t.rating} de 5 estrellas`}>
-                    {Array.from({ length: 5 }, (_, j) => (
-                      <Star
-                        key={j}
-                        aria-hidden="true"
-                        className={cn('size-4', j < t.rating ? 'fill-amber-400 text-amber-400' : 'text-dark/20')}
-                      />
-                    ))}
-                  </div>
-                </div>
+                <Quote className="size-9 text-iris" aria-hidden="true" />
 
                 <blockquote className="mt-5 flex-1 leading-relaxed text-dark/70">“{t.text}”</blockquote>
 
                 <figcaption className="mt-6 flex items-center gap-3 border-t border-sand/60 pt-5">
-                  <img
-                    src={t.avatar}
-                    alt=""
-                    width={48}
-                    height={48}
-                    loading="lazy"
-                    decoding="async"
-                    className="size-12 shrink-0 rounded-full object-cover ring-2 ring-sand"
-                  />
-                  <span className="min-w-0">
-                    <span className="block font-display text-sm font-semibold text-dark">{t.name}</span>
-                    <span className="block text-xs text-dark/65">{t.role}</span>
+                  <span
+                    aria-hidden="true"
+                    className="grid size-12 shrink-0 place-items-center rounded-full bg-ribbon font-display text-lg font-bold text-dark ring-2 ring-sand"
+                  >
+                    {t.name.charAt(0)}
                   </span>
+                  <span className="font-display text-sm font-semibold text-dark">{t.name}</span>
                 </figcaption>
               </figure>
             </SwiperSlide>

@@ -1,27 +1,31 @@
-import { Truck, ShieldCheck, RotateCcw, HeadphonesIcon, Star, Award } from 'lucide-react';
+import { Sprout, InfinityIcon, HeartHandshake, Users, MonitorPlay, RefreshCw } from 'lucide-react';
 
 const trusts = [
-  { icon: Truck, label: 'Envío gratis', sublabel: 'En compras +$15.000' },
-  { icon: ShieldCheck, label: 'Pagos seguros', sublabel: 'Mercado Pago' },
-  { icon: RotateCcw, label: 'Devolución', sublabel: 'Hasta 30 días' },
-  { icon: HeadphonesIcon, label: 'Soporte', sublabel: 'Lun a Vie 9-18hs' },
-  { icon: Star, label: '4.9/5', sublabel: '200+ reseñas' },
-  { icon: Award, label: 'Calidad', sublabel: 'Materiales premium' },
+  { icon: Sprout, label: 'Aprendé desde cero' },
+  { icon: InfinityIcon, label: 'Acceso de por vida' },
+  { icon: HeartHandshake, label: 'Acompañamiento' },
+  { icon: Users, label: 'Comunidad de alumnas' },
+  { icon: MonitorPlay, label: 'Clases grabadas' },
+  { icon: RefreshCw, label: 'Actualizaciones gratuitas' },
 ];
 
 export function TrustStrip() {
   return (
-    <section aria-label="Por qué comprar en BS Papelería" className="border-y border-sand/60 bg-white py-6 sm:py-8">
+    <section aria-label="Beneficios de aprender con BS Papelería" className="border-y border-sand/60 bg-white py-6 sm:py-8">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <ul className="grid grid-cols-2 gap-x-4 gap-y-5 sm:grid-cols-3 lg:grid-cols-6 lg:gap-x-6">
+        {/*
+          Titles only, and "Actualizaciones" is a long word, so each width has its own arrangement: two compact
+          icon-beside-text columns on phones, three from sm, six with the icon above the text from lg (the 6
+          columns are too narrow for an icon beside the text)
+        */}
+        <ul className="grid grid-cols-2 gap-x-3 gap-y-4 sm:grid-cols-3 sm:gap-x-4 sm:gap-y-5 lg:grid-cols-6 lg:gap-x-6">
           {trusts.map((t) => (
-            <li key={t.label} className="flex items-center gap-3">
-              <span className="grid size-11 shrink-0 place-items-center rounded-2xl bg-mist text-iris">
+            <li key={t.label} className="flex items-center gap-2 sm:gap-3 lg:flex-col lg:gap-2.5 lg:text-center">
+              <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-mist text-iris sm:size-11 sm:rounded-2xl">
                 <t.icon className="size-5" aria-hidden="true" />
               </span>
-              <span className="min-w-0">
-                <span className="block text-sm font-semibold leading-tight text-dark">{t.label}</span>
-                <span className="mt-0.5 block text-xs leading-snug text-dark/65">{t.sublabel}</span>
+              <span className="min-w-0 text-xs font-semibold leading-tight text-dark wrap-break-word text-balance sm:text-sm">
+                {t.label}
               </span>
             </li>
           ))}

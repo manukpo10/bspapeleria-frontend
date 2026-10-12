@@ -1,26 +1,26 @@
-import { Palette, Truck, Award, HeartHandshake, Heart } from 'lucide-react';
+import { GraduationCap, Clock, MessagesSquare, Award, Heart } from 'lucide-react';
 import { SectionHeader } from './SectionHeader';
 
 const features = [
   {
-    icon: Palette,
-    title: 'Diseño Único',
-    description: 'Cada producto es pensado con amor y diseñado para destacar. Nada de lo genérico.',
+    icon: GraduationCap,
+    title: 'Aprendé desde cero',
+    description: 'No necesitás experiencia previa. Te explicamos cada proceso de forma sencilla para que puedas aprender, incluso si nunca hiciste papelería.',
   },
   {
-    icon: Truck,
-    title: 'Envíos a Todo el País',
-    description: 'Llegamos a cada rincón de Argentina. Envío gratis en compras mayores a $15.000.',
+    icon: Clock,
+    title: 'A tu ritmo y sin apuros',
+    description: 'Accedé a las clases cuando quieras y volvé a verlas todas las veces que necesites. Tu aprendizaje se adapta a tus tiempos.',
+  },
+  {
+    icon: MessagesSquare,
+    title: 'Acompañamiento de verdad',
+    description: 'No se trata solo de mirar videos. Estamos para responder tus dudas y ayudarte a encontrar soluciones cuando algo no sale como esperabas.',
   },
   {
     icon: Award,
-    title: 'Calidad Premium',
-    description: 'Materiales de primera, impresión de alta definición y acabados impecables.',
-  },
-  {
-    icon: HeartHandshake,
-    title: 'Atención Personalizada',
-    description: 'Estamos para ayudarte en cada paso. Tu satisfacción es nuestra prioridad.',
+    title: 'Experiencia real',
+    description: 'Compartimos nuestra experiencia real para que no solo aprendas a crear productos, sino que también tengas herramientas para empezar a venderlos.',
   },
 ];
 
@@ -48,17 +48,17 @@ export function Features() {
               <Heart className="size-5" aria-hidden="true" />
             </span>
             <p>
-              <span className="block text-sm font-semibold text-dark">Hecho con amor</span>
-              <span className="block text-xs text-dark/65">Cada pedido, uno por uno</span>
+              <span className="block text-sm font-semibold text-dark">Aprendé acompañada</span>
+              <span className="block text-xs text-dark/65">Estamos para ayudarte a avanzar</span>
             </p>
           </div>
         </div>
 
         <div className="lg:col-span-7">
           <SectionHeader
-            script="¿Por qué elegirnos?"
-            title="Hecho a mano, pensado para vos"
-            subtitle="Cada detalle cuenta. Por eso nos enfocamos en ofrecerte la mejor experiencia de compra y aprendizaje."
+            script="¿Por qué aprender con nosotros?"
+            title="Mucho más que aprender una técnica"
+            subtitle="Sabemos que empezar algo nuevo puede generar muchas dudas. Por eso creamos cursos prácticos, fáciles de seguir y con un acompañamiento real, para que puedas avanzar con confianza desde el primer día."
             startFromLg
           />
 

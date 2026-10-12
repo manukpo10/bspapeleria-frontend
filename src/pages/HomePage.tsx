@@ -5,10 +5,10 @@ import { TrustStrip } from '../components/home/TrustStrip';
 import { CategoryGrid } from '../components/home/CategoryGrid';
 import { CourseSlider } from '../components/home/CourseSlider';
 import { ProductSlider } from '../components/home/ProductSlider';
-import { HowToOrder } from '../components/home/HowToOrder';
+import { HowToStart } from '../components/home/HowToStart';
 import { Features } from '../components/home/Features';
 import { Testimonials } from '../components/home/Testimonials';
-import { Newsletter } from '../components/home/Newsletter';
+import { StartCta } from '../components/home/StartCta';
 import { api } from '../services/api';
 import { cachedFetch } from '../lib/apiCache';
 import type { Course, Product, ProductCategory } from '../types';
@@ -74,7 +74,7 @@ export default function HomePage() {
 
   // Position 0 is the category grid
   const firstProductPosition = showCourses ? 2 : 1;
-  const howToOrderPosition = firstProductPosition + productSections.length;
+  const howToStartPosition = firstProductPosition + productSections.length;
 
   return (
     <>
@@ -110,17 +110,17 @@ export default function HomePage() {
         </div>
       ))}
 
-      <div className={band(howToOrderPosition)}>
-        <HowToOrder />
+      <div className={band(howToStartPosition)}>
+        <HowToStart />
       </div>
-      <div className={band(howToOrderPosition + 1)}>
+      <div className={band(howToStartPosition + 1)}>
         <Features />
       </div>
-      <div className={band(howToOrderPosition + 2)}>
+      <div className={band(howToStartPosition + 2)}>
         <Testimonials />
       </div>
-      <div className={band(howToOrderPosition + 3)}>
-        <Newsletter />
+      <div className={band(howToStartPosition + 3)}>
+        <StartCta />
       </div>
     </>
   );

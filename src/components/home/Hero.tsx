@@ -9,18 +9,25 @@ export function Hero() {
         <div className="relative z-10 max-w-xl animate-slide-up">
           <span className="chip bg-white/70 py-1.5 pl-3 pr-4 shadow-soft ring-1 ring-white">
             <Sparkles className="size-4 text-iris" aria-hidden="true" />
-            <span className="eyebrow">Papelería boutique</span>
+            {/* Long label: tighter tracking than the usual eyebrow, and it only breaks at the bullets (two lines on phones) */}
+            <span className="eyebrow tracking-[0.14em]">
+              <span className="whitespace-nowrap">Cursos online •</span>{' '}
+              <span className="whitespace-nowrap">Comunidad •</span>{' '}
+              <span className="whitespace-nowrap">Emprendimiento</span>
+            </span>
           </span>
 
-          <h1 className="mt-6 font-display text-[2.75rem] font-extrabold leading-[1.03] tracking-tight text-dark sm:text-6xl xl:text-7xl">
-            Creá con estilo,
-            <span className="mt-2 block font-script text-[1.15em] font-bold leading-none tracking-normal text-iris">
-              aprendé con pasión
+          {/* The bold part is two lines (its longest word fills the phone width, hence the fluid size up to 40px) and the
+              script part is up to two lines, so the sizes step down from the old one-liner to keep the hero height */}
+          <h1 className="mt-6 font-display text-[length:clamp(1.75rem,9vw,2.5rem)] font-extrabold leading-[1.03] tracking-tight text-dark sm:text-5xl xl:text-[3.25rem]">
+            Todo gran emprendimiento{' '}
+            <span className="mt-2 block font-script text-[1.15em] font-bold leading-[1.1] tracking-normal text-iris">
+              empieza con un primer paso.
             </span>
           </h1>
 
           <p className="mt-6 max-w-lg text-lg text-dark/70">
-            Productos personalizados, sublimables y cursos creativos para quienes buscan algo más que lo ordinario.
+            Aprendé desde cero a crear productos personalizados, desarrollar tu creatividad y construir un emprendimiento con el acompañamiento de quienes también empezaron desde cero.
           </p>
 
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
