@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { CONTACT_EMAIL, INSTAGRAM_URL, WHATSAPP_URL } from '../../lib/constants';
+import { CONTACT_EMAIL, INSTAGRAM_URL, TIKTOK_URL, WHATSAPP_URL } from '../../lib/constants';
 
 // lucide-react 1.x dropped brand icons, so this glyph is drawn here in the same stroke style
 function InstagramIcon({ className }: { className?: string }) {
@@ -109,7 +109,11 @@ export function Footer() {
                   Instagram<span className="sr-only"> (se abre en una pestaña nueva)</span>
                 </a>
               </li>
-              {/* TODO: add TikTok once its real URL is confirmed */}
+              <li>
+                <a href={TIKTOK_URL} target="_blank" rel="noopener noreferrer" className={footerLink}>
+                  TikTok<span className="sr-only"> (se abre en una pestaña nueva)</span>
+                </a>
+              </li>
             </ul>
           </nav>
         </div>

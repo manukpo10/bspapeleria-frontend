@@ -1,5 +1,5 @@
 import { MessageCircle } from 'lucide-react';
-import { INSTAGRAM_URL, WHATSAPP_URL } from '../../lib/constants';
+import { INSTAGRAM_URL, TIKTOK_URL, WHATSAPP_URL } from '../../lib/constants';
 
 const InstagramIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="size-8">
@@ -48,7 +48,7 @@ const networks = [
     name: 'TikTok',
     handle: '@bspapeleria',
     followers: '5.8k seguidores',
-    url: 'https://tiktok.com/@bspapeleria',
+    url: TIKTOK_URL,
     color: '#000000',
     Icon: TikTokIcon,
   },

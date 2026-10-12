@@ -7,6 +7,7 @@ export const CONTACT_EMAIL = 'bspapeleria@gmail.com';
 export const WHATSAPP_DISPLAY = '+54 9 221 318-0884';
 export const WHATSAPP_URL = 'https://wa.me/5492213180884';
 export const INSTAGRAM_URL = 'https://instagram.com/bspapeleria';
+export const TIKTOK_URL = 'https://www.tiktok.com/@bspapeleria';
 
 // Backend origin without the /api suffix (the older VITE_API_URL variable included it, so it is not reused)
 export const API_URL = (import.meta.env.VITE_BACKEND_URL || 'https://bspapeleria-backend-m8u8.onrender.com').replace(/\/+$/, '');
