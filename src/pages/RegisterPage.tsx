@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, Mail, Lock, User, ArrowRight, Loader2 } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -28,6 +28,9 @@ const errorClass = 'mt-1.5 text-xs text-rose-700';
 
 export default function RegisterPage() {
   const navigate = useNavigate();
+  const location = useLocation();
+  // Carried over from the login page when the visitor came from a page that needs a session
+  const from = (location.state as { from?: string } | null)?.from;
   const { login } = useAuthStore();
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -42,7 +45,10 @@ export default function RegisterPage() {
       const user = await authApi.register({ name: data.name, email: data.email, password: data.password });
       login(user);
       toast.success('¡Registro exitoso! Bienvenida a BS Papelería');
-      navigate('/');
+      // Same rule as the login page: an admin never goes back to a customer page, and Back must not reopen this form
+      if (user.role === 'admin') navigate('/admin/overview');
+      else if (from) navigate(from, { replace: true });
+      else navigate('/');
     } catch (err) {
       toast.error((err as Error).message || 'Error al registrarse');
     } finally {
@@ -171,7 +177,7 @@ export default function RegisterPage() {
 
         <p className="mt-6 text-center text-sm text-dark/75">
           ¿Ya tenés cuenta?{' '}
-          <Link to="/login" className="inline-flex min-h-11 items-center font-semibold text-iris hover:underline">
+          <Link to="/login" state={location.state} className="inline-flex min-h-11 items-center font-semibold text-iris hover:underline">
             Ingresá
           </Link>
         </p>

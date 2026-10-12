@@ -67,7 +67,7 @@ export default function App() {
             <Route path="/cursos/:slug/aprender" element={<EnrolledRoute><CourseLearnPage /></EnrolledRoute>} />
             <Route path="/preguntas-frecuentes" element={<FAQPage />} />
             <Route path="/carrito" element={<CartPage />} />
-            <Route path="/checkout" element={<CheckoutPage />} />
+            <Route path="/checkout" element={<ProtectedRoute><CheckoutPage /></ProtectedRoute>} />
             <Route path="/checkout/exito" element={<CheckoutSuccessPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/registro" element={<RegisterPage />} />
