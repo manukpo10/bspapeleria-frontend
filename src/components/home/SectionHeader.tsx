@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { cn } from '../../lib/utils';
+import { Reveal } from '../shared/Reveal';
 
 interface SectionHeaderProps {
   title: string;
@@ -16,7 +17,8 @@ export function SectionHeader({ title, subtitle, script, centered = true, startF
   const leftOnLg = centered && startFromLg;
 
   return (
-    <div
+    // The script phrase, title and subtitle (and the arrows) rise together as one piece
+    <Reveal
       className={cn(
         'mb-10 sm:mb-12',
         centered ? 'text-center' : 'flex items-end justify-between gap-6',
@@ -31,6 +33,6 @@ export function SectionHeader({ title, subtitle, script, centered = true, startF
         )}
       </div>
       {action && <div className="shrink-0">{action}</div>}
-    </div>
+    </Reveal>
   );
 }

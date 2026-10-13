@@ -4,6 +4,7 @@ import { Navigation, Pagination, Autoplay } from 'swiper/modules';
 import type { Course } from '../../types';
 import { cn } from '../../lib/utils';
 import { CourseCard } from '../shared/CourseCard';
+import { Reveal } from '../shared/Reveal';
 import { SectionHeader } from './SectionHeader';
 import { SliderArrows, swiperLayout, swiperBullets } from './SliderArrows';
 
@@ -41,8 +42,10 @@ export function CourseSlider({ title, subtitle, script, courses, loading = false
   if (!loading && courses.length === 0) return null;
 
   return (
-    // The swiper keeps its own 3.5rem of bottom padding (shadows + bullets), so the section needs less
-    <section className="pb-6 pt-12 sm:pb-8 sm:pt-20">
+    // The swiper keeps its own 3.5rem of bottom padding (shadows + bullets), so the section needs less.
+    // overflow-x-clip: the slider block enters 32px from the right, which must not widen the page. Unlike
+    // `overflow: hidden` it leaves the y axis visible, so shadows and bullets are not cut
+    <section className="overflow-x-clip pb-6 pt-12 sm:pb-8 sm:pt-20">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <SectionHeader
           title={title}
@@ -52,41 +55,44 @@ export function CourseSlider({ title, subtitle, script, courses, loading = false
           action={loading ? undefined : <SliderArrows label={title} setPrevEl={setPrevEl} setNextEl={setNextEl} />}
         />
 
-        {loading ? (
-          <div role="status" className="pb-14">
-            <span className="sr-only">Cargando cursos…</span>
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {Array.from({ length: 3 }, (_, i) => (
-                <div key={i} className={cn(i === 1 && 'max-sm:hidden', i === 2 && 'max-lg:hidden')}>
-                  <CourseSkeleton />
-                </div>
-              ))}
+        {/* One wrapper for skeleton and swiper, so the entrance plays once and does not restart when the data arrives */}
+        <Reveal from="right">
+          {loading ? (
+            <div role="status" className="pb-14">
+              <span className="sr-only">Cargando cursos…</span>
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                {Array.from({ length: 3 }, (_, i) => (
+                  <div key={i} className={cn(i === 1 && 'max-sm:hidden', i === 2 && 'max-lg:hidden')}>
+                    <CourseSkeleton />
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
-        ) : (
-          <Swiper
-            modules={[Navigation, Pagination, Autoplay]}
-            // Phones: a little more than one card so the next one peeks. Swiper does not carry spaceBetween from
-            // one breakpoint to the next, so every breakpoint states its own
-            spaceBetween={12}
-            slidesPerView={1.12}
-            navigation={{ prevEl, nextEl }}
-            pagination={{ clickable: true }}
-            autoplay={{ delay: 5000, disableOnInteraction: false }}
-            breakpoints={{
-              640: { slidesPerView: 2, spaceBetween: 24 },
-              1024: { slidesPerView: 3, spaceBetween: 24 },
-            }}
-            className={`${swiperLayout} ${swiperBullets}`}
-          >
-            {courses.map((course) => (
-              // Swiper sets height: 100% on slides; auto lets the flex row stretch them to the tallest card
-              <SwiperSlide key={course.id} className="h-auto!">
-                <CourseCard course={course} />
-              </SwiperSlide>
-            ))}
-          </Swiper>
-        )}
+          ) : (
+            <Swiper
+              modules={[Navigation, Pagination, Autoplay]}
+              // Phones: a little more than one card so the next one peeks. Swiper does not carry spaceBetween from
+              // one breakpoint to the next, so every breakpoint states its own
+              spaceBetween={12}
+              slidesPerView={1.12}
+              navigation={{ prevEl, nextEl }}
+              pagination={{ clickable: true }}
+              autoplay={{ delay: 5000, disableOnInteraction: false }}
+              breakpoints={{
+                640: { slidesPerView: 2, spaceBetween: 24 },
+                1024: { slidesPerView: 3, spaceBetween: 24 },
+              }}
+              className={`${swiperLayout} ${swiperBullets}`}
+            >
+              {courses.map((course) => (
+                // Swiper sets height: 100% on slides; auto lets the flex row stretch them to the tallest card
+                <SwiperSlide key={course.id} className="h-auto!">
+                  <CourseCard course={course} />
+                </SwiperSlide>
+              ))}
+            </Swiper>
+          )}
+        </Reveal>
       </div>
     </section>
   );

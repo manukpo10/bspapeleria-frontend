@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { ArrowRight, HeartHandshake, MonitorPlay, Search } from 'lucide-react';
 import { WHATSAPP_URL } from '../../lib/constants';
+import { Reveal, RevealGroup, RevealItem } from '../shared/Reveal';
 import { SectionHeader } from './SectionHeader';
 
 const steps = [
@@ -32,16 +33,26 @@ export function HowToStart() {
         />
 
         {/* role="list" keeps the list semantics that Safari drops once the markers are removed */}
-        <ol role="list" className="grid gap-5 md:grid-cols-3 md:gap-6 lg:gap-8">
+        <RevealGroup as="ol" role="list" stagger={0.22} className="grid gap-5 md:grid-cols-3 md:gap-6 lg:gap-8">
           {steps.map((step, i) => (
-            <li key={step.title} className="card relative p-6 sm:p-8">
+            // Inside a step the badge pops 0.15s after the card starts, and the connector draws 0.5s after it
+            // (the card's own duration), i.e. right after the card has appeared
+            <RevealItem
+              key={step.title}
+              as="li"
+              stagger={0.35}
+              childDelay={0.15}
+              className="card relative p-6 sm:p-8"
+            >
               <div className="flex items-center justify-between gap-4">
-                <span
+                <RevealItem
+                  as="span"
+                  variant="pop"
                   aria-hidden="true"
                   className="grid size-14 place-items-center rounded-full bg-ribbon font-display text-2xl font-bold text-dark"
                 >
                   {i + 1}
-                </span>
+                </RevealItem>
                 <span className="grid size-12 place-items-center rounded-2xl bg-mist text-iris">
                   <step.icon className="size-6" aria-hidden="true" />
                 </span>
@@ -51,16 +62,20 @@ export function HowToStart() {
 
               {/* Dashed bridge across the column gap, level with the middle of the badge (2rem padding + 1.75rem) */}
               {i < steps.length - 1 && (
-                <span
+                <RevealItem
+                  as="span"
+                  variant="draw"
                   aria-hidden="true"
-                  className="absolute left-full top-15 hidden w-6 -translate-y-1/2 border-t-2 border-dashed border-secondary/60 md:block lg:w-8"
+                  className="absolute left-full top-15 hidden w-6 origin-left -translate-y-1/2 border-t-2 border-dashed border-secondary/60 md:block lg:w-8"
                 />
               )}
-            </li>
+            </RevealItem>
           ))}
-        </ol>
+        </RevealGroup>
 
-        <div className="mt-10 flex flex-col items-center">
+        {/* Last in line. Only a short wait: on phones the cards are a screen above, so it comes into view alone
+            and a longer delay would just be an empty gap */}
+        <Reveal delay={0.2} className="mt-10 flex flex-col items-center">
           <Link to="/cursos" className="btn btn-primary btn-lg w-full sm:w-80">
             Ver todos los cursos <ArrowRight className="size-5" aria-hidden="true" />
           </Link>
@@ -73,7 +88,7 @@ export function HowToStart() {
           >
             Consultar por WhatsApp<span className="sr-only"> (se abre en una pestaña nueva)</span>
           </a>
-        </div>
+        </Reveal>
       </div>
     </section>
   );

@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 import type { ProductCategory } from '../../types';
+import { RevealGroup, RevealItem } from '../shared/Reveal';
 import { SectionHeader } from './SectionHeader';
 
 interface Tile {
@@ -79,9 +80,9 @@ export function CategoryGrid() {
 
         {/* The text lives beside or below the photo, never over it, so the full sentences stay readable at any width:
             compact rows on phones, cards with the photo on top from sm */}
-        <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3 lg:gap-6">
+        <RevealGroup as="ul" stagger={0.08} className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3 lg:gap-6">
           {tiles.map((tile) => (
-            <li key={tile.to} className="flex">
+            <RevealItem key={tile.to} as="li" className="flex">
               <Link
                 to={tile.to}
                 className="group card flex min-w-0 flex-1 items-center gap-4 overflow-hidden p-3 sm:flex-col sm:items-stretch sm:gap-0 sm:p-0"
@@ -113,9 +114,9 @@ export function CategoryGrid() {
                   />
                 </span>
               </Link>
-            </li>
+            </RevealItem>
           ))}
-        </ul>
+        </RevealGroup>
       </div>
     </section>
   );

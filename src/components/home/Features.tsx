@@ -1,4 +1,5 @@
 import { GraduationCap, Clock, MessagesSquare, Award, Heart } from 'lucide-react';
+import { RevealGroup, RevealItem } from '../shared/Reveal';
 import { SectionHeader } from './SectionHeader';
 
 const features = [
@@ -29,21 +30,24 @@ export function Features() {
     <section className="py-12 sm:py-20">
       <div className="mx-auto grid max-w-7xl gap-12 px-4 sm:px-6 lg:grid-cols-12 lg:items-center lg:px-8">
         {/* Photo: a fixed 20rem tall crop on small screens, the full 4:5 portrait beside the copy from lg */}
-        <div className="relative mx-auto w-full max-w-sm lg:col-span-5 lg:max-w-none">
+        <RevealGroup as="div" stagger={0.3} className="relative mx-auto w-full max-w-sm lg:col-span-5 lg:max-w-none">
           <div className="relative h-80 overflow-hidden rounded-[2rem] bg-sand/40 shadow-lift lg:aspect-[4/5] lg:h-auto">
-            <img
-              src="/images/home/hecho-a-mano.webp"
-              alt="Manos atando un moño de cinta lila sobre una libreta lavanda, junto a lapiceras color cobre y estrellitas de papel"
-              width={1024}
-              height={1280}
-              loading="lazy"
-              decoding="async"
-              className="absolute inset-0 size-full object-cover"
-            />
+            {/* The photo settles from a slight zoom; the frame keeps its box and clips it */}
+            <RevealItem variant="settle" className="absolute inset-0">
+              <img
+                src="/images/home/hecho-a-mano.webp"
+                alt="Manos atando un moño de cinta lila sobre una libreta lavanda, junto a lapiceras color cobre y estrellitas de papel"
+                width={1024}
+                height={1280}
+                loading="lazy"
+                decoding="async"
+                className="absolute inset-0 size-full object-cover"
+              />
+            </RevealItem>
           </div>
 
-          {/* Sits outside the clipped frame so it can overlap the corner */}
-          <div className="card absolute -bottom-5 right-4 flex items-center gap-3 py-3 pl-3 pr-5 lg:-right-6">
+          {/* Sits outside the clipped frame so it can overlap the corner. It rises 0.3s after the photo */}
+          <RevealItem className="card absolute -bottom-5 right-4 flex items-center gap-3 py-3 pl-3 pr-5 lg:-right-6">
             <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-mist text-iris">
               <Heart className="size-5" aria-hidden="true" />
             </span>
@@ -51,8 +55,8 @@ export function Features() {
               <span className="block text-sm font-semibold text-dark">Aprendé acompañada</span>
               <span className="block text-xs text-dark/65">Estamos para ayudarte a avanzar</span>
             </p>
-          </div>
-        </div>
+          </RevealItem>
+        </RevealGroup>
 
         <div className="lg:col-span-7">
           <SectionHeader
@@ -62,11 +66,11 @@ export function Features() {
             startFromLg
           />
 
-          <ul className="grid grid-cols-1 gap-5 sm:grid-cols-2 sm:gap-6">
+          <RevealGroup as="ul" stagger={0.08} className="grid grid-cols-1 gap-5 sm:grid-cols-2 sm:gap-6">
             {features.map((feature) => (
               // A row on phones (icon beside the text), the stacked card from sm.
               // Keyed by the description: two cards share the title "Aprendé desde cero"
-              <li key={feature.description} className="card flex items-start gap-4 p-5 sm:block sm:p-6">
+              <RevealItem key={feature.description} as="li" className="card flex items-start gap-4 p-5 sm:block sm:p-6">
                 <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-ribbon text-dark">
                   <feature.icon className="size-6" aria-hidden="true" />
                 </span>
@@ -74,9 +78,9 @@ export function Features() {
                   <h3 className="font-display text-lg font-semibold text-dark sm:mt-5">{feature.title}</h3>
                   <p className="mt-1 text-sm leading-relaxed text-dark/65 sm:mt-2">{feature.description}</p>
                 </div>
-              </li>
+              </RevealItem>
             ))}
-          </ul>
+          </RevealGroup>
         </div>
       </div>
     </section>

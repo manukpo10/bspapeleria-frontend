@@ -1,6 +1,7 @@
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Pagination, Autoplay } from 'swiper/modules';
 import { Quote, Star } from 'lucide-react';
+import { RevealGroup, RevealItem } from '../shared/Reveal';
 import { SectionHeader } from './SectionHeader';
 import { swiperLayout, swiperBullets } from './SliderArrows';
 
@@ -38,47 +39,54 @@ export function Testimonials() {
           subtitle="Detrás de cada proyecto hay alguien que se animó a aprender algo nuevo. Queremos acompañarte a escribir tu propia historia."
         />
 
-        <Swiper
-          modules={[Pagination, Autoplay]}
-          spaceBetween={24}
-          slidesPerView={1}
-          pagination={{ clickable: true }}
-          autoplay={{ delay: 6000, disableOnInteraction: false }}
-          breakpoints={{
-            640: { slidesPerView: 2 },
-            1024: { slidesPerView: 3 },
-          }}
-          className={`${swiperLayout} ${swiperBullets}`}
-        >
-          {testimonials.map((t) => (
-            // Swiper sets height: 100% on slides; auto lets the flex row stretch them to the tallest card
-            <SwiperSlide key={t.name} className="h-auto!">
-              <figure className="card flex h-full flex-col p-6">
-                <div className="flex items-center justify-between gap-3">
-                  <Quote className="size-9 text-iris" aria-hidden="true" />
-                  {/* Ornament from the owner's layout, not a rating that each person gave */}
-                  <div className="flex gap-0.5" aria-hidden="true">
-                    {Array.from({ length: 5 }, (_, i) => (
-                      <Star key={i} className="size-5 fill-amber-400 text-amber-400" />
-                    ))}
+        {/* The whole carousel starts at once, including the cards still off to the side: a card that waited for
+            its own turn would be blank while a finger drags it in */}
+        <RevealGroup stagger={0.08}>
+          <Swiper
+            modules={[Pagination, Autoplay]}
+            spaceBetween={24}
+            slidesPerView={1}
+            pagination={{ clickable: true }}
+            autoplay={{ delay: 6000, disableOnInteraction: false }}
+            breakpoints={{
+              640: { slidesPerView: 2 },
+              1024: { slidesPerView: 3 },
+            }}
+            className={`${swiperLayout} ${swiperBullets}`}
+          >
+            {testimonials.map((t) => (
+              // Swiper sets height: 100% on slides; auto lets the flex row stretch them to the tallest card.
+              // The motion lives in the figure, not in the slide: the card rises, then its stars light up one by one
+              <SwiperSlide key={t.name} className="h-auto!">
+                <RevealItem as="figure" stagger={0.08} childDelay={0.2} className="card flex h-full flex-col p-6">
+                  <div className="flex items-center justify-between gap-3">
+                    <Quote className="size-9 text-iris" aria-hidden="true" />
+                    {/* Ornament from the owner's layout, not a rating that each person gave */}
+                    <div className="flex gap-0.5" aria-hidden="true">
+                      {Array.from({ length: 5 }, (_, i) => (
+                        <RevealItem key={i} as="span" variant="light" className="flex">
+                          <Star className="size-5 fill-amber-400 text-amber-400" />
+                        </RevealItem>
+                      ))}
+                    </div>
                   </div>
-                </div>
 
-                <blockquote className="mt-5 flex-1 leading-relaxed text-dark/70">“{t.text}”</blockquote>
+                  <blockquote className="mt-5 flex-1 leading-relaxed text-dark/70">“{t.text}”</blockquote>
 
-                <figcaption className="mt-6 flex items-center gap-3 border-t border-sand/60 pt-5">
-                  <span
-                    aria-hidden="true"
-                    className="grid size-12 shrink-0 place-items-center rounded-full bg-ribbon font-display text-lg font-bold text-dark ring-2 ring-sand"
-                  >
-                    {t.name.charAt(0)}
-                  </span>
-                  <span className="font-display text-sm font-semibold text-dark">{t.name}</span>
-                </figcaption>
-              </figure>
-            </SwiperSlide>
-          ))}
-        </Swiper>
+                  <figcaption className="mt-6 flex items-center gap-3 border-t border-sand/60 pt-5">
+                    <span
+                      aria-hidden="true"
+                      className="grid size-12 shrink-0 place-items-center rounded-full bg-ribbon font-display text-lg font-bold text-dark ring-2 ring-sand"
+                    >
+                      {t.name.charAt(0)}
+                    </span>
+                    <span className="font-display text-sm font-semibold text-dark">{t.name}</span>
+                  </figcaption>
+                </RevealItem>
+              </SwiperSlide>
+            ))}
+          </Swiper>
+        </RevealGroup>
       </div>
     </section>
   );
