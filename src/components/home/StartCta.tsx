@@ -1,28 +1,17 @@
 import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
+import { PlaneTrail } from '../shared/PlaneTrail';
 
 export function StartCta() {
   return (
     <section className="py-12 sm:py-20">
       <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
-        {/* The photo is the panel's backdrop (bg-ribbon shows while it loads). Its left half is empty paper,
-            which is where the copy sits from md up; the plane flies in on the right */}
-        <div className="relative overflow-hidden rounded-[2.5rem] bg-ribbon px-6 py-12 text-center shadow-soft sm:px-12 sm:py-16 md:text-left">
-          <img
-            src="/images/home/avion-papel.webp"
-            alt=""
-            aria-hidden="true"
-            width={1536}
-            height={864}
-            loading="lazy"
-            decoding="async"
-            className="absolute inset-0 size-full object-cover object-right-top"
-          />
-          {/* Below md the copy covers the plane, so the veil is strong there to keep the ink text above 4.5:1;
-              from md it only softens the left side and leaves the plane untouched */}
-          <div
-            aria-hidden="true"
-            className="absolute inset-0 bg-linear-to-b from-white/85 via-white/75 to-white/60 md:bg-linear-to-r md:from-white/60 md:via-white/30 md:to-transparent"
+        {/* White card: the trail only shows on a light surface. From md the drawing takes the right side, tilted like the
+            hero's and cut by the bottom edge; below md it sits under the copy, in the space the bottom padding reserves */}
+        <div className="card relative overflow-hidden rounded-[2.5rem] px-6 pb-44 pt-12 text-center sm:px-12 sm:pb-52 sm:pt-16 md:pb-16 md:text-left">
+          <PlaneTrail
+            animated="in-view"
+            className="pointer-events-none absolute -bottom-4 right-3 w-60 sm:-bottom-6 sm:right-4 sm:w-72 md:-bottom-8 md:right-0 md:w-1/2 md:-rotate-14 lg:w-[55%]"
           />
 
           <div className="relative mx-auto max-w-xl md:mx-0 md:max-w-xs lg:max-w-md">

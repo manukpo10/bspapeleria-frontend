@@ -25,8 +25,11 @@ const smoothstep = (from: number, to: number, value: number) => {
 
 interface PlaneTrailProps {
   className?: string;
-  /** Plays the fly-in once when the component mounts. Ignored when the visitor prefers reduced motion */
-  animated?: boolean;
+  /**
+   * Plays the fly-in once: `true` as soon as the component mounts, `'in-view'` when the drawing scrolls into view.
+   * Ignored when the visitor prefers reduced motion
+   */
+  animated?: boolean | 'in-view';
 }
 
 /*
@@ -72,16 +75,30 @@ export function PlaneTrail({ className, animated = false }: PlaneTrailProps) {
     };
 
     pose(0);
-    const controls = animate(0, 1, {
-      duration: 1.7,
-      delay: 0.35,
-      ease: [0.3, 0.05, 0.2, 1],
-      onUpdate: pose,
-      onComplete: rest,
-    });
+    let controls: ReturnType<typeof animate> | undefined;
+    const fly = (delay: number) => {
+      controls = animate(0, 1, { duration: 1.7, delay, ease: [0.3, 0.05, 0.2, 1], onUpdate: pose, onComplete: rest });
+    };
+
+    let observer: IntersectionObserver | undefined;
+    if (animated === 'in-view' && 'IntersectionObserver' in window) {
+      // A low threshold: the drawing is often partly cut by its container, so most of it may never be visible
+      observer = new IntersectionObserver(
+        (entries) => {
+          if (!entries.some((entry) => entry.isIntersecting)) return;
+          observer?.disconnect();
+          fly(0.1);
+        },
+        { threshold: 0.15 },
+      );
+      observer.observe(flight.ownerSVGElement ?? flight);
+    } else {
+      fly(0.35);
+    }
 
     return () => {
-      controls.stop();
+      observer?.disconnect();
+      controls?.stop();
       rest();
     };
   }, [animated, reduceMotion]);
