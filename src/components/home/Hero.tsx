@@ -1,5 +1,63 @@
+import { useId } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Send, Sparkles, Star } from 'lucide-react';
+
+// The same five-point star as the bg-stars pattern in index.css
+const STAR = 'M0-10 2.9-3.9 9.5-3.1 4.6 1.5 5.9 8.1 0 4.8-5.9 8.1-4.6 1.5-9.5-3.1-2.9-3.9Z';
+
+/*
+ * The trail from the logo: the wake a paper plane leaves, wide where it started (bottom left) and thinning out
+ * towards the plane (top right), in the ribbon colours and sprinkled with stars. Drawn on the logo's own
+ * 1000 x 674 canvas so the proportions match.
+ */
+function PlaneTrail({ className }: { className?: string }) {
+  // useId can contain characters that are awkward inside url(#...), so keep only the safe ones
+  const id = `trail${useId().replace(/[^a-zA-Z0-9_-]/g, '')}`;
+  const trail = 'M0 272C240 165 520 72 835 26L862 56C640 105 420 235 250 345 140 420 50 540 0 674Z';
+
+  return (
+    <svg viewBox="0 0 1000 674" fill="none" aria-hidden="true" className={className}>
+      <defs>
+        <linearGradient id={`${id}-ribbon`} x1="0" y1="1" x2="1" y2="0">
+          <stop offset="0" stopColor="#e9c5fb" />
+          <stop offset="0.38" stopColor="#d0b8fb" />
+          <stop offset="0.72" stopColor="#c1cdfb" />
+          <stop offset="1" stopColor="#d8eafc" />
+        </linearGradient>
+        <pattern id={`${id}-stars`} width="220" height="220" patternUnits="userSpaceOnUse">
+          <g fill="white" stroke="white" strokeWidth="2.5" strokeLinejoin="round">
+            <path d={STAR} transform="translate(28 34) rotate(12)" />
+            <path d={STAR} transform="translate(118 22) rotate(-8) scale(.7)" />
+            <path d={STAR} transform="translate(186 70) rotate(20) scale(.9)" />
+            <path d={STAR} transform="translate(76 96) rotate(-14) scale(.8)" />
+            <path d={STAR} transform="translate(150 138) rotate(6)" />
+            <path d={STAR} transform="translate(34 160) rotate(-20) scale(.75)" />
+            <path d={STAR} transform="translate(100 192) rotate(14) scale(.65)" />
+            <path d={STAR} transform="translate(200 196) rotate(-6) scale(.8)" />
+          </g>
+        </pattern>
+        {/* In the logo the canvas edge cuts the far end of the trail; here it fades out instead, like a wake */}
+        <linearGradient id={`${id}-fade`} x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stopColor="white" stopOpacity="0" />
+          <stop offset="0.24" stopColor="white" />
+        </linearGradient>
+        <mask id={`${id}-mask`} maskUnits="userSpaceOnUse" x="0" y="0" width="1000" height="674">
+          <rect width="1000" height="674" fill={`url(#${id}-fade)`} />
+        </mask>
+      </defs>
+
+      <g mask={`url(#${id}-mask)`}>
+        <path d={trail} fill={`url(#${id}-ribbon)`} />
+        <path d={trail} fill={`url(#${id}-stars)`} opacity="0.7" />
+      </g>
+
+      {/* The paper plane at the head of the trail, in the logo's violet */}
+      <path d="M985 12 792 4 836 30Z" fill="#b79cf9" />
+      <path d="M985 12 836 30 872 58Z" fill="#a584f3" />
+      <path d="M836 30 829 56 853 44Z" fill="#8f6be8" />
+    </svg>
+  );
+}
 
 export function Hero() {
   return (
@@ -52,14 +110,10 @@ export function Hero() {
           </div>
         </div>
 
-        {/* Collage: a ribbon band like the logo's, with the brand photos resting on it */}
+        {/* Collage: the logo's plane trail, with the brand photos resting on it */}
         <div className="relative mx-auto aspect-square w-full max-w-md sm:max-w-lg lg:max-w-none">
-          <div
-            aria-hidden="true"
-            className="absolute left-[-6%] top-[27%] h-[44%] w-[135%] -rotate-8 overflow-hidden rounded-[3rem] bg-ribbon"
-          >
-            <div className="absolute inset-0 bg-stars opacity-60" />
-          </div>
+          {/* Tilted and lowered so its wide base shows under the main photo and the plane comes out on the right */}
+          <PlaneTrail className="absolute left-[-12%] top-[40%] w-[128%] -rotate-14" />
 
           <div className="absolute left-[4%] top-[7%] z-10 aspect-[4/3] w-[72%] -rotate-3 overflow-hidden rounded-[2rem] shadow-lift ring-8 ring-white">
             <img
