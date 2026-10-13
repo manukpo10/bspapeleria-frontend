@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { CONTACT_EMAIL, INSTAGRAM_URL, TIKTOK_URL, WHATSAPP_URL } from '../../lib/constants';
+import { CONTACT_EMAIL, INSTAGRAM_URL, SITE_CREDIT, TIKTOK_URL, WHATSAPP_URL } from '../../lib/constants';
 
 // lucide-react 1.x dropped brand icons, so this glyph is drawn here in the same stroke style
 function InstagramIcon({ className }: { className?: string }) {
@@ -120,6 +120,19 @@ export function Footer() {
 
         <div className="mt-12 flex flex-col items-center justify-between gap-2 border-t border-sand/70 pt-6 text-xs text-dark/65 sm:flex-row sm:gap-4">
           <p>&copy; {new Date().getFullYear()} BS Papelería. Todos los derechos reservados.</p>
+          {/* Followed link with the referrer kept (no noreferrer), so the studio sees the visits that come from here */}
+          <p className="flex items-center gap-1">
+            Diseño y desarrollo:
+            <a
+              href={SITE_CREDIT.url}
+              target="_blank"
+              rel="noopener"
+              className="inline-flex min-h-11 items-center font-medium text-dark/75 transition-colors hover:text-iris"
+            >
+              {SITE_CREDIT.name}
+              <span className="sr-only"> (se abre en una pestaña nueva)</span>
+            </a>
+          </p>
           <div className="flex gap-6">
             <Link to="/" className="inline-flex min-h-11 items-center transition-colors hover:text-iris">Términos</Link>
             <Link to="/" className="inline-flex min-h-11 items-center transition-colors hover:text-iris">Privacidad</Link>

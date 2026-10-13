@@ -9,6 +9,9 @@ export const WHATSAPP_URL = 'https://wa.me/5492213180884';
 export const INSTAGRAM_URL = 'https://instagram.com/bspapeleria';
 export const TIKTOK_URL = 'https://www.tiktok.com/@bspapeleria';
 
+// Studio that designed and built the site: the footer credit (index.html carries the same name as its author tag)
+export const SITE_CREDIT = { name: 'DiagonalSoft', url: 'https://diagonalsoft.com.ar' };
+
 // Backend origin without the /api suffix (the older VITE_API_URL variable included it, so it is not reused)
 export const API_URL = (import.meta.env.VITE_BACKEND_URL || 'https://bspapeleria-backend-m8u8.onrender.com').replace(/\/+$/, '');
 
