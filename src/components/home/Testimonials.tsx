@@ -1,13 +1,13 @@
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Pagination, Autoplay } from 'swiper/modules';
-import { Quote } from 'lucide-react';
+import { Quote, Star } from 'lucide-react';
 import { SectionHeader } from './SectionHeader';
 import { swiperLayout, swiperBullets } from './SliderArrows';
 
 import 'swiper/css';
 import 'swiper/css/pagination';
 
-// First names only: no photos, roles or ratings were provided, so the cards do not show any
+// First names only: no photos or roles were provided, so the cards do not show any
 const testimonials = [
   {
     name: 'Viviana',
@@ -54,7 +54,15 @@ export function Testimonials() {
             // Swiper sets height: 100% on slides; auto lets the flex row stretch them to the tallest card
             <SwiperSlide key={t.name} className="h-auto!">
               <figure className="card flex h-full flex-col p-6">
-                <Quote className="size-9 text-iris" aria-hidden="true" />
+                <div className="flex items-center justify-between gap-3">
+                  <Quote className="size-9 text-iris" aria-hidden="true" />
+                  {/* Ornament from the owner's layout, not a rating that each person gave */}
+                  <div className="flex gap-0.5" aria-hidden="true">
+                    {Array.from({ length: 5 }, (_, i) => (
+                      <Star key={i} className="size-5 fill-amber-400 text-amber-400" />
+                    ))}
+                  </div>
+                </div>
 
                 <blockquote className="mt-5 flex-1 leading-relaxed text-dark/70">“{t.text}”</blockquote>
 
