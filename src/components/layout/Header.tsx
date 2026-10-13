@@ -25,10 +25,16 @@ const iconButton =
 const menuItem =
   'flex min-h-11 items-center gap-3 rounded-2xl px-3 text-sm font-medium text-dark/75 transition-colors hover:bg-mist hover:text-dark';
 
+// The highlight is the logo's ribbon with its stars: two layers behind the label (ribbon, then stars at pill scale)
+// that fade in on hover and keyboard focus, and stay on for the current page
 const desktopLinkClass = ({ isActive }: { isActive: boolean }) =>
   cn(
-    'rounded-full px-4 py-2 text-sm font-medium transition-colors',
-    isActive ? 'bg-sand/50 text-dark' : 'text-dark/65 hover:bg-sand/30 hover:text-dark',
+    'relative isolate overflow-hidden rounded-full px-4 py-2 text-sm font-medium transition-colors',
+    'before:absolute before:inset-0 before:-z-20 before:bg-ribbon before:opacity-0 before:transition-opacity before:duration-200',
+    'after:absolute after:inset-0 after:-z-10 after:bg-stars after:[background-size:88px_88px] after:opacity-0 after:transition-opacity after:duration-200',
+    isActive
+      ? 'text-dark before:opacity-100 after:opacity-90'
+      : 'text-dark/65 hover:text-dark hover:before:opacity-100 hover:after:opacity-90 focus-visible:text-dark focus-visible:before:opacity-100 focus-visible:after:opacity-90',
   );
 
 const mobileLinkClass = ({ isActive }: { isActive: boolean }) =>
