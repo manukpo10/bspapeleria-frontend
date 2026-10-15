@@ -115,6 +115,14 @@ function mapBackendProduct(data: any): Product {
   };
 }
 
+// The backend replaces the stored list with the one it receives (an empty list clears it) and keeps the stored
+// one only when the field is missing, so the builder always sends it. Rows with both texts blank are dropped
+function faqsToBackend(faqs: CourseFaq[] | undefined) {
+  return faqs
+    ?.map((f) => ({ pregunta: f.question.trim(), respuesta: f.answer.trim() }))
+    .filter((f) => f.pregunta || f.respuesta);
+}
+
 function mapBackendCourse(data: any): Course {
   return {
     id: String(data.id),
@@ -347,6 +355,7 @@ export const api = {
       // The backend stores a blank text as null
       descripcionCorta: course.shortDescription?.trim() ?? '',
       introduccionTemario: course.syllabusIntro?.trim() ?? '',
+      preguntasFrecuentes: faqsToBackend(course.faqs),
       imagenUrl: course.coverImage,
       precio: course.price,
       precioComparacion: course.comparePrice,
@@ -384,6 +393,7 @@ export const api = {
       descripcion: data.description,
       descripcionCorta: data.shortDescription?.trim() ?? '',
       introduccionTemario: data.syllabusIntro?.trim() ?? '',
+      preguntasFrecuentes: faqsToBackend(data.faqs),
       imagenUrl: data.coverImage,
       precio: data.price,
       precioComparacion: data.comparePrice,

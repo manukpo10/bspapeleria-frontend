@@ -1,11 +1,11 @@
 import { useState, useEffect, useRef, useId } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import {
-  ArrowLeft, ChevronDown, ChevronUp, ExternalLink, FileText, Image as ImageIcon, Loader2, Plus, Trash2, TriangleAlert, Upload
+  ArrowDown, ArrowLeft, ArrowUp, ChevronDown, ChevronUp, ExternalLink, FileText, Image as ImageIcon, Loader2, Plus, Trash2, TriangleAlert, Upload
 } from 'lucide-react';
 import { api } from '../services/api';
 import { uploadCourseMaterial, uploadCourseCoverImage } from '../services/supabaseStorage';
-import type { Course, Topic, Lesson } from '../types';
+import type { Course, CourseFaq, Topic, Lesson } from '../types';
 import { toast } from 'sonner';
 import { cn } from '../lib/utils';
 import { CourseCard } from '../components/shared/CourseCard';
@@ -510,6 +510,145 @@ function CourseMaterialsSection({
   );
 }
 
+/* ─── FAQ Section ─── */
+// Same limits as the backend, which also caps the list at 20 questions
+const MAX_FAQS = 20;
+const FAQ_QUESTION_MAX = 300;
+const FAQ_ANSWER_MAX = 2000;
+
+// A row with only one of its two texts cannot be saved; a row with neither is dropped on save
+const isHalfFilledFaq = (f: CourseFaq) => Boolean(f.question.trim()) !== Boolean(f.answer.trim());
+
+function CourseFaqsSection({ faqs, onChange }: { faqs: CourseFaq[]; onChange: (updated: CourseFaq[]) => void }) {
+  const rootRef = useRef<HTMLDivElement>(null);
+  // Control (data-faq-focus) that takes focus once the list re-renders, so a moved, added or removed row
+  // does not leave a keyboard user on a button that now belongs to another question
+  const pendingFocus = useRef<string | null>(null);
+
+  useEffect(() => {
+    const target = pendingFocus.current;
+    if (!target) return;
+    pendingFocus.current = null;
+    rootRef.current?.querySelector<HTMLElement>(`[data-faq-focus="${target}"]`)?.focus();
+  }, [faqs]);
+
+  const update = (index: number, patch: Partial<CourseFaq>) => {
+    onChange(faqs.map((f, i) => (i === index ? { ...f, ...patch } : f)));
+  };
+
+  const add = () => {
+    if (faqs.length >= MAX_FAQS) return;
+    pendingFocus.current = `question-${faqs.length}`;
+    onChange([...faqs, { question: '', answer: '' }]);
+  };
+
+  const remove = (index: number) => {
+    const next = faqs.filter((_, i) => i !== index);
+    // The question of the row that takes its place, not its delete button: a second press must not delete it too
+    pendingFocus.current = next.length > 0 ? `question-${Math.min(index, next.length - 1)}` : 'add';
+    onChange(next);
+  };
+
+  const move = (index: number, direction: -1 | 1) => {
+    const target = index + direction;
+    if (target < 0 || target >= faqs.length) return;
+    const next = [...faqs];
+    [next[index], next[target]] = [next[target], next[index]];
+    // Focus follows the row; at either end the arrow that is still enabled gets it
+    const arrow = direction === -1 ? (target > 0 ? 'up' : 'down') : (target < next.length - 1 ? 'down' : 'up');
+    pendingFocus.current = `${arrow}-${target}`;
+    onChange(next);
+  };
+
+  const atLimit = faqs.length >= MAX_FAQS;
+
+  return (
+    <FormSection
+      title="Preguntas frecuentes"
+      description={`Se muestran al final de la página del curso, en este orden. Hasta ${MAX_FAQS} preguntas: ${FAQ_QUESTION_MAX} caracteres cada pregunta y ${FAQ_ANSWER_MAX} cada respuesta.`}
+    >
+      <div ref={rootRef} className="space-y-5">
+        {faqs.length > 0 ? (
+          <ol aria-label="Preguntas frecuentes" className="space-y-4">
+            {faqs.map((faq, i) => (
+              <li key={i} className="rounded-2xl bg-mist p-4 ring-1 ring-sand/70 sm:p-5">
+                <div className="flex items-center gap-1">
+                  <span className="grid size-8 shrink-0 place-items-center rounded-full bg-white font-display text-xs font-bold text-iris">
+                    {i + 1}
+                  </span>
+                  <div className="ml-auto flex items-center">
+                    <IconButton
+                      icon={ArrowUp}
+                      label={`Subir pregunta ${i + 1}`}
+                      disabled={i === 0}
+                      onClick={() => move(i, -1)}
+                      data-faq-focus={`up-${i}`}
+                    />
+                    <IconButton
+                      icon={ArrowDown}
+                      label={`Bajar pregunta ${i + 1}`}
+                      disabled={i === faqs.length - 1}
+                      onClick={() => move(i, 1)}
+                      data-faq-focus={`down-${i}`}
+                    />
+                    <IconButton
+                      icon={Trash2}
+                      tone="danger"
+                      label={`Eliminar pregunta ${i + 1}`}
+                      onClick={() => remove(i)}
+                      data-faq-focus={`remove-${i}`}
+                    />
+                  </div>
+                </div>
+
+                <div className="mt-3 space-y-4">
+                  <FormField label={`Pregunta ${i + 1}`}>
+                    {(control) => (
+                      <input
+                        {...control}
+                        maxLength={FAQ_QUESTION_MAX}
+                        value={faq.question}
+                        onChange={(e) => update(i, { question: e.target.value })}
+                        placeholder="Ej: ¿Necesito experiencia previa?"
+                        className="field bg-white"
+                        data-faq-focus={`question-${i}`}
+                      />
+                    )}
+                  </FormField>
+                  <FormField label={`Respuesta ${i + 1}`}>
+                    {(control) => (
+                      <textarea
+                        {...control}
+                        maxLength={FAQ_ANSWER_MAX}
+                        value={faq.answer}
+                        onChange={(e) => update(i, { answer: e.target.value })}
+                        placeholder="Escribí la respuesta"
+                        rows={3}
+                        className="field min-h-24 resize-y bg-white"
+                      />
+                    )}
+                  </FormField>
+                </div>
+              </li>
+            ))}
+          </ol>
+        ) : (
+          <p className="rounded-2xl border border-dashed border-sand px-4 py-6 text-center text-sm text-dark/65">
+            Todavía no hay preguntas frecuentes. Agregá la primera para mostrarla en la página del curso.
+          </p>
+        )}
+
+        <div className="flex flex-wrap items-center gap-3">
+          <button type="button" onClick={add} disabled={atLimit} data-faq-focus="add" className="btn btn-soft min-h-11">
+            <Plus className="size-5" aria-hidden="true" /> Agregar pregunta
+          </button>
+          {atLimit && <p className="text-sm text-dark/65">Llegaste al máximo de {MAX_FAQS} preguntas.</p>}
+        </div>
+      </div>
+    </FormSection>
+  );
+}
+
 const modeButton = (active: boolean) =>
   cn(
     'min-h-11 rounded-full px-4 text-sm font-semibold transition-all',
@@ -531,6 +670,7 @@ export default function AdminCourseBuilderPage() {
     description: '',
     shortDescription: '',
     syllabusIntro: '',
+    faqs: [],
     whatYouWillLearn: [''],
     requirements: [],
     instructor: { id: '', name: '', avatar: '', bio: '', expertise: [], coursesCount: 0, studentsCount: 0, rating: 0 },
@@ -561,7 +701,7 @@ export default function AdminCourseBuilderPage() {
       if (!c) return;
       // The API fills a missing short text with the long description: the field stays blank then,
       // so saving does not copy the long text into it
-      setCourse({ ...c, shortDescription: c.shortDescription === c.description ? '' : c.shortDescription });
+      setCourse({ ...c, faqs: c.faqs ?? [], shortDescription: c.shortDescription === c.description ? '' : c.shortDescription });
     });
   }, [id, isNew]);
 
@@ -596,6 +736,11 @@ export default function AdminCourseBuilderPage() {
   const handleSave = async () => {
     if (!course.title) {
       toast.error('El título es obligatorio');
+      return;
+    }
+    const halfFilledFaq = course.faqs?.findIndex(isHalfFilledFaq) ?? -1;
+    if (halfFilledFaq >= 0) {
+      toast.error(`Pregunta ${halfFilledFaq + 1}: completá la pregunta y la respuesta, o borrá la fila.`);
       return;
     }
     setSaving(true);
@@ -808,7 +953,8 @@ export default function AdminCourseBuilderPage() {
             <CoverImageUploader
               value={course.coverImage}
               courseSlug={course.slug}
-              onChange={(url) => setCourse({ ...course, coverImage: url })}
+              // Functional update: the upload resolves later, and the form may have changed meanwhile
+              onChange={(url) => setCourse((current) => ({ ...current, coverImage: url }))}
             />
 
             <FormField label="URL de video intro (opcional)">
@@ -891,6 +1037,9 @@ export default function AdminCourseBuilderPage() {
               <Plus className="size-5" aria-hidden="true" /> Agregar módulo
             </button>
           </FormSection>
+
+          {/* FAQs: shown at the end of the course page */}
+          <CourseFaqsSection faqs={course.faqs ?? []} onChange={(updated) => setCourse({ ...course, faqs: updated })} />
 
           {/* Course Materials */}
           <CourseMaterialsSection
