@@ -23,9 +23,6 @@ export const PRODUCT_CATEGORIES = [
   { id: 'archivos-digitales', name: 'Archivos Digitales', description: 'Imprimibles, plantillas y recursos descargables.' },
 ] as const;
 
-export const COURSE_LEVELS = ['principiante', 'intermedio', 'avanzado'] as const;
-export const COURSE_MODALITIES = ['online', 'presencial', 'hibrido'] as const;
-
 export const ORDER_STATUSES = ['pending', 'paid', 'shipped', 'delivered', 'cancelled'] as const;
 export const PAYMENT_STATUSES = ['pending', 'approved', 'rejected'] as const;
 
