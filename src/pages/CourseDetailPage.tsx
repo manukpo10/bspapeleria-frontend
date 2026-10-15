@@ -46,6 +46,12 @@ const tabs = [
 
 type TabId = (typeof tabs)[number]['id'];
 
+// The API gives the duration as "8h"; running text reads "8 horas"
+const hoursLabel = (duration: string) => {
+  const hours = parseInt(duration, 10);
+  return Number.isNaN(hours) ? duration : `${hours} ${hours === 1 ? 'hora' : 'horas'}`;
+};
+
 const sectionHeading = 'font-display text-2xl font-bold tracking-tight text-dark';
 const skeletonBlock = 'animate-pulse rounded-full bg-sand/40';
 
@@ -146,9 +152,9 @@ export default function CourseDetailPage() {
 
   const totalLessons = course.topics.reduce((sum, t) => sum + t.lessons.length, 0);
   const discount = course.comparePrice ? Math.round((1 - course.price / course.comparePrice) * 100) : 0;
-  // Backend courses have one description only: it goes in the hero and the "about" block is left out
-  const heroText = course.shortDescription || course.description;
-  const showAbout = Boolean(course.description) && course.description !== heroText;
+  // The full description leads the page (the owner's layout); the short one is for the course cards and the
+  // search snippet, and stands in only when a course has no full description
+  const heroText = course.description.trim() || course.shortDescription.trim();
   const relatedCourses = courses.filter((c) => c.id !== course.id).slice(0, 2);
   const instructor = course.instructor;
 
@@ -229,7 +235,7 @@ export default function CourseDetailPage() {
               <h1 className="mt-4 font-display text-3xl font-bold tracking-tight text-dark sm:text-4xl">
                 {course.title}
               </h1>
-              <p className="mt-4 max-w-2xl text-base text-dark/75">{heroText}</p>
+              {heroText && <p className="mt-4 max-w-2xl whitespace-pre-line text-base text-dark/75">{heroText}</p>}
 
               <ul className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-3 text-sm text-dark/75">
                 {/* A new course has no reviews and no students yet: those figures are left out instead of printing zeros */}
@@ -245,7 +251,7 @@ export default function CourseDetailPage() {
                 )}
                 {course.duration && (
                   <li className="flex items-center gap-2">
-                    <Clock className="size-5 text-iris" aria-hidden="true" /> {course.duration}
+                    <Clock className="size-5 text-iris" aria-hidden="true" /> {hoursLabel(course.duration)}
                   </li>
                 )}
                 <li className="flex items-center gap-2">
@@ -253,17 +259,12 @@ export default function CourseDetailPage() {
                 </li>
               </ul>
 
-              <div className="mt-6 flex items-center gap-3">
-                <img
-                  src={instructor.avatar}
-                  alt=""
-                  width={40}
-                  height={40}
-                  className="size-10 rounded-full object-cover ring-2 ring-white"
-                />
-                <p className="text-sm text-dark/75">
+              {/* Every course is taught by the shop itself, so the line under the name speaks for it */}
+              <div className="mt-6 text-sm">
+                <p className="text-dark/75">
                   Dictado por <span className="font-semibold text-dark">{instructor.name}</span>
                 </p>
+                <p className="mt-0.5 text-dark/65">Aprendé con quienes también emprendieron desde cero.</p>
               </div>
             </header>
 
@@ -369,14 +370,6 @@ export default function CourseDetailPage() {
                 mobileBuyBarClearance,
               )}
             >
-              {/* About */}
-              {showAbout && (
-                <section aria-labelledby="about-heading">
-                  <h2 id="about-heading" className={sectionHeading}>Sobre este curso</h2>
-                  <p className="mt-4 max-w-3xl whitespace-pre-line text-base text-dark/75">{course.description}</p>
-                </section>
-              )}
-
               {/* What you'll learn */}
               {course.whatYouWillLearn.length > 0 && (
                 <section aria-labelledby="learn-heading" className="card p-6 sm:p-8">
@@ -412,10 +405,15 @@ export default function CourseDetailPage() {
               {/* Syllabus */}
               {course.topics.length > 0 && (
                 <section aria-labelledby="syllabus-heading">
-                  <h2 id="syllabus-heading" className={sectionHeading}>Temario del curso</h2>
-                  <p className="mt-2 text-sm text-dark/65">
-                    {course.topics.length} {course.topics.length === 1 ? 'módulo' : 'módulos'} · {totalLessons} lecciones
-                    {course.duration && ` · ${course.duration}`}
+                  <h2 id="syllabus-heading" className={sectionHeading}>Esto es lo que vas a aprender</h2>
+                  {/* The course's own introduction when it has one; otherwise the figures */}
+                  <p className="mt-2 max-w-3xl text-sm text-dark/65">
+                    {course.syllabusIntro || (
+                      <>
+                        {course.topics.length} {course.topics.length === 1 ? 'módulo' : 'módulos'} · {totalLessons} lecciones
+                        {course.duration && ` · ${course.duration}`}
+                      </>
+                    )}
                   </p>
                   <ul className="mt-6 space-y-3">
                     {course.topics.map((topic, index) => {
