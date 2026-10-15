@@ -94,6 +94,11 @@ export interface Assignment {
   allowedFileTypes: string[];
 }
 
+export interface CourseFaq {
+  question: string;
+  answer: string;
+}
+
 export interface Course {
   id: string;
   slug: string;
@@ -102,6 +107,8 @@ export interface Course {
   shortDescription: string;
   /** One sentence under the syllabus heading on the course page */
   syllabusIntro?: string;
+  /** The course's own frequently asked questions, in display order */
+  faqs?: CourseFaq[];
   whatYouWillLearn: string[];
   requirements: string[];
   instructor: Instructor;

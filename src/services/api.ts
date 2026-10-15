@@ -1,5 +1,5 @@
 import type {
-  Product, Course, User, Order, CartItem, Address, Coupon, CouponInput,
+  Product, Course, CourseFaq, User, Order, CartItem, Address, Coupon, CouponInput,
   ProductFilters, CourseFilters
 } from '../types';
 import { API_URL } from '../lib/constants';
@@ -124,6 +124,13 @@ function mapBackendCourse(data: any): Course {
     // A course saved before the short text existed (or with it blank) falls back to the long description
     shortDescription: data.descripcionCorta || data.descripcion || '',
     syllabusIntro: data.introduccionTemario || '',
+    // Defensive: every course in the catalogue goes through here, so one malformed entry must not break the list
+    faqs: (Array.isArray(data.preguntasFrecuentes) ? data.preguntasFrecuentes : [])
+      .map((f: { pregunta?: unknown; respuesta?: unknown } | null) => ({
+        question: String(f?.pregunta ?? '').trim(),
+        answer: String(f?.respuesta ?? '').trim(),
+      }))
+      .filter((f: CourseFaq) => f.question && f.answer),
     whatYouWillLearn: [],
     requirements: [],
     instructor: {

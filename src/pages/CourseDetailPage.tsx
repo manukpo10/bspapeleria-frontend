@@ -1,13 +1,13 @@
-import { useState, useEffect, useRef, type KeyboardEvent } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import {
-  Play, Clock, Users, Star, BookOpen, Check, ChevronDown, FileText, HelpCircle,
-  FileDown, ClipboardList, ShoppingCart, Award, GraduationCap, Sparkles, MessageSquareText,
+  Play, Clock, Users, BookOpen, Check, ChevronDown, FileText, HelpCircle,
+  FileDown, ClipboardList, ShoppingCart, GraduationCap, Sparkles,
+  InfinityIcon, CirclePlay, MessageCircleHeart,
   type LucideIcon
 } from 'lucide-react';
 import { SEO } from '../components/shared/SEO';
 import { Breadcrumbs } from '../components/shared/PageHeader';
-import { CourseCard } from '../components/shared/CourseCard';
 import { StarRating } from '../components/shared/StarRating';
 import { MobileBuyBar, mobileBuyBarClearance } from '../components/shared/MobileBuyBar';
 import { api } from '../services/api';
@@ -16,7 +16,6 @@ import { useUIStore } from '../store/uiStore';
 import { useAuthStore } from '../store/authStore';
 import { cn, formatPrice } from '../lib/utils';
 import type { Course, Lesson } from '../types';
-import { courses, reviews as mockReviews } from '../data/mocks';
 import { toast } from 'sonner';
 
 const lessonMeta: Record<Lesson['type'], { icon: LucideIcon; label: string }> = {
@@ -39,12 +38,24 @@ const modalityLabel: Record<Course['modality'], string> = {
   hibrido: 'Híbrido',
 };
 
-const tabs = [
-  { id: 'reviews', label: 'Reseñas' },
-  { id: 'qa', label: 'Q&A' },
-] as const;
+// What every course of the shop includes (the owner's list), shown in the purchase card
+const courseIncludes: { icon: LucideIcon; title: string; detail: string }[] = [
+  { icon: InfinityIcon, title: 'Acceso de por vida', detail: 'Volvé a las clases cuando quieras.' },
+  { icon: CirclePlay, title: 'Clases grabadas', detail: 'Aprendé a tu ritmo y desde donde estés.' },
+  { icon: MessageCircleHeart, title: 'Acompañamiento personalizado', detail: 'Consultá tus dudas durante el aprendizaje.' },
+  { icon: BookOpen, title: 'Contenido paso a paso', detail: 'Desde el diseño hasta el armado final.' },
+];
 
-type TabId = (typeof tabs)[number]['id'];
+// Every course is taught by the shop's owners, so "Sobre el instructor" introduces them in their own words
+const teamPhotos = [
+  { src: '/images/brand/clari-avatar.webp', name: 'Clary' },
+  { src: '/images/brand/dario-avatar.webp', name: 'Darío' },
+];
+const teamBio = [
+  'Somos Clary y Darío, y hace más de 6 años que trabajamos en el mundo de la papelería personalizada.',
+  'Empezamos aprendiendo, probando y resolviendo problemas, igual que muchas de las personas que hoy llegan a nuestros cursos.',
+  'Ahora compartimos nuestra experiencia para que puedas aprender de forma sencilla, evitar errores comunes y animarte a crear tu propio emprendimiento.',
+];
 
 // The API gives the duration as "8h"; running text reads "8 horas"
 const hoursLabel = (duration: string) => {
@@ -63,9 +74,7 @@ export default function CourseDetailPage() {
   const [course, setCourse] = useState<Course | null>(null);
   const [loading, setLoading] = useState(true);
   const [expandedTopic, setExpandedTopic] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<TabId>('reviews');
   const [playingPreview, setPlayingPreview] = useState(false);
-  const tabRefs = useRef<Partial<Record<TabId, HTMLButtonElement | null>>>({});
   // The page's own main call to action: the phone buy bar watches it
   const [ctaEl, setCtaEl] = useState<HTMLElement | null>(null);
 
@@ -155,7 +164,6 @@ export default function CourseDetailPage() {
   // The full description leads the page (the owner's layout); the short one is for the course cards and the
   // search snippet, and stands in only when a course has no full description
   const heroText = course.description.trim() || course.shortDescription.trim();
-  const relatedCourses = courses.filter((c) => c.id !== course.id).slice(0, 2);
   const instructor = course.instructor;
 
   // The main action is defined once and rendered twice: in the purchase card and in the phone buy bar
@@ -170,32 +178,6 @@ export default function CourseDetailPage() {
       </button>
     );
   const mainActionClass = 'btn btn-primary btn-lg w-full whitespace-normal text-center';
-
-  // Arrow keys, Home and End move between tabs, as in the ARIA tabs pattern
-  const handleTabKeyDown = (e: KeyboardEvent<HTMLButtonElement>, current: TabId) => {
-    const index = tabs.findIndex((t) => t.id === current);
-    let next: number;
-    switch (e.key) {
-      case 'ArrowRight':
-        next = (index + 1) % tabs.length;
-        break;
-      case 'ArrowLeft':
-        next = (index - 1 + tabs.length) % tabs.length;
-        break;
-      case 'Home':
-        next = 0;
-        break;
-      case 'End':
-        next = tabs.length - 1;
-        break;
-      default:
-        return;
-    }
-    e.preventDefault();
-    const nextId = tabs[next].id;
-    setActiveTab(nextId);
-    tabRefs.current[nextId]?.focus();
-  };
 
   return (
     <>
@@ -341,25 +323,20 @@ export default function CourseDetailPage() {
                   </div>
                 )}
 
-                {(course.includes.length > 0 || course.certificate) && (
-                  <div className="mt-6 border-t border-sand/60 pt-5">
-                    <h2 className="font-display text-sm font-semibold text-dark">Este curso incluye</h2>
-                    <ul className="mt-3 space-y-2.5">
-                      {course.includes.map((item, i) => (
-                        <li key={i} className="flex items-start gap-3 text-sm text-dark/75">
-                          <Check className="mt-0.5 size-5 shrink-0 text-iris" aria-hidden="true" />
-                          {item}
-                        </li>
-                      ))}
-                      {course.certificate && (
-                        <li className="flex items-start gap-3 text-sm text-dark/75">
-                          <Award className="mt-0.5 size-5 shrink-0 text-iris" aria-hidden="true" />
-                          Certificado de finalización
-                        </li>
-                      )}
-                    </ul>
-                  </div>
-                )}
+                <div className="mt-6 border-t border-sand/60 pt-5">
+                  <h2 className="font-display text-sm font-semibold text-dark">Este curso incluye</h2>
+                  <ul className="mt-4 space-y-4">
+                    {courseIncludes.map(({ icon: Icon, title, detail }) => (
+                      <li key={title} className="flex items-start gap-3 text-sm">
+                        <Icon className="mt-0.5 size-5 shrink-0 text-iris" aria-hidden="true" />
+                        <p>
+                          <span className="block font-semibold text-dark">{title}</span>
+                          <span className="block text-dark/65">{detail}</span>
+                        </p>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               </div>
             </aside>
 
@@ -494,138 +471,50 @@ export default function CourseDetailPage() {
                 </section>
               )}
 
-              {/* Instructor */}
+              {/* Instructor: the shop's owners, with their photos and their own words */}
               <section aria-labelledby="instructor-heading">
                 <h2 id="instructor-heading" className={sectionHeading}>Sobre el instructor</h2>
                 <div className="card mt-6 flex flex-col gap-5 p-6 sm:flex-row sm:p-8">
-                  <img
-                    src={instructor.avatar}
-                    alt={instructor.name}
-                    width={80}
-                    height={80}
-                    loading="lazy"
-                    decoding="async"
-                    className="size-20 shrink-0 rounded-full object-cover ring-4 ring-mist"
-                  />
+                  <div className="flex shrink-0 -space-x-3">
+                    {teamPhotos.map((person) => (
+                      <img
+                        key={person.name}
+                        src={person.src}
+                        alt={person.name}
+                        width={80}
+                        height={80}
+                        loading="lazy"
+                        decoding="async"
+                        className="size-20 rounded-full object-cover ring-4 ring-white"
+                      />
+                    ))}
+                  </div>
                   <div className="min-w-0">
                     <h3 className="font-display text-lg font-semibold text-dark">{instructor.name}</h3>
-                    {instructor.bio && <p className="mt-2 text-dark/75">{instructor.bio}</p>}
-                    <ul className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-xs text-dark/65">
-                      {instructor.coursesCount > 0 && (
-                        <li className="flex items-center gap-1.5">
-                          <BookOpen className="size-4 text-iris" aria-hidden="true" /> {instructor.coursesCount} cursos
-                        </li>
-                      )}
-                      {instructor.studentsCount > 0 && (
-                        <li className="flex items-center gap-1.5">
-                          <Users className="size-4 text-iris" aria-hidden="true" /> {instructor.studentsCount} estudiantes
-                        </li>
-                      )}
-                      {instructor.rating > 0 && (
-                        <li className="flex items-center gap-1.5">
-                          <Star className="size-4 fill-amber-400 text-amber-400" aria-hidden="true" /> {instructor.rating.toFixed(1)}
-                        </li>
-                      )}
-                    </ul>
+                    <p className="text-sm text-dark/65">Emprendedores y creadores de contenido educativo</p>
+                    <div className="mt-4 space-y-3 text-dark/75">
+                      {teamBio.map((paragraph) => (
+                        <p key={paragraph}>{paragraph}</p>
+                      ))}
+                      <p className="font-semibold text-dark">Nos encanta enseñar, pero sobre todo acompañarte mientras aprendés.</p>
+                    </div>
                   </div>
                 </div>
               </section>
 
-              {/* Reviews & Q&A */}
-              <section aria-labelledby="reviews-heading">
-                <h2 id="reviews-heading" className={sectionHeading}>Reseñas y preguntas</h2>
-                <div className="mt-6">
-                  <div
-                    role="tablist"
-                    aria-label="Reseñas y preguntas del curso"
-                    className="flex gap-1 overflow-x-auto border-b border-sand/70 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-                  >
-                    {tabs.map((tab) => (
-                      <button
-                        key={tab.id}
-                        ref={(el) => { tabRefs.current[tab.id] = el; }}
-                        id={`tab-${tab.id}`}
-                        type="button"
-                        role="tab"
-                        aria-selected={activeTab === tab.id}
-                        aria-controls={`panel-${tab.id}`}
-                        tabIndex={activeTab === tab.id ? 0 : -1}
-                        onClick={() => setActiveTab(tab.id)}
-                        onKeyDown={(e) => handleTabKeyDown(e, tab.id)}
-                        className={cn(
-                          'min-h-12 shrink-0 border-b-[3px] px-4 font-display text-sm font-semibold transition-colors sm:px-6',
-                          activeTab === tab.id
-                            ? 'border-iris text-dark'
-                            : 'border-transparent text-dark/65 hover:text-dark',
-                        )}
-                      >
-                        {tab.label}
-                      </button>
+              {/* Frequently asked questions: each course has its own. Reviews stay hidden until there are real ones,
+                  and related courses come back when the catalogue has more than a handful */}
+              {course.faqs && course.faqs.length > 0 && (
+                <section aria-labelledby="faq-heading">
+                  <h2 id="faq-heading" className={sectionHeading}>Preguntas frecuentes</h2>
+                  <ul className="mt-6 space-y-3">
+                    {course.faqs.map((faq, i) => (
+                      <li key={`${i}-${faq.question}`} className="card p-5 sm:p-6">
+                        <h3 className="font-display text-base font-semibold text-dark">{faq.question}</h3>
+                        <p className="mt-2 whitespace-pre-line text-dark/75">{faq.answer}</p>
+                      </li>
                     ))}
-                  </div>
-
-                  <div
-                    key={activeTab}
-                    role="tabpanel"
-                    id={`panel-${activeTab}`}
-                    aria-labelledby={`tab-${activeTab}`}
-                    tabIndex={0}
-                    className="animate-fade-in pt-6"
-                  >
-                    {activeTab === 'reviews' && (
-                      <div className="space-y-4">
-                        <div className="card flex flex-col items-center gap-3 p-6 text-center sm:flex-row sm:gap-6 sm:text-left">
-                          <p className="font-display text-5xl font-bold text-dark">{course.rating.toFixed(1)}</p>
-                          <div>
-                            <StarRating rating={course.rating} size={20} className="justify-center sm:justify-start" />
-                            <p className="mt-1 text-sm text-dark/65">Basado en {course.reviewsCount} reseñas</p>
-                          </div>
-                        </div>
-                        <ul className="space-y-4">
-                          {mockReviews.slice(0, 4).map((review) => (
-                            <li key={review.id} className="card p-5">
-                              <div className="flex items-center gap-3">
-                                <img
-                                  src={review.userAvatar}
-                                  alt=""
-                                  width={40}
-                                  height={40}
-                                  loading="lazy"
-                                  decoding="async"
-                                  className="size-10 rounded-full object-cover ring-2 ring-sand"
-                                />
-                                <div>
-                                  <p className="font-display text-sm font-semibold text-dark">{review.userName}</p>
-                                  <StarRating rating={review.rating} size={14} className="mt-0.5" />
-                                </div>
-                              </div>
-                              <p className="mt-3 text-dark/75">{review.comment}</p>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-                    {activeTab === 'qa' && (
-                      <div className="flex items-center gap-4 rounded-2xl bg-mist p-5">
-                        <span className="grid size-12 shrink-0 place-items-center rounded-xl bg-white text-iris">
-                          <MessageSquareText className="size-6" aria-hidden="true" />
-                        </span>
-                        <p className="text-dark/75">Sección de Q&A próximamente.</p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </section>
-
-              {/* Related courses */}
-              {relatedCourses.length > 0 && (
-                <section aria-labelledby="related-heading">
-                  <h2 id="related-heading" className={sectionHeading}>Cursos relacionados</h2>
-                  <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2">
-                    {relatedCourses.map((related) => (
-                      <CourseCard key={related.id} course={related} />
-                    ))}
-                  </div>
+                  </ul>
                 </section>
               )}
             </div>
