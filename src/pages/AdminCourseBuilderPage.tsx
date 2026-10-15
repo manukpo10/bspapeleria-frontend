@@ -256,6 +256,8 @@ function toPreviewCourse(c: Course): Course {
     ...c,
     slug: c.slug || 'vista-previa',
     title: c.title || 'Título del curso',
+    // Same fallback as the storefront: a blank short text shows the long description
+    shortDescription: c.shortDescription.trim() || c.description,
     instructor: {
       ...c.instructor,
       name: name || 'Instructor',
@@ -528,6 +530,7 @@ export default function AdminCourseBuilderPage() {
     title: '',
     description: '',
     shortDescription: '',
+    syllabusIntro: '',
     whatYouWillLearn: [''],
     requirements: [],
     instructor: { id: '', name: '', avatar: '', bio: '', expertise: [], coursesCount: 0, studentsCount: 0, rating: 0 },
@@ -555,7 +558,10 @@ export default function AdminCourseBuilderPage() {
   useEffect(() => {
     if (isNew) return;
     api.getCourseById(id!).then((c) => {
-      if (c) setCourse(c);
+      if (!c) return;
+      // The API fills a missing short text with the long description: the field stays blank then,
+      // so saving does not copy the long text into it
+      setCourse({ ...c, shortDescription: c.shortDescription === c.description ? '' : c.shortDescription });
     });
   }, [id, isNew]);
 
@@ -670,10 +676,14 @@ export default function AdminCourseBuilderPage() {
               )}
             </FormField>
 
-            <FormField label="Descripción corta" hint="Todavía no se guarda.">
+            <FormField
+              label="Descripción corta"
+              hint="Se muestra en las tarjetas del curso. Si la dejás vacía, se usa la descripción completa. Máximo 500 caracteres."
+            >
               {(control) => (
                 <input
                   {...control}
+                  maxLength={500}
                   value={course.shortDescription}
                   onChange={(e) => setCourse({ ...course, shortDescription: e.target.value })}
                   placeholder="Breve descripción que aparece en listados"
@@ -691,6 +701,22 @@ export default function AdminCourseBuilderPage() {
                   placeholder="Descripción detallada del curso"
                   rows={4}
                   className="field min-h-28 resize-y"
+                />
+              )}
+            </FormField>
+
+            <FormField
+              label="Introducción del temario"
+              hint="Va debajo del título del temario en la página del curso. Si la dejás vacía, se muestran los módulos, las lecciones y la duración. Máximo 500 caracteres."
+            >
+              {(control) => (
+                <input
+                  {...control}
+                  maxLength={500}
+                  value={course.syllabusIntro ?? ''}
+                  onChange={(e) => setCourse({ ...course, syllabusIntro: e.target.value })}
+                  placeholder="Un recorrido paso a paso por lo que vas a aprender"
+                  className="field"
                 />
               )}
             </FormField>

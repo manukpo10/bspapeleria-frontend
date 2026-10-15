@@ -121,7 +121,9 @@ function mapBackendCourse(data: any): Course {
     slug: data.slug,
     title: data.titulo,
     description: data.descripcion || '',
-    shortDescription: data.descripcion || '',
+    // A course saved before the short text existed (or with it blank) falls back to the long description
+    shortDescription: data.descripcionCorta || data.descripcion || '',
+    syllabusIntro: data.introduccionTemario || '',
     whatYouWillLearn: [],
     requirements: [],
     instructor: {
@@ -335,6 +337,9 @@ export const api = {
     const payload = {
       titulo: course.title,
       descripcion: course.description,
+      // The backend stores a blank text as null
+      descripcionCorta: course.shortDescription?.trim() ?? '',
+      introduccionTemario: course.syllabusIntro?.trim() ?? '',
       imagenUrl: course.coverImage,
       precio: course.price,
       precioComparacion: course.comparePrice,
@@ -370,6 +375,8 @@ export const api = {
     const payload = {
       titulo: data.title,
       descripcion: data.description,
+      descripcionCorta: data.shortDescription?.trim() ?? '',
+      introduccionTemario: data.syllabusIntro?.trim() ?? '',
       imagenUrl: data.coverImage,
       precio: data.price,
       precioComparacion: data.comparePrice,

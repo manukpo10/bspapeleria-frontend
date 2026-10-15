@@ -1,15 +1,16 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, BookOpen, Clock, GraduationCap, Sparkles, Star, Users } from 'lucide-react';
+import { ArrowRight, Clock, GraduationCap, InfinityIcon, MessageCircle, Sparkles } from 'lucide-react';
 import type { Course } from '../../types';
-import { cn, formatPrice } from '../../lib/utils';
+import { formatPrice } from '../../lib/utils';
 
 const NEW_COURSE_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
 
+// Lower case on purpose: it reads as "Nivel inicial" in the meta line
 const levelLabel: Record<Course['level'], string> = {
-  principiante: 'Principiante',
-  intermedio: 'Intermedio',
-  avanzado: 'Avanzado',
+  principiante: 'inicial',
+  intermedio: 'intermedio',
+  avanzado: 'avanzado',
 };
 
 const modalityLabel: Record<Course['modality'], string> = {
@@ -20,8 +21,8 @@ const modalityLabel: Record<Course['modality'], string> = {
 
 interface CourseCardProps {
   course: Course;
-  /** Adds modality, status flags, review count, module count and a full-width enrol button.
-   *  The home slider keeps the minimal body with a text link */
+  /** Same content in both variants. Detailed closes with a full-width button under the price;
+   *  the home slider and related courses keep a text link beside it */
   detailed?: boolean;
 }
 
@@ -31,7 +32,7 @@ export function CourseCard({ course, detailed = false }: CourseCardProps) {
 
   const href = `/cursos/${course.slug}`;
   const isNew = mountedAt - new Date(course.createdAt).getTime() < NEW_COURSE_WINDOW_MS;
-  const modules = course.topics.length;
+  const shortDescription = course.shortDescription.trim();
 
   const priceRow = (
     <div className="flex flex-wrap items-baseline gap-x-2">
@@ -66,79 +67,48 @@ export function CourseCard({ course, detailed = false }: CourseCardProps) {
           )}
         </Link>
 
-        <span className="chip pointer-events-none absolute left-3 top-3 bg-white/90 text-dark shadow-soft">
-          {levelLabel[course.level] ?? course.level}
-        </span>
-        {course.duration && (
-          <span className="chip pointer-events-none absolute bottom-3 right-3 bg-dark/75 text-white backdrop-blur-sm">
-            <Clock className="size-3.5" aria-hidden="true" /> {course.duration}
-          </span>
-        )}
-      </div>
-
-      <div className="flex flex-1 flex-col p-5">
-        {detailed && (
-          <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5">
-            <p className="text-xs text-dark/65">{modalityLabel[course.modality] ?? course.modality}</p>
-            {isNew && <span className="chip bg-mist text-iris">Nuevo</span>}
+        {(isNew || course.featured) && (
+          <div className="pointer-events-none absolute inset-x-3 top-3 flex flex-wrap gap-1.5">
+            {isNew && <span className="chip bg-white/90 text-iris shadow-soft">Nuevo</span>}
             {course.featured && (
-              <span className="chip bg-mist text-iris">
+              <span className="chip bg-white/90 text-iris shadow-soft">
                 <Sparkles className="size-3.5" aria-hidden="true" /> Destacado
               </span>
             )}
           </div>
         )}
+        {course.duration && (
+          <span className="chip pointer-events-none absolute bottom-3 right-3 bg-dark/75 text-white backdrop-blur-sm">
+            <Clock className="size-3.5" aria-hidden="true" />
+            <span className="sr-only">Duración: </span>
+            {course.duration}
+          </span>
+        )}
+      </div>
 
-        <h3 className={cn('font-display text-lg font-semibold leading-snug text-dark line-clamp-2', detailed && 'mt-1.5')}>
+      <div className="flex flex-1 flex-col p-5">
+        {/* Wraps instead of squeezing: on a narrow card the second item drops below the first */}
+        <ul className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-medium text-dark/70">
+          <li className="flex items-start gap-1.5">
+            <InfinityIcon className="size-4 shrink-0 text-iris" aria-hidden="true" /> Acceso de por vida
+          </li>
+          <li className="flex items-start gap-1.5">
+            <MessageCircle className="size-4 shrink-0 text-iris" aria-hidden="true" /> Acompañamiento personalizado
+          </li>
+        </ul>
+
+        <h3 className="mt-3 font-display text-lg font-semibold leading-snug text-dark line-clamp-2">
           <Link to={href} className="transition-colors hover:text-iris">
             {course.title}
           </Link>
         </h3>
 
-        <div className="mt-3 flex items-center gap-2">
-          <img
-            src={course.instructor.avatar}
-            alt=""
-            width={24}
-            height={24}
-            loading="lazy"
-            decoding="async"
-            className="size-6 rounded-full object-cover ring-2 ring-sand"
-          />
-          <span className="text-sm text-dark/70">{course.instructor.name}</span>
-        </div>
+        {shortDescription && <p className="mt-2 text-sm text-dark/75 line-clamp-3">{shortDescription}</p>}
 
-        {/* A new course has no students and no reviews yet: those figures are left out instead of printing zeros */}
-        <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-dark/65 empty:hidden">
-          {course.duration && (
-            <span className="flex items-center gap-1.5">
-              <Clock className="size-3.5" aria-hidden="true" />
-              <span className="sr-only">Duración: </span>
-              {course.duration}
-            </span>
-          )}
-          {course.enrolledCount > 0 && (
-            <span className="flex items-center gap-1.5">
-              <Users className="size-3.5" aria-hidden="true" />
-              <span className="sr-only">Estudiantes: </span>
-              {course.enrolledCount}
-            </span>
-          )}
-          {course.reviewsCount > 0 && (
-            <span className="flex items-center gap-1.5">
-              <Star className="size-3.5 fill-amber-400 text-amber-400" aria-hidden="true" />
-              <span className="sr-only">Calificación: </span>
-              {course.rating.toFixed(1)}
-              {detailed && ` (${course.reviewsCount})`}
-            </span>
-          )}
-          {detailed && modules > 0 && (
-            <span className="flex items-center gap-1.5">
-              <BookOpen className="size-3.5" aria-hidden="true" />
-              {modules} {modules === 1 ? 'módulo' : 'módulos'}
-            </span>
-          )}
-        </div>
+        <p className="mt-3 text-xs text-dark/65">
+          {modalityLabel[course.modality] ?? course.modality} <span aria-hidden="true">·</span> Nivel{' '}
+          {levelLabel[course.level] ?? course.level}
+        </p>
 
         <div className="mt-auto pt-5">
           <div className="border-t border-sand/60 pt-4">
@@ -146,18 +116,20 @@ export function CourseCard({ course, detailed = false }: CourseCardProps) {
               <>
                 {priceRow}
                 <Link to={href} className="btn btn-soft mt-3 w-full">
-                  <GraduationCap className="size-4" aria-hidden="true" /> Inscribirme
+                  <GraduationCap className="size-4" aria-hidden="true" /> Conocer el curso
                   <span className="sr-only">: {course.title}</span>
                 </Link>
               </>
             ) : (
-              <div className="flex items-center justify-between gap-3">
+              // Wraps so the longer link never pushes past the edge of a narrow slider card
+              <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
                 {priceRow}
                 <Link
                   to={href}
                   className="group/link inline-flex min-h-11 shrink-0 items-center gap-1 text-sm font-semibold text-iris transition-colors hover:text-dark"
                 >
-                  Ver curso
+                  Conocer el curso
+                  <span className="sr-only">: {course.title}</span>
                   <ArrowRight
                     className="size-4 transition-transform group-hover/link:translate-x-1"
                     aria-hidden="true"

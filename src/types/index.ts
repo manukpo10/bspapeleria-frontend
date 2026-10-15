@@ -100,6 +100,8 @@ export interface Course {
   title: string;
   description: string;
   shortDescription: string;
+  /** One sentence under the syllabus heading on the course page */
+  syllabusIntro?: string;
   whatYouWillLearn: string[];
   requirements: string[];
   instructor: Instructor;

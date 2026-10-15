@@ -24,9 +24,9 @@ function InstagramIcon({ className }: { className?: string }) {
 const trainingLinks = [
   { label: 'Todos los cursos', to: '/cursos' },
   // These three are the courses published today
-  { label: 'Agendas en PowerPoint', to: '/cursos/agendas-en-powerpoint' },
+  { label: 'El Mundo de las Agendas', to: '/cursos/agendas-en-powerpoint' },
   { label: 'Etiquetas Escolares', to: '/cursos/etiquetas-escolares-en-powerpoint' },
-  { label: 'Candy Bar', to: '/cursos/candy-bar-powerpoint' },
+  { label: 'La Magia del Candy Bar', to: '/cursos/candy-bar-powerpoint' },
 ];
 
 const brandLinks = [
