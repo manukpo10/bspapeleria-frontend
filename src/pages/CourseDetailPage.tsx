@@ -48,11 +48,11 @@ const courseIncludes: { icon: LucideIcon; title: string; detail: string }[] = [
 
 // Every course is taught by the shop's owners, so "Sobre el instructor" introduces them in their own words
 const teamPhotos = [
-  { src: '/images/brand/clari-avatar.webp', name: 'Clary' },
+  { src: '/images/brand/clari-avatar.webp', name: 'Clari' },
   { src: '/images/brand/dario-avatar.webp', name: 'Darío' },
 ];
 const teamBio = [
-  'Somos Clary y Darío, y hace más de 6 años que trabajamos en el mundo de la papelería personalizada.',
+  'Somos Clari y Darío, y hace más de 6 años que trabajamos en el mundo de la papelería personalizada.',
   'Empezamos aprendiendo, probando y resolviendo problemas, igual que muchas de las personas que hoy llegan a nuestros cursos.',
   'Ahora compartimos nuestra experiencia para que puedas aprender de forma sencilla, evitar errores comunes y animarte a crear tu propio emprendimiento.',
 ];
