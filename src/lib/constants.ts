@@ -1,10 +1,9 @@
 export const APP_NAME = 'BS Papelería';
-export const APP_DESCRIPTION = 'Papelería boutique moderna con productos personalizados, sublimables, archivos digitales y cursos creativos.';
+export const APP_DESCRIPTION = 'Cursos online y recursos digitales para aprender papelería creativa y emprender.';
 export const APP_URL = 'https://bspapeleria.com';
 export const CONTACT_EMAIL = 'bspapeleria@gmail.com';
 
 // The shop takes no phone calls: the number is offered as a WhatsApp link only, never as tel:
-export const WHATSAPP_DISPLAY = '+54 9 221 318-0884';
 export const WHATSAPP_URL = 'https://wa.me/5492213180884';
 export const INSTAGRAM_URL = 'https://instagram.com/bspapeleria';
 export const TIKTOK_URL = 'https://www.tiktok.com/@bspapeleria';
