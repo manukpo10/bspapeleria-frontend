@@ -8,13 +8,13 @@ import { InstagramFeedSection } from '../components/about/InstagramFeedSection';
 
 const team = [
   {
-    name: 'Clari',
-    text: '¡Hola! Soy Clari, Licenciada en Artes Audiovisuales y la mente creativa detrás de BS Papelería. Me encargo de los diseños y de enseñarte a crear tus propios proyectos desde cero. Fan de Volver al Futuro y de los perros.',
+    name: 'Clary',
+    text: '¡Hola! Soy Clary, Licenciada en Artes Audiovisuales y la mente creativa detrás de BS Papelería. Me encargo de los diseños y de enseñarte a crear tus propios proyectos desde cero. Fan de Volver al Futuro y de los perros.',
     caption: 'El día que retiré mi título, uno de mis mayores logros.',
     image: {
       src: '/images/brand/clari.webp',
       size: 564,
-      alt: 'Clari sonriendo, con su título de la Universidad Nacional de La Plata en las manos',
+      alt: 'Clary sonriendo, con su título de la Universidad Nacional de La Plata en las manos',
     },
     tilt: '-rotate-2',
   },
