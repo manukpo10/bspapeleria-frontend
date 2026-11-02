@@ -6,21 +6,30 @@ import { faqs } from '../data/mocks';
 import { cn } from '../lib/utils';
 import { CONTACT_EMAIL, WHATSAPP_URL } from '../lib/constants';
 
+// The shop no longer sells physical products through the site, so the "envios" and "personalizados" questions
+// are hidden. Only questions whose category has a tab here are listed
 const categories = [
   { id: 'all', name: 'Todas' },
-  { id: 'envios', name: 'Envíos' },
   { id: 'pagos', name: 'Pagos' },
   { id: 'cursos', name: 'Cursos' },
   { id: 'devoluciones', name: 'Devoluciones' },
-  { id: 'personalizados', name: 'Personalizados' },
 ];
+
+// Returns and exchanges of a physical product received at home
+const PHYSICAL_RETURN_FAQS = new Set(['f11', 'f13']);
+
+const visibleFaqs = faqs.filter(
+  (f) => categories.some((c) => c.id === f.category) && !PHYSICAL_RETURN_FAQS.has(f.id),
+);
+
+const PAGE_DESCRIPTION = '¿Tenés dudas? Acá vas a encontrar respuestas sobre nuestros cursos, recursos digitales, pagos y acompañamiento.';
 
 export default function FAQPage() {
   const [activeCategory, setActiveCategory] = useState('all');
   const [search, setSearch] = useState('');
   const [openId, setOpenId] = useState<string | null>(null);
 
-  const filtered = faqs
+  const filtered = visibleFaqs
     .filter((f) => (activeCategory === 'all' ? true : f.category === activeCategory))
     .filter((f) => f.question.toLowerCase().includes(search.toLowerCase()) || f.answer.toLowerCase().includes(search.toLowerCase()))
     .sort((a, b) => a.order - b.order);
@@ -32,15 +41,11 @@ export default function FAQPage() {
 
   return (
     <>
-      <SEO title="Preguntas Frecuentes" />
+      <SEO title="Preguntas frecuentes" description={PAGE_DESCRIPTION} />
       <PageHeader
-        title="Preguntas Frecuentes"
+        title="Preguntas frecuentes"
         crumbs={[{ label: 'Inicio', to: '/' }, { label: 'Preguntas frecuentes' }]}
-        description={
-          <>
-            Respuestas a lo que más nos preguntan — {filtered.length} {filtered.length === 1 ? 'pregunta' : 'preguntas'}
-          </>
-        }
+        description={PAGE_DESCRIPTION}
       />
 
       <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
