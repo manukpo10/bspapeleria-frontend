@@ -1,8 +1,7 @@
 import { useState, useEffect, useRef, type KeyboardEvent, type Ref } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, Link, Navigate, useNavigate } from 'react-router-dom';
 import {
-  ShoppingCart, Heart, Minus, Plus, Star, Truck, ShieldCheck, RotateCcw, PackageCheck, PackageX,
-  Package, MessageSquareText
+  ShoppingCart, Heart, Minus, Plus, Star, Package, MessageSquareText
 } from 'lucide-react';
 import { SEO } from '../components/shared/SEO';
 import { Breadcrumbs } from '../components/shared/PageHeader';
@@ -12,6 +11,7 @@ import { useCartStore } from '../store/cartStore';
 import { useUIStore } from '../store/uiStore';
 import { cn, formatPrice } from '../lib/utils';
 import { PRODUCT_CATEGORIES } from '../lib/constants';
+import { isDigitalResource } from '../lib/storefront';
 import type { Product } from '../types';
 import { toast } from 'sonner';
 
@@ -86,15 +86,18 @@ export default function ProductDetailPage() {
     );
   }
 
+  // The storefront no longer sells physical products: an old link to one lands on the list
+  if (product && !isDigitalResource(product)) return <Navigate to="/productos" replace />;
+
   if (!product) {
     return (
       <div className="mx-auto flex max-w-7xl flex-col items-center px-4 py-20 text-center sm:px-6 lg:px-8">
         <span className="grid size-20 place-items-center rounded-full bg-mist text-iris">
           <Package className="size-9" aria-hidden="true" />
         </span>
-        <h1 className="mt-6 font-display text-3xl font-bold tracking-tight text-dark">Producto no encontrado</h1>
+        <h1 className="mt-6 font-display text-3xl font-bold tracking-tight text-dark">Recurso no encontrado</h1>
         <p className="mt-3 max-w-md text-dark/75">Puede que ya no esté disponible o que el enlace sea incorrecto.</p>
-        <Link to="/productos" className="btn btn-primary mt-8">Ver todos los productos</Link>
+        <Link to="/productos" className="btn btn-primary mt-8">Ver todos los recursos</Link>
       </div>
     );
   }
@@ -160,14 +163,6 @@ export default function ProductDetailPage() {
   const comparePrice =
     product.comparePrice != null && product.comparePrice > product.price ? product.comparePrice : null;
   const categoryName = PRODUCT_CATEGORIES.find((c) => c.id === product.category)?.name ?? product.category;
-  const inStock = product.stock > 0;
-
-  const reassurances = [
-    { icon: Truck, text: 'Envío a todo el país' },
-    { icon: ShieldCheck, text: 'Pago seguro' },
-    { icon: RotateCcw, text: '10 días de devolución' },
-    { icon: inStock ? PackageCheck : PackageX, text: inStock ? 'En stock' : 'Sin stock' },
-  ];
 
   return (
     <>
@@ -178,7 +173,7 @@ export default function ProductDetailPage() {
           <Breadcrumbs
             crumbs={[
               { label: 'Inicio', to: '/' },
-              { label: 'Productos', to: '/productos' },
+              { label: 'Recursos digitales', to: '/productos' },
               { label: product.name },
             ]}
           />
@@ -284,9 +279,6 @@ export default function ProductDetailPage() {
                   <Plus className="size-4" aria-hidden="true" />
                 </button>
               </div>
-              {product.stock < 10 && product.stock > 0 && (
-                <span className="text-sm font-medium text-rose-700">¡Solo quedan {product.stock}!</span>
-              )}
             </div>
 
             {/* Actions */}
@@ -304,18 +296,6 @@ export default function ProductDetailPage() {
                 <Heart className="size-5" aria-hidden="true" />
               </button>
             </div>
-
-            {/* Reassurance */}
-            <ul className="mt-8 grid gap-4 border-t border-sand/60 pt-8 sm:grid-cols-2">
-              {reassurances.map(({ icon: Icon, text }) => (
-                <li key={text} className="flex items-center gap-3">
-                  <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-mist text-iris">
-                    <Icon className="size-5" aria-hidden="true" />
-                  </span>
-                  <span className="text-sm font-medium text-dark/75">{text}</span>
-                </li>
-              ))}
-            </ul>
           </div>
         </div>
 
@@ -365,8 +345,6 @@ export default function ProductDetailPage() {
               <dl className="grid max-w-3xl grid-cols-1 gap-4 sm:grid-cols-2">
                 {[
                   { label: 'Categoría', value: categoryName },
-                  { label: 'Stock', value: `${product.stock} unidades` },
-                  { label: 'Tipo', value: product.isDigital ? 'Digital' : 'Físico' },
                   { label: 'Tags', value: product.tags.join(', ') || '—' },
                 ].map(({ label, value }) => (
                   <div key={label} className="rounded-2xl bg-mist p-5">

@@ -106,7 +106,8 @@ function mapBackendProduct(data: any): Product {
     category: data.categoria?.replace(/_/g, '-') ?? '',
     tags: data.tags || [],
     stock: data.stock || 0,
-    isDigital: data.esDigital || false,
+    // The same rule the backend applies to shipping: stored flag or the digital files category
+    isDigital: data.esDigital || data.categoria === 'archivos_digitales',
     downloadUrl: data.urlDescarga,
     featured: data.destacado || false,
     rating: data.rating || 0,
