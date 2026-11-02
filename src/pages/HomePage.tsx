@@ -11,43 +11,18 @@ import { Testimonials } from '../components/home/Testimonials';
 import { StartCta } from '../components/home/StartCta';
 import { api } from '../services/api';
 import { cachedFetch } from '../lib/apiCache';
-import type { Course, Product, ProductCategory } from '../types';
+import { isDigitalResource } from '../lib/storefront';
+import type { Course, Product } from '../types';
 
-const PRODUCT_SECTIONS: { category: ProductCategory; title: string; subtitle: string; script: string }[] = [
-  {
-    category: 'archivos-digitales',
-    title: 'Archivos Digitales',
-    subtitle: 'Plantillas, planners y recursos descargables para tu creatividad.',
-    script: 'Descargá y creá',
-  },
-  {
-    category: 'personalizados',
-    title: 'Productos Personalizados',
-    subtitle: 'Agendas, tazas, llaveros y más con tu toque único.',
-    script: 'Hecho para vos',
-  },
-  {
-    category: 'sublimables',
-    title: 'Productos Sublimables',
-    subtitle: 'Remeras, mates y accesorios con sublimación de calidad.',
-    script: 'Colores vibrantes',
-  },
-  {
-    category: 'fiestas',
-    title: 'Detalles para Fiestas',
-    subtitle: 'Cotillón, decoración y todo lo que necesitás para tu evento.',
-    script: 'Celebrá con estilo',
-  },
-  {
-    category: 'carteleria',
-    title: 'Cartelería',
-    subtitle: 'Carteles, invitaciones y papelería para eventos especiales.',
-    script: 'Comunicá con elegancia',
-  },
-];
+// The only product section left on the home: the shop sells courses and digital resources
+const DIGITAL_SECTION = {
+  title: 'Recursos digitales para tus proyectos',
+  subtitle: 'Archivos y plantillas listas para usar, personalizar y darle vida a tus ideas, sin empezar todo desde cero.',
+  script: 'Descargá y creá',
+};
 
 // Sections after the trust strip alternate tinted / white by their position among the sections that
-// actually render, so the rhythm holds even when a category has no products
+// actually render, so the rhythm holds even when a section has nothing to show
 const band = (position: number) => (position % 2 === 0 ? 'bg-mist' : 'bg-white');
 
 export default function HomePage() {
@@ -68,17 +43,16 @@ export default function HomePage() {
   }, []);
 
   const showCourses = loadingCourses || featuredCourses.length > 0;
-  const productSections = PRODUCT_SECTIONS
-    .map((section) => ({ ...section, products: allProducts.filter((p) => p.category === section.category) }))
-    .filter((section) => loadingProducts || section.products.length > 0);
+  const digitalResources = allProducts.filter(isDigitalResource);
+  const showResources = loadingProducts || digitalResources.length > 0;
 
   // Position 0 is the category grid
-  const firstProductPosition = showCourses ? 2 : 1;
-  const howToStartPosition = firstProductPosition + productSections.length;
+  const resourcesPosition = showCourses ? 2 : 1;
+  const howToStartPosition = resourcesPosition + (showResources ? 1 : 0);
 
   return (
     <>
-      <SEO title="Inicio" description="BS Papelería - Papelería boutique moderna con productos personalizados, sublimables, archivos digitales y cursos creativos." />
+      <SEO title="Inicio" description="BS Papelería: cursos online y recursos digitales para aprender papelería creativa y emprender." />
       <Hero />
       <TrustStrip />
 
@@ -98,17 +72,17 @@ export default function HomePage() {
         </div>
       )}
 
-      {productSections.map((section, i) => (
-        <div key={section.category} className={band(firstProductPosition + i)}>
+      {showResources && (
+        <div className={band(resourcesPosition)}>
           <ProductSlider
-            title={section.title}
-            subtitle={section.subtitle}
-            script={section.script}
-            products={section.products}
+            title={DIGITAL_SECTION.title}
+            subtitle={DIGITAL_SECTION.subtitle}
+            script={DIGITAL_SECTION.script}
+            products={digitalResources}
             loading={loadingProducts}
           />
         </div>
-      ))}
+      )}
 
       <div className={band(howToStartPosition)}>
         <HowToStart />

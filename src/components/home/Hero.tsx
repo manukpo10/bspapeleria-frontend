@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Send, Sparkles, Star } from 'lucide-react';
+import { ArrowRight, MessageCircleHeart, Sparkles } from 'lucide-react';
 import { PlaneTrail } from '../shared/PlaneTrail';
 
 const INTRO_KEY = 'bs-hero-intro';
@@ -57,26 +57,13 @@ export function Hero() {
             Aprendé desde cero a crear productos personalizados, desarrollar tu creatividad y construir un emprendimiento con el acompañamiento de quienes también empezaron desde cero.
           </p>
 
-          <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-            <Link to="/productos" className="btn btn-primary btn-lg w-full sm:w-auto">
-              Ver productos <ArrowRight className="size-5" aria-hidden="true" />
-            </Link>
-            <Link to="/cursos" className="btn btn-secondary btn-lg w-full sm:w-auto">
-              Ver cursos
+          <div className="mt-8">
+            <Link to="/cursos" className="btn btn-primary btn-lg w-full sm:w-auto">
+              Conocé nuestros cursos <ArrowRight className="size-5" aria-hidden="true" />
             </Link>
           </div>
 
-          <div className="mt-8 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
-            <div className="flex items-center gap-2">
-              <div className="flex gap-0.5" aria-hidden="true">
-                {Array.from({ length: 5 }, (_, i) => (
-                  <Star key={i} className="size-5 fill-amber-400 text-amber-400" />
-                ))}
-              </div>
-              <span className="font-semibold text-dark">4.9/5</span>
-            </div>
-            <span className="text-dark/70">Más de 2.500 clientes felices</span>
-          </div>
+          <p className="mt-8 text-sm font-semibold text-dark">Más de 6 años de experiencia en papelería</p>
         </div>
 
         {/* Collage: the logo's plane trail, with the brand photos resting on it */}
@@ -109,11 +96,11 @@ export function Hero() {
 
           <div className="absolute bottom-[26%] left-0 z-30 flex animate-float items-center gap-3 rounded-2xl bg-white py-3 pl-3 pr-5 shadow-lift ring-1 ring-sand/60">
             <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-mist">
-              <Send className="size-5 text-iris" aria-hidden="true" />
+              <MessageCircleHeart className="size-5 text-iris" aria-hidden="true" />
             </span>
             <p>
-              <span className="block text-sm font-semibold text-dark">Hecho a mano</span>
-              <span className="block text-xs text-dark/65">Personalizado para vos</span>
+              <span className="block text-sm font-semibold text-dark">Aprendé acompañada</span>
+              <span className="block text-xs text-dark/65">Estamos para ayudarte</span>
             </p>
           </div>
         </div>

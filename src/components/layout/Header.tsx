@@ -15,7 +15,7 @@ const navLinks = [
   { label: 'Inicio', href: '/' },
   { label: 'Cursos', href: '/cursos' },
   { label: 'Nosotros', href: '/nosotros' },
-  { label: 'Productos', href: '/productos' },
+  { label: 'Recursos Digitales', href: '/productos' },
   { label: 'FAQ', href: '/preguntas-frecuentes' },
 ];
 
@@ -415,7 +415,7 @@ export function Header() {
             >
               <form onSubmit={handleSearch} role="search" className="relative rounded-3xl shadow-lift">
                 <label htmlFor="header-search" className="sr-only">
-                  Buscar productos y cursos
+                  Buscar recursos digitales
                 </label>
                 <Search className="pointer-events-none absolute left-5 top-1/2 size-5 -translate-y-1/2 text-dark/55" aria-hidden="true" />
                 <input
@@ -424,7 +424,7 @@ export function Header() {
                   type="text"
                   enterKeyHint="search"
                   autoComplete="off"
-                  placeholder="Buscar productos, cursos..."
+                  placeholder="Buscar recursos digitales..."
                   className="field h-16 rounded-3xl border-sand/60 pl-14 pr-16 text-lg"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
@@ -485,7 +485,7 @@ export function Header() {
                     </span>
                     <p className="mt-5 font-display text-lg font-semibold text-dark">Tu carrito está vacío</p>
                     <Link to="/productos" onClick={() => setCartDrawerOpen(false)} className="btn btn-soft mt-6">
-                      Ver productos
+                      Ver recursos digitales
                     </Link>
                   </div>
                 ) : (

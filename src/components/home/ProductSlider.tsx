@@ -58,7 +58,7 @@ export function ProductSlider({ title, subtitle, script, products, loading = fal
         <Reveal from="right">
           {loading ? (
             <div role="status" className="pb-14">
-              <span className="sr-only">Cargando productos…</span>
+              <span className="sr-only">Cargando recursos…</span>
               <div className="grid grid-cols-2 gap-3 sm:gap-6 lg:grid-cols-3 xl:grid-cols-4">
                 {Array.from({ length: 4 }, (_, i) => (
                   <div key={i} className={cn(i === 2 && 'max-lg:hidden', i === 3 && 'max-xl:hidden')}>

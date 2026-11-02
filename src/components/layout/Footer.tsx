@@ -32,8 +32,7 @@ const trainingLinks = [
 const brandLinks = [
   { label: 'Nuestra historia', to: '/nosotros' },
   { label: 'Preguntas frecuentes', to: '/preguntas-frecuentes' },
-  { label: 'Productos personalizados', to: '/productos?categoria=personalizados' },
-  { label: 'Recursos digitales', to: '/productos?categoria=archivos-digitales' },
+  { label: 'Recursos digitales', to: '/productos' },
 ];
 
 const columnTitle = 'font-display text-sm font-semibold text-dark';
